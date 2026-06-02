@@ -8,7 +8,10 @@
   <div class="space-y-6">
     
     <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <label class="text-xs font-bold text-gray-400 mb-2 block">ประเภทบทความวิจัย</label>
+        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+          <h3 class="font-black text-[#2A1D1A] text-lg">ประเภทบทความวิจัย</h3>
+        </div>
         <select (change)="activeType.set($any($event.target).value)" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all cursor-pointer">
             <option value="conference">ประชุมวิชาการ</option>
             <option value="journal">วารสาร</option>
@@ -16,56 +19,122 @@
     </div>
 
     <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <h3 class="font-black text-[#2A1D1A] text-lg mb-6 flex items-center gap-2">ข้อมูลบทความวิจัย</h3>
+        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></svg>
+          <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลบทความวิจัย</h3>
+        </div>
         <div class="space-y-4">
             <div>
                 <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อเรื่อง</label>
-                <input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none">
+                <input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
             </div>
             <div>
                 <label class="text-xs font-bold text-gray-400 mb-2 block">ภาควิชา</label>
-                <select class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none">
+                <select class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
                     <option>เลือกภาควิชา</option>
+                    <option>ภาควิชาคณิตศาสตร์</option>
+                    <option>ภาควิชาเคมี</option>
+                    <option>ภาควิชาเทคโนโลยีการอาหาร</option>
+                    <option>ภาควิชาฟิสิกส์</option>
+                    <option>ภาควิชาวิทยาการคอมพิวเตอร์</option>
                 </select>
             </div>
         </div>
     </div>
 
     <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <div class="flex justify-between mb-6">
+        <div class="flex justify-between items-center mb-6">
+          <div class="flex items-center gap-3 text-[#F9BD15]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <h3 class="font-black text-[#2A1D1A] text-lg">รายชื่อผู้เขียนบทความ</h3>
-            <button class="text-[#F9BD15] font-black text-xs">+ เพิ่มผู้ร่วมเขียน</button>
+          </div>
+          <button class="text-[#F9BD15] font-black text-xs hover:brightness-110 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
+            เพิ่มผู้ร่วมเขียน
+          </button>
         </div>
-        <input type="text" placeholder="ค้นหาชื่อผู้ร่วมเขียน..." class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none mb-4">
+        
+        <div class="relative mb-4">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </div>
+          <input type="text" placeholder="ค้นหาชื่อผู้ร่วมเขียนบทความเพื่อเพิ่มลงในรายการ" class="w-full pl-11 p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+        </div>
         
         <div class="bg-gray-50 rounded-2xl p-4">
             <div class="flex justify-between py-3 px-4 border-b border-gray-200 text-xs font-bold text-gray-400">
-                <span>ชื่อ-นามสกุล</span><span>บทบาท</span><span>แก้ไข</span>
+                <span class="w-1/2">ชื่อ-นามสกุล</span>
+                <span class="w-1/3">บทบาท</span>
+                <span class="w-1/6 text-right">แก้ไข</span>
             </div>
-            @for (author of authors(); track author.id) {
-                <div class="flex justify-between py-4 px-4 items-center">
-                    <span class="font-bold text-sm text-[#2A1D1A]">{{ author.name }}</span>
-                    <span class="bg-[#FEF5DD] text-[#D97706] px-3 py-1 rounded-full text-[10px] font-black">{{ author.role }}</span>
-                    <button (click)="removeAuthor(author.id)" class="text-red-400 font-bold text-xs">ลบ</button>
-                </div>
-            }
+            
+            <div class="divide-y divide-gray-100">
+              @for (author of authors(); track author.id) {
+                  <div class="flex justify-between py-4 px-4 items-center">
+                      <span class="w-1/2 font-bold text-sm text-[#2A1D1A]">{{ author.name }}</span>
+                      <div class="w-1/3">
+                        <span class="bg-[#FEF5DD] text-[#D97706] px-4 py-1.5 rounded-full text-[10px] font-black tracking-wide">{{ author.role }}</span>
+                      </div>
+                      <div class="w-1/6 text-right">
+                        <button (click)="removeAuthor(author.id)" class="text-red-400 hover:text-red-600 font-bold text-xs transition-colors">ลบ</button>
+                      </div>
+                  </div>
+              }
+              @if (authors().length === 0) {
+                <div class="py-6 text-center text-sm font-bold text-gray-400">ไม่มีรายชื่อผู้จัดทำ</div>
+              }
+            </div>
         </div>
     </div>
 
     <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        
         @if (activeType() === 'conference') {
-            <h3 class="font-black text-[#2A1D1A] text-lg mb-6">ข้อมูลการประชุม</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div><label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อประชุม</label><input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
-                <div><label class="text-xs font-bold text-gray-400 mb-2 block">วันเดือนปี</label><input type="date" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
-                <div class="col-span-2"><label class="text-xs font-bold text-gray-400 mb-2 block">สถานที่จัด</label><input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
+            <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลการประชุม</h3>
             </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อประชุม</label>
+                  <input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+                </div>
+                <div>
+                  <label class="text-xs font-bold text-gray-400 mb-2 block">วันเดือนปีในการนำเสนอ</label>
+                  <div class="relative">
+                    <input type="date" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all text-[#2A1D1A] cursor-pointer">
+                  </div>
+                </div>
+                <div class="col-span-1 md:col-span-2">
+                  <label class="text-xs font-bold text-gray-400 mb-2 block">สถานที่จัด</label>
+                  <input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+                </div>
+            </div>
+            
         } @else {
-            <h3 class="font-black text-[#2A1D1A] text-lg mb-6">ข้อมูลวารสาร</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div class="col-span-2"><label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อวารสาร</label><input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
-                <div><label class="text-xs font-bold text-gray-400 mb-2 block">ฉบับที่</label><input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
-                <div><label class="text-xs font-bold text-gray-400 mb-2 block">หน้า</label><input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
+            <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+              <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลวารสาร</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+                <div class="md:col-span-2">
+                  <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อวารสาร</label>
+                  <input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+                </div>
+                <div class="md:col-span-1">
+                  <label class="text-xs font-bold text-gray-400 mb-2 block">ฉบับที่</label>
+                  <input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+                </div>
+                <div class="md:col-span-1">
+                  <label class="text-xs font-bold text-gray-400 mb-2 block">วันเดือนปี</label>
+                  <div class="relative">
+                    <input type="date" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all text-[#2A1D1A] cursor-pointer">
+                  </div>
+                </div>
+                <div class="md:col-span-1">
+                  <label class="text-xs font-bold text-gray-400 mb-2 block">หน้า</label>
+                  <input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+                </div>
             </div>
         }
     </div>
