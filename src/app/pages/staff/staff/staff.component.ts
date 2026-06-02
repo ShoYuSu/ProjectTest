@@ -1,0 +1,23 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+
+@Component({
+  selector: 'app-staff',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  templateUrl: './staff.component.html',
+  styleUrl: './staff.component.css'
+})
+export class StaffComponent {
+  mockStaffList = [
+    { id: 1, name: 'ผศ.ดร. สมชาย ใจดี', position: 'อาจารย์ประจำ', department: 'วิทยาการคอมพิวเตอร์', researchCount: 15, image: 'https://i.pravatar.cc/150?img=11' },
+    { id: 2, name: 'รศ.ดร. สมหญิง รักเรียน', position: 'หัวหน้าภาควิชา', department: 'เทคโนโลยีสารสนเทศ', researchCount: 32, image: 'https://i.pravatar.cc/150?img=5' },
+    { id: 3, name: 'อ. มานะ อุตสาหะ', position: 'อาจารย์ประจำ', department: 'วิศวกรรมซอฟต์แวร์', researchCount: 5, image: 'https://i.pravatar.cc/150?img=8' },
+    { id: 4, name: 'ดร. สมศักดิ์ พัฒนา', position: 'อาจารย์พิเศษ', department: 'วิทยาการคอมพิวเตอร์', researchCount: 12, image: 'https://i.pravatar.cc/150?img=15' },
+    { id: 5, name: 'คุณ สมพร ดูแลดี', position: 'เจ้าหน้าที่บริหาร', department: 'ส่วนกลาง', researchCount: 0, image: '' },
+    { id: 6, name: 'อ. สุดา น่ารัก', position: 'อาจารย์ประจำ', department: 'เทคโนโลยีสารสนเทศ', researchCount: 8, image: 'https://i.pravatar.cc/150?img=9' },
+    { id: 7, name: 'ผศ. สมเกียรติ ยิ่งใหญ่', position: 'รองคณบดี', department: 'วิศวกรรมซอฟต์แวร์', researchCount: 20, image: 'https://i.pravatar.cc/150?img=12' },
+    { id: 8, name: 'คุณ วารี สีสวย', position: 'นักวิจัย', department: 'ศูนย์วิจัยฯ', researchCount: 45, image: 'https://i.pravatar.cc/150?img=32' },
+  ];
+}

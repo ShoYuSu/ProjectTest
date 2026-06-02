@@ -1,0 +1,198 @@
+<div class="max-w-[1200px] mx-auto animate-in fade-in duration-500 pb-10 relative">
+      
+  <div class="flex items-center gap-3 mb-8 mt-4">
+    <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
+    <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Add User</h2>
+  </div>
+
+  <div class="bg-white rounded-[2rem] p-10 shadow-sm border border-gray-100">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 pb-8 border-b border-gray-50 gap-6 md:gap-0">
+        <div>
+          <h2 class="text-2xl font-black text-[#2A1D1A] mb-2">เพิ่มบุคลากรใหม่</h2>
+          <p class="text-sm text-gray-400 font-bold">จัดการข้อมูลพื้นฐานและกำหนดขอบเขตสิทธิ์การใช้งานระบบ</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <button routerLink="/staff" class="text-gray-400 font-bold hover:text-[#2A1D1A] px-4 transition-colors">ยกเลิก</button>
+          <button (click)="onSubmit()" class="bg-[#F9BD15] px-8 py-3 rounded-xl font-black text-[#2A1D1A] shadow-md hover:brightness-105 active:scale-95 transition-all">
+            บันทึกข้อมูล
+          </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-12">
+      
+      <div class="xl:col-span-4 space-y-6">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="text-[#F9BD15]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลพื้นฐาน</h3>
+          </div>
+
+          <div class="flex flex-col items-center justify-center mb-8">
+            <div class="w-32 h-32 rounded-full bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center mb-4 cursor-pointer hover:bg-gray-100 transition-colors relative group">
+              <svg class="w-8 h-8 text-gray-300 group-hover:text-[#F9BD15] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.66-.9l.82-1.23A2 2 0 0110.07 4h3.86a2 2 0 011.66.9l.82 1.23A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 10-6 0 3 3 0 006 0z"/></svg>
+            </div>
+          </div>
+
+          <div class="space-y-5">
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-2">ชื่อ-นามสกุล</label>
+              <input type="text" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-2">รหัสประจำตัว</label>
+              <input type="text" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-2">อีเมล</label>
+              <input type="email" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-2">สาขา/ภาควิชา</label>
+              <div class="relative">
+                <select class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none appearance-none transition-all text-gray-500">
+                  <option value="" disabled selected>เลือกสาขา/ภาควิชา</option>
+                  <option value="math">Mathematics (ภาควิชาคณิตศาสตร์)</option>
+                  <option value="chem">Chemistry (ภาควิชาเคมี)</option>
+                  <option value="food">Food Technology (ภาควิชาเทคโนโลยีการอาหาร)</option>
+                  <option value="physics">Physics (ภาควิชาฟิสิกส์)</option>
+                  <option value="cs">Computer Science (ภาควิชาวิทยาการคอมพิวเตอร์)</option>
+                </select>
+                <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </div>
+            </div>
+          </div>
+      </div>
+
+      <div class="xl:col-span-8">
+          
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <div class="flex items-center gap-3">
+              <div class="text-[#F9BD15]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <h3 class="font-black text-[#2A1D1A] text-lg">การกำหนดสิทธิ์</h3>
+            </div>
+            
+            <div class="bg-[#FEF5DD] text-[#D97706] px-5 py-3 rounded-xl text-[11px] md:text-xs font-bold flex items-start gap-2 max-w-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                <span>เลือกขอบเขตข้อมูลสำหรับแต่ละการกระทำ (ส่วนตัว / ภาควิชา / คณะ)</span>
+            </div>
+          </div>
+          
+          <div class="overflow-x-auto mt-8">
+            <table class="w-full min-w-[700px]">
+              <thead class="text-xs text-gray-400 font-bold border-b border-gray-100">
+                  <tr>
+                    <th class="text-left py-4 px-2">ฟีเจอร์ / โมดูล</th>
+                    <th class="py-4 text-center w-40">ดูข้อมูล (VIEW)</th>
+                    <th class="py-4 text-center w-40">เพิ่มข้อมูล (ADD)</th>
+                    <th class="py-4 text-center w-40">แก้ไข/ลบ (EDIT)</th>
+                  </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-50">
+                  @for (mod of modules; track mod.id) {
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                      <td class="py-6 px-2">
+                          <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
+                                @switch (mod.id) {
+                                  @case (1) { <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg> }
+                                  @case (2) { <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> }
+                                  @case (3) { <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg> }
+                                  @case (4) { <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg> }
+                                  @case (5) { <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> }
+                                }
+                            </div>
+                            <div>
+                                <p class="font-black text-sm text-[#2A1D1A]">{{ mod.name }}</p>
+                                <p class="text-[10px] text-gray-400 font-bold mt-0.5">{{ mod.subName }}</p>
+                            </div>
+                          </div>
+                      </td>
+                      
+                      <td class="px-2 py-3 align-middle text-center">
+                          @if (mod.isDashboard) {
+                            <label class="relative inline-flex items-center cursor-pointer justify-center">
+                              <input type="checkbox" class="sr-only peer" [checked]="mod.viewAccess">
+                              <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F9BD15]"></div>
+                            </label>
+                          } @else {
+                            <div class="relative w-full">
+                              <select class="w-full text-xs font-bold border rounded-xl py-3 pl-3 pr-8 outline-none appearance-none transition-all bg-white border-gray-100 text-[#2A1D1A] cursor-pointer hover:border-[#F9BD15] focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15] shadow-sm">
+                                <option value="none" [selected]="mod.view === 'none'">ปิดการใช้งาน</option>
+                                <option value="own" [selected]="mod.view === 'own'">เฉพาะของตนเอง</option>
+                                <option value="dept" [selected]="mod.view === 'dept'">เฉพาะในภาควิชา</option>
+                                <option value="all" [selected]="mod.view === 'all'">ข้อมูลทั้งหมด</option>
+                              </select>
+                              <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                              </div>
+                            </div>
+                          }
+                      </td>
+
+                      <td class="px-2 py-3 align-middle text-center">
+                          <div class="relative w-full">
+                            <select [disabled]="mod.isDashboard"
+                                    class="w-full text-xs font-bold border rounded-xl py-3 pl-3 pr-8 outline-none appearance-none transition-all cursor-pointer shadow-sm
+                                          bg-white border-gray-100 text-[#2A1D1A] hover:border-[#F9BD15] focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15]
+                                          disabled:bg-gray-50 disabled:text-gray-400 disabled:border-transparent disabled:shadow-none disabled:cursor-not-allowed">
+                              <option value="none" [selected]="mod.add === 'none'">ปิดการใช้งาน</option>
+                              <option value="own" [selected]="mod.add === 'own'">เฉพาะของตนเอง</option>
+                              <option value="dept" [selected]="mod.add === 'dept'">เฉพาะในภาควิชา</option>
+                              <option value="all" [selected]="mod.add === 'all'">ข้อมูลทั้งหมด</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400" [class.opacity-50]="mod.isDashboard">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                          </div>
+                      </td>
+
+                      <td class="px-2 py-3 align-middle text-center">
+                          <div class="relative w-full">
+                            <select [disabled]="mod.isDashboard"
+                                    class="w-full text-xs font-bold border rounded-xl py-3 pl-3 pr-8 outline-none appearance-none transition-all cursor-pointer shadow-sm
+                                          bg-white border-gray-100 text-[#2A1D1A] hover:border-[#F9BD15] focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15]
+                                          disabled:bg-gray-50 disabled:text-gray-400 disabled:border-transparent disabled:shadow-none disabled:cursor-not-allowed">
+                              <option value="none" [selected]="mod.edit === 'none'">ปิดการใช้งาน</option>
+                              <option value="own" [selected]="mod.edit === 'own'">เฉพาะของตนเอง</option>
+                              <option value="dept" [selected]="mod.edit === 'dept'">เฉพาะในภาควิชา</option>
+                              <option value="all" [selected]="mod.edit === 'all'">ข้อมูลทั้งหมด</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400" [class.opacity-50]="mod.isDashboard">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                            </div>
+                          </div>
+                      </td>
+                    </tr>
+                  }
+              </tbody>
+            </table>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (showSuccessModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1a1a1a]/80 backdrop-blur-sm animate-in fade-in duration-300">
+    <div class="bg-white rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95 duration-300">
+        <h3 class="text-xl font-black text-[#2A1D1A] mb-6">บัญชีถูกสร้างขึ้นแล้ว</h3>
+        
+        <p class="text-[13px] text-gray-500 font-bold leading-relaxed mb-8">
+          อีเมล จะถูกใช้เป็น Username<br>
+          และ รหัสประจำตัว จะถูกใช้เป็น Password<br>
+          ในช่วงแรกเข้า<br>
+          และจะถูกบังคับให้เปลี่ยนรหัสผ่าน
+        </p>
+        
+        <button (click)="closeModal()" class="w-full bg-[#F9BD15] text-white font-bold py-3.5 rounded-xl hover:bg-yellow-400 active:scale-95 transition-all shadow-md">
+          ฉันเข้าใจแล้ว
+        </button>
+    </div>
+  </div>
+}

@@ -1,0 +1,79 @@
+<div class="max-w-[1000px] mx-auto animate-in fade-in duration-500 pb-20">
+      
+  <div class="flex items-center gap-3 mb-8 mt-4">
+    <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
+    <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Add Research Article</h2>
+  </div>
+
+  <div class="space-y-6">
+    
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        <label class="text-xs font-bold text-gray-400 mb-2 block">ประเภทบทความวิจัย</label>
+        <select (change)="activeType.set($any($event.target).value)" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all cursor-pointer">
+            <option value="conference">ประชุมวิชาการ</option>
+            <option value="journal">วารสาร</option>
+        </select>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        <h3 class="font-black text-[#2A1D1A] text-lg mb-6 flex items-center gap-2">ข้อมูลบทความวิจัย</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อเรื่อง</label>
+                <input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-400 mb-2 block">ภาควิชา</label>
+                <select class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none">
+                    <option>เลือกภาควิชา</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        <div class="flex justify-between mb-6">
+            <h3 class="font-black text-[#2A1D1A] text-lg">รายชื่อผู้เขียนบทความ</h3>
+            <button class="text-[#F9BD15] font-black text-xs">+ เพิ่มผู้ร่วมเขียน</button>
+        </div>
+        <input type="text" placeholder="ค้นหาชื่อผู้ร่วมเขียน..." class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none mb-4">
+        
+        <div class="bg-gray-50 rounded-2xl p-4">
+            <div class="flex justify-between py-3 px-4 border-b border-gray-200 text-xs font-bold text-gray-400">
+                <span>ชื่อ-นามสกุล</span><span>บทบาท</span><span>แก้ไข</span>
+            </div>
+            @for (author of authors(); track author.id) {
+                <div class="flex justify-between py-4 px-4 items-center">
+                    <span class="font-bold text-sm text-[#2A1D1A]">{{ author.name }}</span>
+                    <span class="bg-[#FEF5DD] text-[#D97706] px-3 py-1 rounded-full text-[10px] font-black">{{ author.role }}</span>
+                    <button (click)="removeAuthor(author.id)" class="text-red-400 font-bold text-xs">ลบ</button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        @if (activeType() === 'conference') {
+            <h3 class="font-black text-[#2A1D1A] text-lg mb-6">ข้อมูลการประชุม</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div><label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อประชุม</label><input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
+                <div><label class="text-xs font-bold text-gray-400 mb-2 block">วันเดือนปี</label><input type="date" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
+                <div class="col-span-2"><label class="text-xs font-bold text-gray-400 mb-2 block">สถานที่จัด</label><input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
+            </div>
+        } @else {
+            <h3 class="font-black text-[#2A1D1A] text-lg mb-6">ข้อมูลวารสาร</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="col-span-2"><label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อวารสาร</label><input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
+                <div><label class="text-xs font-bold text-gray-400 mb-2 block">ฉบับที่</label><input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
+                <div><label class="text-xs font-bold text-gray-400 mb-2 block">หน้า</label><input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none"></div>
+            </div>
+        }
+    </div>
+
+    <div class="flex justify-end gap-4 pt-6">
+        <button routerLink="/research/article" class="px-8 py-3 rounded-xl font-bold text-gray-400 hover:text-[#2A1D1A] transition-colors">ยกเลิก</button>
+        <button class="px-10 py-3 rounded-xl font-black bg-[#F9BD15] text-[#2A1D1A] shadow-md hover:brightness-105 active:scale-95 transition-all">บันทึกข้อมูล</button>
+    </div>
+
+  </div>
+</div>

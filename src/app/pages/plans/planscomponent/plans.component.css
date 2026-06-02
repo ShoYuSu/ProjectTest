@@ -1,0 +1,12 @@
+.animate-in { animation: fadeIn 0.4s ease-out forwards; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ตกแต่ง Scrollbar แนวนอนของตารางให้สวยงาม */
+.custom-scrollbar::-webkit-scrollbar { height: 8px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f9fafb; border-radius: 8px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 8px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }

@@ -1,0 +1,203 @@
+<div class="space-y-8 animate-in fade-in duration-500 pb-10">
+
+  <div class="flex items-center gap-3">
+    <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
+    <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Dashboard</h2>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <div class="bg-white p-8 rounded-3xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col justify-between">
+      <div class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 mb-1">บุคลากรรวมทั้งหมด</p>
+        <h3 class="text-5xl font-black text-[#2A1D1A]">120</h3>
+        <div class="flex gap-8 mt-6">
+          <div><span class="text-[10px] text-gray-400">อาจารย์</span><p class="text-sm font-black text-[#2A1D1A]">92</p></div>
+          <div><span class="text-[10px] text-gray-400">เจ้าหน้าที่</span><p class="text-sm font-black text-[#2A1D1A]">28</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col justify-between">
+      <div class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 mb-1">บทความวิจัยทั้งหมด</p>
+        <h3 class="text-5xl font-black text-[#2A1D1A]">3,482</h3>
+        <div class="flex gap-8 mt-6">
+          <div><span class="text-[10px] text-gray-400">ประชุมวิชาการ</span><p class="text-sm font-black text-[#2A1D1A]">1,672</p></div>
+          <div><span class="text-[10px] text-gray-400">วารสาร</span><p class="text-sm font-black text-[#2A1D1A]">1,810</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col justify-between">
+      <div class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mb-6 text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg>
+      </div>
+      <div>
+        <p class="text-[11px] font-bold text-gray-400 mb-1">โครงการวิจัยทั้งหมด</p>
+        <h3 class="text-5xl font-black text-[#2A1D1A]">528</h3>
+        <div class="flex gap-8 mt-6">
+          <div><span class="text-[10px] text-gray-400">ทุน (บาท)</span><p class="text-sm font-black text-[#2A1D1A]">1,265,050</p></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bg-white rounded-3xl p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100">
+    <div class="flex justify-between items-center mb-10">
+      <h3 class="font-bold text-[#2A1D1A] text-base flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#F9BD15]"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        สถิติโครงการวิจัย จำนวนและงบประมาณ
+      </h3>
+
+      <div class="relative w-36">
+        <button type="button" (click)="toggleDropdown1()"
+                class="w-full px-4 py-2 bg-[#F9BD15] text-white rounded-xl font-bold text-xs border border-transparent outline-none flex justify-between items-center transition-all hover:brightness-105 shadow-sm">
+          <span>{{ selectedOption1() }}</span>
+          <svg [class.rotate-180]="isDropdown1Open()" class="w-4 h-4 transition-transform text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+
+        @if (isDropdown1Open()) {
+          <ul class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden flex flex-col animate-in slide-in-from-top-2">
+            @for (item of options1; track item) {
+              <li (click)="selectOption1(item)"
+                  class="px-4 py-3 text-xs font-bold cursor-pointer transition-colors hover:bg-[#FEF5DD]"
+                  [ngClass]="selectedOption1() === item ? 'text-[#F9BD15] bg-[#FEF5DD]' : 'text-gray-500'">
+                {{ item }}
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+
+    <div class="h-64 flex items-end justify-around relative px-10 pb-6 mt-4">
+      <div class="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-[10px] text-gray-400 font-medium"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div>
+      <div class="absolute left-8 right-8 top-0 h-px bg-gray-100"></div>
+      <div class="absolute left-8 right-8 top-1/4 h-px bg-gray-100"></div>
+      <div class="absolute left-8 right-8 top-2/4 h-px bg-gray-100"></div>
+      <div class="absolute left-8 right-8 top-3/4 h-px bg-gray-100"></div>
+      <div class="absolute left-8 right-8 bottom-6 h-px bg-gray-200"></div>
+
+      @for (item of chartData1; track item.year) {
+        <div class="relative z-10 w-16 h-full flex flex-col items-center justify-end group">
+          <span class="text-[#F9BD15] font-bold text-sm mb-2 opacity-0 animate-[fadeInTop_0.5s_ease-out_0.5s_forwards]">{{item.value}}</span>
+
+          <div class="w-12 bg-[#F9BD15] rounded-t-sm transition-all duration-1000 ease-out origin-bottom animate-[growUp_1s_ease-out_forwards] hover:brightness-110 cursor-pointer"
+               [style.height.%]="item.value"></div>
+
+          <span class="absolute -bottom-6 text-xs font-bold text-[#2A1D1A]">{{item.year}}</span>
+        </div>
+      }
+    </div>
+    <div class="flex justify-end mt-4 text-[10px] font-bold text-[#2A1D1A] items-center gap-2">
+      <div class="w-3 h-3 rounded-full bg-[#F9BD15]"></div> {{ selectedOption1() }}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-3xl p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100">
+    <div class="flex justify-between items-center mb-10">
+      <h3 class="font-bold text-[#2A1D1A] text-base flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#F9BD15]"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        สถิติบทความวิจัย ประชุมวิจัยและวารสาร
+      </h3>
+
+      <div class="relative w-36">
+        <button type="button" (click)="toggleDropdown2()"
+                class="w-full px-4 py-2 bg-[#F9BD15] text-white rounded-xl font-bold text-xs border border-transparent outline-none flex justify-between items-center transition-all hover:brightness-105 shadow-sm">
+          <span>{{ selectedOption2() }}</span>
+          <svg [class.rotate-180]="isDropdown2Open()" class="w-4 h-4 transition-transform text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+
+        @if (isDropdown2Open()) {
+          <ul class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden flex flex-col animate-in slide-in-from-top-2">
+            @for (item of options2; track item) {
+              <li (click)="selectOption2(item)"
+                  class="px-4 py-3 text-xs font-bold cursor-pointer transition-colors hover:bg-[#FEF5DD]"
+                  [ngClass]="selectedOption2() === item ? 'text-[#F9BD15] bg-[#FEF5DD]' : 'text-gray-500'">
+                {{ item }}
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+
+    <div class="h-64 flex items-end justify-around relative px-10 pb-6 mt-4">
+      <div class="absolute left-0 top-0 bottom-6 flex flex-col justify-between text-[10px] text-gray-400 font-medium"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div>
+      <div class="absolute left-8 right-8 top-0 h-px bg-gray-100"></div>
+      <div class="absolute left-8 right-8 top-1/4 h-px bg-gray-100"></div>
+      <div class="absolute left-8 right-8 top-2/4 h-px bg-gray-100"></div>
+      <div class="absolute left-8 right-8 top-3/4 h-px bg-gray-100"></div>
+      <div class="absolute left-8 right-8 bottom-6 h-px bg-gray-200"></div>
+
+      @for (item of chartData2; track item.year) {
+        <div class="relative z-10 w-16 h-full flex flex-col items-center justify-end group">
+          <span class="text-[#F9BD15] font-bold text-sm mb-2 opacity-0 animate-[fadeInTop_0.5s_ease-out_0.5s_forwards]">{{item.value}}</span>
+
+          <div class="w-12 bg-[#F9BD15] rounded-t-sm transition-all duration-1000 ease-out origin-bottom animate-[growUp_1s_ease-out_forwards] hover:brightness-110 cursor-pointer"
+               [style.height.%]="item.value"></div>
+
+          <span class="absolute -bottom-6 text-xs font-bold text-[#2A1D1A]">{{item.year}}</span>
+        </div>
+      }
+    </div>
+    <div class="flex justify-end mt-4 text-[10px] font-bold text-[#2A1D1A] items-center gap-2">
+      <div class="w-3 h-3 rounded-full bg-[#F9BD15]"></div> {{ selectedOption2() }}
+    </div>
+  </div>
+
+  <div class="bg-white rounded-3xl p-8 shadow-[0_2px_10px_rgba(0,0,0,0.02)] border border-gray-100 mb-10">
+    <div class="mb-8">
+      <h3 class="font-bold text-[#2A1D1A] text-base flex items-center gap-2 mb-1">
+        <div class="w-3 h-3 rounded-full bg-[#F9BD15]"></div>
+        สถานะโครงการ
+      </h3>
+      <p class="text-xs text-gray-400 ml-5">สัดส่วนโครงการแยกตามสถานะปัจจุบัน</p>
+    </div>
+
+    <div class="flex flex-col md:flex-row items-center justify-center gap-16 py-4">
+
+      <div class="relative w-48 h-48 rounded-full flex items-center justify-center"
+           style="background: conic-gradient(#FDE68A 0% 30%, #FBBF24 30% 82%, #D97706 82% 100%);">
+        <div class="w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center shadow-inner">
+          <h3 class="text-3xl font-black text-[#2A1D1A]">528</h3>
+          <p class="text-[10px] text-gray-400 font-bold">โครงการ</p>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div class="flex items-start gap-3">
+          <div class="w-3 h-3 rounded-full bg-[#FDE68A] mt-1"></div>
+          <div>
+            <p class="text-sm font-bold text-[#2A1D1A]">ยังไม่ได้ดำเนินการ</p>
+            <p class="text-xs text-gray-400">156 โครงการ (30%)</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-3 h-3 rounded-full bg-[#FBBF24] mt-1"></div>
+          <div>
+            <p class="text-sm font-bold text-[#2A1D1A]">อยู่ระหว่างดำเนินการ</p>
+            <p class="text-xs text-gray-400">275 โครงการ (52%)</p>
+          </div>
+        </div>
+        <div class="flex items-start gap-3">
+          <div class="w-3 h-3 rounded-full bg-[#D97706] mt-1"></div>
+          <div>
+            <p class="text-sm font-bold text-[#2A1D1A]">ดำเนินการเสร็จสิ้น</p>
+            <p class="text-xs text-gray-400">97 โครงการ (18%)</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

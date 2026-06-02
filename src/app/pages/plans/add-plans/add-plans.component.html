@@ -1,0 +1,269 @@
+<div class="max-w-[1000px] mx-auto animate-in fade-in duration-500 pb-20">
+      
+  <div class="flex items-center gap-3 mb-8 mt-4">
+    <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
+    <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Plans / Projects</h2>
+  </div>
+
+  <div class="space-y-6">
+    
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+          <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลแผนงาน/โครงการ</h3>
+        </div>
+        
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs font-bold text-gray-400 mb-2 block">ตั้งชื่อโครงการ</label>
+            <input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+          </div>
+          
+          <div>
+            <label class="text-xs font-bold text-gray-400 mb-2 block">กิจกรรมย่อย</label>
+            <div class="space-y-3">
+                @for (item of subActivities(); track item.id; let first = $first) {
+                  <div class="flex gap-2 animate-in fade-in slide-in-from-top-1">
+                    <input type="text" 
+                            [value]="item.value"
+                            (input)="updateSubActivity(item.id, $any($event.target).value)"
+                            placeholder="ระบุกิจกรรมย่อย" 
+                            class="flex-1 p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+                    
+                    @if (first) {
+                      <button type="button" (click)="addSubActivity()" class="w-14 bg-green-50 text-green-600 rounded-xl font-black text-xl hover:bg-green-100 active:scale-95 transition-all">+</button>
+                    } @else {
+                      <button type="button" (click)="removeSubActivity(item.id)" class="w-14 bg-red-50 text-red-500 rounded-xl font-black text-xl hover:bg-red-100 active:scale-95 transition-all">-</button>
+                    }
+                  </div>
+                }
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-6">
+              
+              <div class="relative">
+                <label class="text-xs font-bold text-gray-400 mb-2 block">ยุทธศาสตร์</label>
+                <button type="button" (click)="toggleStrategy()" 
+                  class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border outline-none flex justify-between items-center transition-all"
+                  [class.border-[#F9BD15]]="isStrategyOpen()" 
+                  [class.bg-white]="isStrategyOpen()"
+                  [class.border-transparent]="!isStrategyOpen()">
+                    <span class="truncate pr-4" [class.text-gray-400]="selectedStrategy() === 'เลือกแผนยุทธศาสตร์'">{{ selectedStrategy() }}</span>
+                    <svg [class.rotate-180]="isStrategyOpen()" class="w-4 h-4 shrink-0 transition-transform text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+
+                @if (isStrategyOpen()) {
+                  <ul class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden flex flex-col animate-in slide-in-from-top-2">
+                      <div class="overflow-y-auto max-h-60 custom-scrollbar flex-1">
+                        @for (item of strategiesList(); track $index) {
+                          <li class="px-4 py-3 text-sm font-bold text-[#2A1D1A] transition-colors hover:bg-[#FEF5DD] group relative" 
+                            [class.bg-[#FEF5DD]]="selectedStrategy() === item">
+                            
+                            @if (editingStrategyIndex() === $index) {
+                              <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                                <input #editInput [value]="item" type="text" class="flex-1 px-3 py-1.5 text-xs font-bold border border-gray-300 rounded-lg outline-none focus:border-[#F9BD15] bg-white">
+                                <button (click)="saveEditStrategy($index, editInput.value, $event)" class="p-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors" title="บันทึก">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </button>
+                                <button (click)="cancelEditStrategy($event)" class="p-1.5 bg-red-50 text-red-500 rounded hover:bg-red-100 transition-colors" title="ยกเลิก">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                              </div>
+                            } @else {
+                              <div class="flex items-center justify-between">
+                                <span (click)="selectStrategy(item)" class="flex-1 cursor-pointer truncate pr-2 block">{{ item }}</span>
+                                <div class="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity shrink-0">
+                                  <button (click)="startEditStrategy($index, $event)" title="แก้ไข" class="p-1.5 text-gray-400 hover:text-[#F9BD15] transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                  </button>
+                                  <button (click)="deleteStrategy($index, $event)" title="ลบ" class="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                  </button>
+                                </div>
+                              </div>
+                            }
+                          </li>
+                        }
+                      </div>
+                      <div class="border-t border-gray-100 p-2 bg-gray-50">
+                        @if (!isAddingStrategy()) {
+                          <button type="button" (click)="isAddingStrategy.set(true); $event.stopPropagation()" class="w-full text-left px-3 py-2 text-sm font-bold text-[#F9BD15] hover:bg-white rounded-lg transition-colors flex items-center gap-2">
+                            <span>+</span> เพิ่มยุทธศาสตร์ใหม่
+                          </button>
+                        } @else {
+                          <div class="flex gap-2" (click)="$event.stopPropagation()">
+                            <input #newStrategy type="text" placeholder="พิมพ์ชื่อยุทธศาสตร์..." class="flex-1 px-3 py-2 text-xs font-bold border border-gray-200 rounded-lg outline-none focus:border-[#F9BD15]">
+                            <button type="button" (click)="addNewStrategy(newStrategy.value)" class="px-4 py-2 bg-[#F9BD15] text-[#2A1D1A] text-xs font-bold rounded-lg hover:brightness-105 active:scale-95 transition-all">เพิ่ม</button>
+                            <button type="button" (click)="isAddingStrategy.set(false)" class="px-2 py-2 text-gray-400 hover:text-red-500 font-bold text-sm transition-colors">✕</button>
+                          </div>
+                        }
+                      </div>
+                  </ul>
+                }
+              </div>
+
+              <div class="relative">
+                <label class="text-xs font-bold text-gray-400 mb-2 block">แผนงาน</label>
+                <button type="button" (click)="togglePlan()" 
+                  class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border outline-none flex justify-between items-center transition-all"
+                  [class.border-[#F9BD15]]="isPlanOpen()" 
+                  [class.bg-white]="isPlanOpen()"
+                  [class.border-transparent]="!isPlanOpen()">
+                    <span class="truncate pr-4" [class.text-gray-400]="selectedPlan() === 'เลือกแผนงาน'">{{ selectedPlan() }}</span>
+                    <svg [class.rotate-180]="isPlanOpen()" class="w-4 h-4 shrink-0 transition-transform text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+
+                @if (isPlanOpen()) {
+                  <ul class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden flex flex-col animate-in slide-in-from-top-2">
+                      <div class="overflow-y-auto max-h-60 custom-scrollbar flex-1">
+                        @for (item of plansList(); track $index) {
+                          <li class="px-4 py-3 text-sm font-bold text-[#2A1D1A] transition-colors hover:bg-[#FEF5DD] group relative" 
+                            [class.bg-[#FEF5DD]]="selectedPlan() === item">
+                            
+                            @if (editingPlanIndex() === $index) {
+                              <div class="flex items-center gap-2" (click)="$event.stopPropagation()">
+                                <input #editInputPlan [value]="item" type="text" class="flex-1 px-3 py-1.5 text-xs font-bold border border-gray-300 rounded-lg outline-none focus:border-[#F9BD15] bg-white">
+                                <button (click)="saveEditPlan($index, editInputPlan.value, $event)" class="p-1.5 bg-green-50 text-green-600 rounded hover:bg-green-100 transition-colors" title="บันทึก">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                </button>
+                                <button (click)="cancelEditPlan($event)" class="p-1.5 bg-red-50 text-red-500 rounded hover:bg-red-100 transition-colors" title="ยกเลิก">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                              </div>
+                            } @else {
+                              <div class="flex items-center justify-between">
+                                <span (click)="selectPlan(item)" class="flex-1 cursor-pointer truncate pr-2 block">{{ item }}</span>
+                                <div class="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-opacity shrink-0">
+                                  <button (click)="startEditPlan($index, $event)" title="แก้ไข" class="p-1.5 text-gray-400 hover:text-[#F9BD15] transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                  </button>
+                                  <button (click)="deletePlan($index, $event)" title="ลบ" class="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                  </button>
+                                </div>
+                              </div>
+                            }
+                          </li>
+                        }
+                      </div>
+                      <div class="border-t border-gray-100 p-2 bg-gray-50">
+                        @if (!isAddingPlan()) {
+                          <button type="button" (click)="isAddingPlan.set(true); $event.stopPropagation()" class="w-full text-left px-3 py-2 text-sm font-bold text-[#F9BD15] hover:bg-white rounded-lg transition-colors flex items-center gap-2">
+                            <span>+</span> เพิ่มแผนงานใหม่
+                          </button>
+                        } @else {
+                          <div class="flex gap-2" (click)="$event.stopPropagation()">
+                            <input #newPlan type="text" placeholder="พิมพ์ชื่อแผนงาน..." class="flex-1 px-3 py-2 text-xs font-bold border border-gray-200 rounded-lg outline-none focus:border-[#F9BD15]">
+                            <button type="button" (click)="addNewPlan(newPlan.value)" class="px-4 py-2 bg-[#F9BD15] text-[#2A1D1A] text-xs font-bold rounded-lg hover:brightness-105 active:scale-95 transition-all">เพิ่ม</button>
+                            <button type="button" (click)="isAddingPlan.set(false)" class="px-2 py-2 text-gray-400 hover:text-red-500 font-bold text-sm transition-colors">✕</button>
+                          </div>
+                        }
+                      </div>
+                  </ul>
+                }
+              </div>
+
+          </div>
+        </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-6">
+          <div class="flex items-center gap-3 text-[#F9BD15]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <h3 class="font-black text-[#2A1D1A] text-lg">ชื่อผู้รับผิดชอบ</h3>
+          </div>
+          <button class="text-[#F9BD15] font-black text-xs hover:brightness-110">+ เพิ่มรายชื่อ</button>
+        </div>
+        
+        <input type="text" placeholder="ค้นหาชื่อผู้รับผิดชอบ" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none mb-4 transition-all">
+        
+        <div class="bg-gray-50 rounded-2xl p-4">
+          <div class="flex justify-between py-3 px-4 border-b border-gray-200 text-xs font-bold text-gray-400">
+              <span>ชื่อ-นามสกุล</span>
+              <span>แก้ไข</span>
+          </div>
+          <div class="flex justify-between py-4 px-4 items-center">
+              <span class="font-bold text-sm text-[#2A1D1A]">ดร. ลอร์ดโวลเดอมอร์</span>
+              <button class="text-red-400 hover:text-red-600 font-bold text-xs transition-colors">ลบ</button>
+          </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-6">
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+          <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+              <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลลงงบประมาณ</h3>
+          </div>
+          <div class="space-y-4">
+            <div>
+                <label class="text-xs font-bold text-gray-400 mb-2 block">งบประมาณอนุมัติ</label>
+                <input type="number" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-400 mb-2 block">งบประมาณใช้จริง</label>
+                <input type="number" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+          <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg>
+              <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลสถานะ</h3>
+          </div>
+          <div class="space-y-4">
+              
+              <div class="relative">
+                <label class="text-xs font-bold text-gray-400 mb-2 block">สถานะของแผนงาน/โครงการ</label>
+                <button type="button" (click)="toggleStatus()" 
+                  class="w-full p-4 rounded-xl font-bold text-sm border outline-none flex justify-between items-center transition-all"
+                  [ngClass]="{
+                    'border-[#F9BD15] bg-white text-[#2A1D1A]': isStatusOpen(),
+                    'border-transparent': !isStatusOpen(),
+                    'bg-gray-50 text-gray-400': !isStatusOpen() && selectedStatus() === 'ระบุสถานะ',
+                    'bg-[#FEF5DD] text-[#2A1D1A]': !isStatusOpen() && selectedStatus() === 'อยู่ระหว่างดำเนินการ',
+                    'bg-[#FFD6D6] text-[#2A1D1A]': !isStatusOpen() && selectedStatus() === 'ยังไม่ได้ดำเนินการ',
+                    'bg-[#D1F0D1] text-[#2A1D1A]': !isStatusOpen() && selectedStatus() === 'เสร็จสิ้น'
+                  }">
+                    <span>{{ selectedStatus() }}</span>
+                    <svg [class.rotate-180]="isStatusOpen()" class="w-4 h-4 transition-transform" 
+                        [class.text-gray-400]="selectedStatus() === 'ระบุสถานะ' || isStatusOpen()"
+                        [class.text-[#2A1D1A]]="selectedStatus() !== 'ระบุสถานะ' && !isStatusOpen()"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+
+                @if (isStatusOpen()) {
+                  <ul class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden flex flex-col animate-in slide-in-from-top-2">
+                      @for (item of statusList; track item) {
+                        <li (click)="selectStatus(item)" 
+                          class="px-4 py-3 text-sm font-bold text-[#2A1D1A] cursor-pointer transition-colors hover:bg-gray-50" 
+                          [class.bg-gray-50]="selectedStatus() === item">
+                          {{ item }}
+                        </li>
+                      }
+                  </ul>
+                }
+              </div>
+
+              @if (selectedStatus() === 'อยู่ระหว่างดำเนินการ') {
+                <div class="animate-in fade-in slide-in-from-top-1">
+                  <label class="text-xs font-bold text-gray-400 mb-2 block">รายละเอียด</label>
+                  <textarea placeholder="ระบุรายละเอียดเพิ่มเติม..." class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none h-[120px] transition-all"></textarea>
+                </div>
+              }
+          </div>
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-4 pt-6">
+        <button routerLink="/plans" class="px-8 py-3 rounded-xl font-bold text-gray-400 hover:text-[#2A1D1A] transition-colors">ยกเลิก</button>
+        <button class="px-10 py-3 rounded-xl font-black bg-[#F9BD15] text-[#2A1D1A] shadow-md hover:brightness-105 active:scale-95 transition-all">บันทึกข้อมูล</button>
+    </div>
+
+  </div>
+</div>

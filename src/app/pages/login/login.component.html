@@ -1,0 +1,31 @@
+<div class="min-h-screen flex relative overflow-hidden font-sans bg-[#4A3B32]">
+  <div class="absolute inset-0 z-0 bg-gradient-to-br from-[#2C2220] via-[#4A3B32] to-[#F4B61A]/40 opacity-90"></div>
+  <div class="absolute inset-0 z-0" style="background-image: radial-gradient(#F9BD15 1px, transparent 1px); background-size: 40px 40px; opacity: 0.1;"></div>
+
+  <div class="relative z-10 flex w-full h-full items-center justify-center p-6">
+      <div class="w-full max-w-md bg-[#2C1D19] rounded-xl overflow-hidden shadow-2xl border border-white/10">
+        <div class="h-28 bg-white w-full relative">
+            <img src="https://siam.edu/wp-content/uploads/2019/12/Siam-University-Banner.jpg" class="w-full h-full object-cover" alt="SU Banner">
+        </div>
+
+        <div class="p-8 pb-10 space-y-6">
+            <div>
+              <label class="text-white text-xs font-bold mb-2 block uppercase tracking-widest">Username / Email</label>
+              <input type="text" value="ADMIN" class="w-full bg-[#1A110F] border border-white/10 rounded-lg px-4 py-3.5 text-white font-bold outline-none focus:border-[#F9BD15] transition-colors">
+            </div>
+            <div>
+              <div class="flex justify-between mb-2 items-center">
+                <label class="text-white text-xs font-bold uppercase tracking-widest">Password</label>
+                <a href="#" class="text-[#F9BD15] text-[10px] font-bold hover:underline">ลืมรหัสผ่านใช่หรือไม่?</a>
+              </div>
+              <input type="password" value="********" class="w-full bg-[#1A110F] border border-white/10 rounded-lg px-4 py-3.5 text-white font-bold tracking-widest outline-none focus:border-[#F9BD15] transition-colors">
+            </div>
+            <div class="pt-4">
+              <button (click)="onLogin()" class="w-full bg-[#F9BD15] text-[#2C1D19] font-black text-sm py-4 rounded-xl hover:bg-yellow-400 transition-all shadow-lg active:scale-95 uppercase tracking-widest">
+                  เข้าสู่ระบบ
+              </button>
+            </div>
+        </div>
+      </div>
+  </div>
+</div>

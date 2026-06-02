@@ -1,0 +1,98 @@
+<div class="max-w-[1000px] mx-auto animate-in fade-in duration-500 pb-20">
+      
+  <div class="flex items-center gap-3 mb-8 mt-4">
+    <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
+    <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Add Research Project</h2>
+  </div>
+
+  <div class="space-y-6">
+    
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></svg>
+          <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลโครงการวิจัย</h3>
+        </div>
+        
+        <div>
+          <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อโครงการวิจัย</label>
+          <input type="text" placeholder="ระบุชื่อโครงการวิจัย..." class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+        </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-6">
+          <div class="flex items-center gap-3 text-[#F9BD15]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <h3 class="font-black text-[#2A1D1A] text-lg">คณะผู้จัดทำผลงาน</h3>
+          </div>
+          <button class="text-[#F9BD15] font-black text-xs hover:brightness-110 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
+            เพิ่มผู้จัดทำ
+          </button>
+        </div>
+        
+        <div class="relative mb-4">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </div>
+          <input type="text" placeholder="ค้นหาชื่อผู้จัดทำผลงานเพื่อเพิ่มลงในรายการ" class="w-full pl-11 p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+        </div>
+        
+        <div class="bg-gray-50 rounded-2xl p-4">
+          <div class="flex justify-between py-3 px-4 border-b border-gray-200 text-xs font-bold text-gray-400">
+              <span class="w-1/2">ชื่อ-นามสกุล</span>
+              <span class="w-1/3">บทบาท</span>
+              <span class="w-1/6 text-right">แก้ไข</span>
+          </div>
+          
+          <div class="divide-y divide-gray-100">
+            @for (member of teamMembers(); track member.id) {
+              <div class="flex justify-between py-4 px-4 items-center">
+                  <span class="w-1/2 font-bold text-sm text-[#2A1D1A]">{{ member.name }}</span>
+                  <div class="w-1/3">
+                    <span class="bg-[#FEF5DD] text-[#D97706] px-4 py-1.5 rounded-full text-[10px] font-black tracking-wide">{{ member.role }}</span>
+                  </div>
+                  <div class="w-1/6 text-right">
+                    <button (click)="removeMember(member.id)" class="text-red-400 hover:text-red-600 font-bold text-xs transition-colors">ลบ</button>
+                  </div>
+              </div>
+            }
+            @if (teamMembers().length === 0) {
+              <div class="py-6 text-center text-sm font-bold text-gray-400">ไม่มีรายชื่อผู้จัดทำ</div>
+            }
+          </div>
+        </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+            <h3 class="font-black text-[#2A1D1A] text-lg">งบประมาณ</h3>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+              <label class="text-xs font-bold text-gray-400 mb-2 block">วันเดือนปีที่ได้รับ</label>
+              <div class="relative">
+                <input type="date" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all text-[#2A1D1A] cursor-pointer">
+              </div>
+          </div>
+          <div>
+              <label class="text-xs font-bold text-gray-400 mb-2 block">แหล่งทุนวิจัย</label>
+              <input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+          </div>
+        </div>
+
+        <div class="w-full md:w-1/2 md:pr-3">
+          <label class="text-xs font-bold text-gray-400 mb-2 block">งบประมาณรวม (บาท)</label>
+          <input type="number" placeholder="0.00" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-4 pt-6">
+        <button routerLink="/research" class="px-8 py-3 rounded-xl font-bold text-gray-400 hover:text-[#2A1D1A] transition-colors">ยกเลิก</button>
+        <button class="px-10 py-3 rounded-xl font-black bg-[#F9BD15] text-[#2A1D1A] shadow-md hover:brightness-105 active:scale-95 transition-all">บันทึกข้อมูล</button>
+    </div>
+
+  </div>
+</div>

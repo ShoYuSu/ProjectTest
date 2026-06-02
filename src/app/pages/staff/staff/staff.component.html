@@ -1,0 +1,70 @@
+<div class="space-y-8 animate-in fade-in duration-500">
+      
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-4">
+    <div class="flex items-center gap-3">
+      <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
+      <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">STAFF INFORMATION</h2>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </div>
+        <input type="text" placeholder="ค้นหาชื่อ, ตำแหน่ง..." class="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15] w-64 shadow-sm transition-all" />
+      </div>
+      
+      <button routerLink="/staff/add-staff" 
+              class="w-fit flex-none bg-[#2A1D1A] text-[#F9BD15] px-6 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-sm active:scale-95 whitespace-nowrap">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+        เพิ่มบุคลากร
+      </button>
+    </div>
+  </div>
+
+  <div class="flex gap-4 border-b border-gray-200 pb-px">
+    <button class="pb-3 border-b-2 border-[#F9BD15] text-[#2A1D1A] font-bold text-sm px-2">ทั้งหมด (120)</button>
+    <button class="pb-3 border-b-2 border-transparent text-gray-400 hover:text-gray-600 font-bold text-sm px-2 transition-colors">สายวิชาการ (92)</button>
+    <button class="pb-3 border-b-2 border-transparent text-gray-400 hover:text-gray-600 font-bold text-sm px-2 transition-colors">สายสนับสนุน (28)</button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    @for (staff of mockStaffList; track staff.id) {
+      <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative group">
+        <button class="absolute top-4 right-4 text-gray-300 hover:text-[#F9BD15] opacity-0 group-hover:opacity-100 transition-opacity">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+        </button>
+
+        <div class="flex flex-col items-center text-center">
+          <div class="w-20 h-20 rounded-full bg-gray-100 border-2 border-[#F9BD15]/20 p-1 mb-4">
+            <div class="w-full h-full rounded-full bg-gray-200 overflow-hidden">
+              <img [src]="staff.image" [alt]="staff.name" class="w-full h-full object-cover" *ngIf="staff.image; else noImg">
+              <ng-template #noImg>
+                <div class="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xl">{{ staff.name.charAt(0) }}</div>
+              </ng-template>
+            </div>
+          </div>
+          
+          <h3 class="font-black text-[#2A1D1A] text-base mb-1">{{ staff.name }}</h3>
+          <p class="text-[10px] font-bold text-[#F9BD15] uppercase tracking-widest mb-3 bg-[#F9BD15]/10 px-3 py-1 rounded-full">{{ staff.position }}</p>
+          
+          <div class="w-full space-y-2 mt-2">
+            <div class="flex justify-between items-center text-xs border-b border-gray-50 pb-2">
+              <span class="text-gray-400">คณะ/แผนก</span>
+              <span class="font-bold text-[#2A1D1A]">{{ staff.department }}</span>
+            </div>
+            <div class="flex justify-between items-center text-xs border-b border-gray-50 pb-2">
+              <span class="text-gray-400">จำนวนงานวิจัย</span>
+              <span class="font-bold text-[#2A1D1A]">{{ staff.researchCount }}</span>
+            </div>
+          </div>
+          
+          <button routerLink="/staff/profile" 
+                  class="w-full mt-5 bg-gray-50 hover:bg-[#F9BD15] text-[#2A1D1A] hover:text-white font-bold text-xs py-2.5 rounded-xl transition-colors border border-gray-100 hover:border-[#F9BD15]">
+            ดูโปรไฟล์
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
