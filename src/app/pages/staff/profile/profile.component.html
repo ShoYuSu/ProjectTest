@@ -1,8 +1,29 @@
 <div class="max-w-[1200px] mx-auto animate-in fade-in duration-500 pb-20">
       
-  <div class="flex items-center gap-3 mb-8 mt-4">
-    <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
-    <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Profile</h2>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 mt-4">
+    <div class="flex items-center gap-3">
+      <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
+      <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Profile</h2>
+    </div>
+
+    @if (isCurrentUser) {
+      <div class="flex gap-2 shrink-0">
+          @if (!isEditMode) {
+              <button (click)="toggleEdit()" class="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-[#2A1D1A] text-[#F9BD15] hover:bg-black transition-all shadow-md active:scale-95">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                  แก้ไขโปรไฟล์
+              </button>
+          } @else {
+              <button (click)="cancelEdit()" class="px-6 py-2.5 rounded-xl font-bold text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 transition-all active:scale-95">
+                  ยกเลิก
+              </button>
+              <button (click)="saveProfile()" class="px-6 py-2.5 rounded-xl font-black text-sm bg-[#F9BD15] text-[#2A1D1A] shadow-md hover:brightness-105 transition-all active:scale-95 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  บันทึก
+              </button>
+          }
+      </div>
+    }
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -15,23 +36,41 @@
         </div>
 
         <div class="flex justify-center mb-8">
-          <div class="w-36 h-36 rounded-full overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] border-4 border-white bg-gray-50">
+          <div class="w-36 h-36 rounded-full overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] border-4 border-white bg-gray-50 relative group">
             <img src="https://i.pinimg.com/736x/8e/33/c9/8e33c94f5fb2b3f2ec48416d80bb8b36.jpg" alt="Profile" class="w-full h-full object-cover">
+            
+            @if (isEditMode) {
+              <div class="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer hover:bg-black/50 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              </div>
+            }
           </div>
         </div>
 
         <div class="space-y-4">
           <div>
             <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อเต็ม</label>
-            <div class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-gray-400 border border-transparent">แฮร์รี่ พอตเตอร์</div>
+            @if (!isEditMode) {
+              <div class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-gray-500 border border-transparent">{{ userProfile.fullName }}</div>
+            } @else {
+              <input type="text" [(ngModel)]="editData.fullName" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
+            }
           </div>
           <div>
             <label class="text-xs font-bold text-gray-400 mb-2 block">อีเมล</label>
-            <div class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-gray-400 border border-transparent break-all">harrypotter&#64;siam.edu</div>
+            @if (!isEditMode) {
+              <div class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-gray-500 border border-transparent break-all">{{ userProfile.email }}</div>
+            } @else {
+              <input type="email" [(ngModel)]="editData.email" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
+            }
           </div>
           <div>
             <label class="text-xs font-bold text-gray-400 mb-2 block">รหัสประจำตัว</label>
-            <div class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-gray-400 border border-transparent">XXXXXXXXXX</div>
+            @if (!isEditMode) {
+              <div class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-gray-500 border border-transparent">{{ userProfile.studentId }}</div>
+            } @else {
+              <input type="text" [(ngModel)]="editData.studentId" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
+            }
           </div>
         </div>
       </div>
@@ -42,8 +81,14 @@
           <h3 class="font-black text-[#2A1D1A] text-lg">Certificate</h3>
         </div>
         <div class="grid grid-cols-2 gap-4">
-          <div class="aspect-square bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center text-gray-300 italic">No Image</div>
-          <div class="aspect-square bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center text-gray-300 italic">No Image</div>
+          <div class="aspect-square bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center text-gray-300 italic relative cursor-pointer hover:bg-gray-100 transition-colors">
+            @if (isEditMode) { <span class="absolute text-xs font-bold text-gray-400">+ เพิ่มรูป</span> }
+            @else { No Image }
+          </div>
+          <div class="aspect-square bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center text-gray-300 italic relative cursor-pointer hover:bg-gray-100 transition-colors">
+            @if (isEditMode) { <span class="absolute text-xs font-bold text-gray-400">+ เพิ่มรูป</span> }
+            @else { No Image }
+          </div>
         </div>
       </div>
     </div>
@@ -58,19 +103,35 @@
         <div class="bg-gray-50 p-6 rounded-3xl grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label class="text-xs font-bold text-gray-400 mb-2 block">ระดับปริญญา</label>
-            <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-400 border border-transparent shadow-sm">ปริญญาตรี</div>
+            @if (!isEditMode) {
+              <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-500 border border-transparent shadow-sm">{{ userProfile.degree }}</div>
+            } @else {
+              <input type="text" [(ngModel)]="editData.degree" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
+            }
           </div>
           <div>
             <label class="text-xs font-bold text-gray-400 mb-2 block">สาขาวิชา</label>
-            <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-400 border border-transparent shadow-sm">ป้องกันตัวจากศาสตร์มืด</div>
+            @if (!isEditMode) {
+              <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-500 border border-transparent shadow-sm">{{ userProfile.major }}</div>
+            } @else {
+              <input type="text" [(ngModel)]="editData.major" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
+            }
           </div>
           <div>
             <label class="text-xs font-bold text-gray-400 mb-2 block">มหาวิทยาลัย</label>
-            <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-400 border border-transparent shadow-sm">มหาวิทยาลัยฮอกวอตส์</div>
+            @if (!isEditMode) {
+              <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-500 border border-transparent shadow-sm">{{ userProfile.university }}</div>
+            } @else {
+              <input type="text" [(ngModel)]="editData.university" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
+            }
           </div>
           <div>
             <label class="text-xs font-bold text-gray-400 mb-2 block">ปีสำเร็จการศึกษา</label>
-            <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-400 border border-transparent shadow-sm">1960</div>
+            @if (!isEditMode) {
+              <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-500 border border-transparent shadow-sm">{{ userProfile.gradYear }}</div>
+            } @else {
+              <input type="text" [(ngModel)]="editData.gradYear" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
+            }
           </div>
         </div>
       </div>
@@ -80,11 +141,17 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
           <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลความเชี่ยวชาญ</h3>
         </div>
-        <div class="flex flex-wrap gap-3">
-          <span class="px-5 py-2 bg-[#FEF5DD] text-[#E0A812] font-black text-sm rounded-full">ดวลเวทมนตร์</span>
-          <span class="px-5 py-2 bg-[#FEF5DD] text-[#E0A812] font-black text-sm rounded-full">ภาษาพาร์เซล</span>
-          <span class="px-5 py-2 bg-[#FEF5DD] text-[#E0A812] font-black text-sm rounded-full">ป้องกันตัวจากศาสตร์มืด</span>
-        </div>
+        
+        @if (!isEditMode) {
+          <div class="flex flex-wrap gap-3">
+            @for (skill of expertiseArray; track skill) {
+              <span class="px-5 py-2 bg-[#FEF5DD] text-[#E0A812] font-black text-sm rounded-full">{{ skill }}</span>
+            }
+          </div>
+        } @else {
+          <label class="text-xs font-bold text-gray-400 mb-2 block">ระบุความเชี่ยวชาญ (คั่นด้วยเครื่องหมายจุลภาค ,)</label>
+          <input type="text" [(ngModel)]="editData.expertise" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:bg-white focus:border-[#F9BD15] outline-none shadow-sm transition-all" placeholder="เช่น ดวลเวทมนตร์, ภาษาพาร์เซล">
+        }
       </div>
     </div>
 

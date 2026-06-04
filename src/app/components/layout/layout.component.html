@@ -106,15 +106,19 @@
            }
       </a>
 
-      <div class="flex items-center bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors" routerLink="/login" [ngClass]="isMiniSidebar() ? 'justify-center p-3' : 'gap-4 p-4'">
-          <div class="shrink-0 rounded-full border-2 border-[#F9BD15] flex items-center justify-center text-[#F9BD15] font-black shadow-sm bg-[#3A1E1D]" [ngClass]="isMiniSidebar() ? 'w-10 h-10 text-base' : 'w-10 h-10 text-lg'">A</div>
-          @if (!isMiniSidebar()) {
-            <div class="text-left whitespace-nowrap">
-              <p class="text-xs font-black text-white uppercase leading-none mb-1">ADMIN</p>
-              <p class="text-[9px] text-[#F9BD15] uppercase tracking-widest">SYSTEM ADMIN</p>
-            </div>
-          }
+<div class="flex items-center bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors" 
+     routerLink="/staff/profile" 
+     [ngClass]="isMiniSidebar() ? 'justify-center p-3' : 'gap-4 p-4'">
+    
+    <div class="shrink-0 rounded-full border-2 border-[#F9BD15] flex items-center justify-center text-[#F9BD15] font-black shadow-sm bg-[#3A1E1D]" 
+         [ngClass]="isMiniSidebar() ? 'w-10 h-10 text-base' : 'w-10 h-10 text-lg'">A</div>
+    @if (!isMiniSidebar()) {
+      <div class="text-left whitespace-nowrap">
+        <p class="text-xs font-black text-white uppercase leading-none mb-1">ADMIN</p>
+        <p class="text-[9px] text-[#F9BD15] uppercase tracking-widest">SYSTEM ADMIN</p>
       </div>
+    }
+</div>
     </div>
   </aside>
 
