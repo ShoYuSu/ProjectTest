@@ -1,14 +1,16 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router'; // 👈 นำเข้า RouterLink
 
 @Component({
   selector: 'app-training',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink], // 👈 เพิ่มใน imports
   templateUrl: './training.component.html',
   styleUrl: './training.component.css'
 })
-export class TrainingComponent {
+export class TrainingComponent implements OnInit {
+  isAdmin = false;
   
   mockTrainings = Array.from({ length: 12 }, (_, i) => ({
     id: i + 1,
@@ -25,13 +27,18 @@ export class TrainingComponent {
   currentPage = signal(1);
   itemsPerPage = 10;
 
+  ngOnInit() {
+    // ⭐️ ตรวจสอบสิทธิ์ว่าเป็น admin หรือไม่
+    const role = localStorage.getItem('role');
+    this.isAdmin = (role === 'admin');
+  }
+
   paginatedTrainings = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.itemsPerPage;
     return this.mockTrainings.slice(startIndex, startIndex + this.itemsPerPage);
   });
 
   totalPages = computed(() => Math.ceil(this.mockTrainings.length / this.itemsPerPage));
-
   pagesArray = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
 
   goToPage(page: number) { this.currentPage.set(page); }

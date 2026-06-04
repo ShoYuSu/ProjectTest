@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -9,7 +9,9 @@ import { RouterLink } from '@angular/router';
   templateUrl: './staff.component.html',
   styleUrl: './staff.component.css'
 })
-export class StaffComponent {
+export class StaffComponent implements OnInit {
+  isAdmin = false;
+
   mockStaffList = [
     { id: 1, name: 'ผศ.ดร. สมชาย ใจดี', position: 'อาจารย์ประจำ', department: 'วิทยาการคอมพิวเตอร์', researchCount: 15, image: 'https://i.pravatar.cc/150?img=11' },
     { id: 2, name: 'รศ.ดร. สมหญิง รักเรียน', position: 'หัวหน้าภาควิชา', department: 'เทคโนโลยีสารสนเทศ', researchCount: 32, image: 'https://i.pravatar.cc/150?img=5' },
@@ -20,4 +22,19 @@ export class StaffComponent {
     { id: 7, name: 'ผศ. สมเกียรติ ยิ่งใหญ่', position: 'รองคณบดี', department: 'วิศวกรรมซอฟต์แวร์', researchCount: 20, image: 'https://i.pravatar.cc/150?img=12' },
     { id: 8, name: 'คุณ วารี สีสวย', position: 'นักวิจัย', department: 'ศูนย์วิจัยฯ', researchCount: 45, image: 'https://i.pravatar.cc/150?img=32' },
   ];
+
+  ngOnInit() {
+    // ตรวจสอบสิทธิ์ว่าเป็น admin หรือไม่
+    const role = localStorage.getItem('role');
+    this.isAdmin = (role === 'admin');
+  }
+
+  // ฟังก์ชันลบบัญชี
+  deleteStaff(id: number, name: string) {
+    if (confirm(`คำเตือน: คุณต้องการลบบัญชีของ "${name}" ใช่หรือไม่?\n(การกระทำนี้ไม่สามารถกู้คืนได้)`)) {
+      this.mockStaffList = this.mockStaffList.filter(staff => staff.id !== id);
+      alert('ลบบัญชีผู้ใช้งานเรียบร้อยแล้ว');
+      // 💡 ในอนาคตสามารถใส่โค้ดเรียก API ลบข้อมูลลง Database ได้ที่นี่
+    }
+  }
 }

@@ -89,7 +89,7 @@
 
     <div class="mt-auto flex flex-col gap-3 transition-all duration-300" [ngClass]="isMiniSidebar() ? 'p-3' : 'p-6'">
       
-      <a href="http://localhost:4200/home" class="flex items-center rounded-2xl border border-white/5 transition-all group shadow-sm bg-white/5 hover:bg-white/10" [ngClass]="isMiniSidebar() ? 'justify-center p-3' : 'justify-between p-4'">
+      <a (click)="goToAdvisorSystem($event)" class="cursor-pointer flex items-center rounded-2xl border border-white/5 transition-all group shadow-sm bg-white/5 hover:bg-white/10" [ngClass]="isMiniSidebar() ? 'justify-center p-3' : 'justify-between p-4'">
            <div class="flex items-center" [ngClass]="!isMiniSidebar() ? 'gap-3' : ''">
              <div class="p-2 bg-[#F9BD15]/10 rounded-lg text-[#F9BD15] shrink-0">
                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -106,20 +106,51 @@
            }
       </a>
 
-<div class="flex items-center bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors" 
-     routerLink="/staff/profile" 
-     [ngClass]="isMiniSidebar() ? 'justify-center p-3' : 'gap-4 p-4'">
-    
-    <div class="shrink-0 rounded-full border-2 border-[#F9BD15] flex items-center justify-center text-[#F9BD15] font-black shadow-sm bg-[#3A1E1D]" 
-         [ngClass]="isMiniSidebar() ? 'w-10 h-10 text-base' : 'w-10 h-10 text-lg'">A</div>
-    @if (!isMiniSidebar()) {
-      <div class="text-left whitespace-nowrap">
-        <p class="text-xs font-black text-white uppercase leading-none mb-1">ADMIN</p>
-        <p class="text-[9px] text-[#F9BD15] uppercase tracking-widest">SYSTEM ADMIN</p>
+      <div class="relative w-full">
+            
+          @if (isProfileMenuOpen) {
+            <div class="absolute bottom-[calc(100%+8px)] left-0 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50"
+                 [ngClass]="isMiniSidebar() ? 'w-[200px]' : 'w-full'">
+              
+              <a routerLink="/staff/profile" (click)="isProfileMenuOpen = false" class="flex items-center gap-3 px-4 py-3.5 text-sm font-bold text-[#2A1D1A] hover:bg-gray-50 transition-colors cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-gray-500"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>โปรไฟล์ส่วนตัว</span>
+              </a>
+              
+              <div class="h-px bg-gray-100 w-full"></div>
+              
+              <button (click)="logout()" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors text-left">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                <span>ออกจากระบบ</span>
+              </button>
+              
+            </div>
+          }
+
+          <div class="flex items-center bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors group" 
+               (click)="toggleProfileMenu()" 
+               [ngClass]="isMiniSidebar() ? 'justify-center p-3' : 'gap-4 p-4'">
+              
+              <div class="shrink-0 rounded-full border-2 border-[#F9BD15] flex items-center justify-center text-[#F9BD15] font-black shadow-sm bg-[#3A1E1D]" 
+                   [ngClass]="isMiniSidebar() ? 'w-10 h-10 text-base' : 'w-10 h-10 text-lg'">
+                   {{ userInitial }}
+              </div>
+              
+              @if (!isMiniSidebar()) {
+                <div class="text-left whitespace-nowrap flex-1 overflow-hidden">
+                  <p class="text-xs font-black text-white uppercase leading-none mb-1 truncate w-full">{{ userName }}</p>
+                  <p class="text-[9px] text-[#F9BD15] uppercase tracking-widest">{{ userRoleDisplay }}</p>
+                </div>
+                
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                     class="text-gray-400 group-hover:text-white transition-all shrink-0" 
+                     [class.rotate-180]="isProfileMenuOpen">
+                     <path d="m18 15-6-6-6 6"/>
+                </svg>
+              }
+          </div>
       </div>
-    }
-</div>
-    </div>
+      </div>
   </aside>
 
   <div class="flex-1 flex flex-col h-screen overflow-hidden">
