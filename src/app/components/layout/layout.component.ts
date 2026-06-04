@@ -10,12 +10,12 @@ import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/rou
   styleUrl: './layout.component.css'
 })
 export class LayoutComponent implements OnInit {
-  private router = inject(Router); 
+  private router = inject(Router);
 
   isStaffExpanded = signal(false);
   isResearchExpanded = signal(false);
-  isSidebarOpen = signal(false); 
-  isMiniSidebar = signal(false); 
+  isSidebarOpen = signal(false);
+  isMiniSidebar = signal(false);
 
   isProfileMenuOpen = false;
   userName: string = 'ADMIN';
@@ -25,7 +25,7 @@ export class LayoutComponent implements OnInit {
   ngOnInit() {
     const role = localStorage.getItem('role');
     const fullName = localStorage.getItem('full_name');
-    
+
     if (fullName) {
       this.userName = fullName;
       this.userInitial = fullName.charAt(0).toUpperCase();
@@ -45,9 +45,9 @@ export class LayoutComponent implements OnInit {
   }
 
   logout() {
-    localStorage.clear(); 
+    localStorage.clear();
     this.isProfileMenuOpen = false;
-    this.router.navigate(['/login']); 
+    this.router.navigate(['/dashboard']);
   }
 
   // ⭐️ ฟังก์ชันสำหรับข้ามไป "ระบบที่ปรึกษา" (ระบบเพื่อน) พร้อมส่ง Token
@@ -59,9 +59,9 @@ export class LayoutComponent implements OnInit {
     const fullName = localStorage.getItem('full_name') || '';
 
     // สร้าง URL ไปที่พอร์ต 4201 พร้อมแนบพารามิเตอร์ยืนยันตัวตน
-    const advisorUrl = `http://localhost:4201/admin/dashboard?role=${role}&token=${token}&user=${fullName}`;
-    
-    window.location.href = advisorUrl; 
+    const advisorUrl = `http://localhost:4200/home?role=${role}&token=${token}&user=${fullName}`;
+
+    window.location.href = advisorUrl;
   }
 
   toggleMiniSidebar() {
@@ -72,22 +72,22 @@ export class LayoutComponent implements OnInit {
     }
   }
 
-  toggleStaff() { 
-    if (this.isMiniSidebar()) this.isMiniSidebar.set(false); 
-    this.isStaffExpanded.set(!this.isStaffExpanded()); 
+  toggleStaff() {
+    if (this.isMiniSidebar()) this.isMiniSidebar.set(false);
+    this.isStaffExpanded.set(!this.isStaffExpanded());
   }
-  
-  toggleResearch() { 
-    if (this.isMiniSidebar()) this.isMiniSidebar.set(false); 
-    this.isResearchExpanded.set(!this.isResearchExpanded()); 
+
+  toggleResearch() {
+    if (this.isMiniSidebar()) this.isMiniSidebar.set(false);
+    this.isResearchExpanded.set(!this.isResearchExpanded());
   }
-  
-  toggleSidebar() { 
-    this.isSidebarOpen.set(!this.isSidebarOpen()); 
+
+  toggleSidebar() {
+    this.isSidebarOpen.set(!this.isSidebarOpen());
   }
 
   closeSidebarOnMobile() {
-    if (window.innerWidth < 1024) { 
+    if (window.innerWidth < 1024) {
       this.isSidebarOpen.set(false);
     }
   }
