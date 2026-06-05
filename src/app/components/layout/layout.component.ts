@@ -22,7 +22,24 @@ export class LayoutComponent implements OnInit {
   userRoleDisplay: string = 'SYSTEM ADMIN';
   userInitial: string = 'A';
 
-  ngOnInit() {
+ngOnInit() {
+    // ⭐️ 1. ดักจับข้อมูล (Token, Role, User) ที่เพื่อนส่งมาทาง URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+    const roleFromUrl = urlParams.get('role');
+    const userFromUrl = urlParams.get('user');
+
+    // ถ้ามี Token ส่งมาทาง URL ให้เอามาเซฟลงความจำของ 4201 
+    if (tokenFromUrl) {
+      localStorage.setItem('token', tokenFromUrl);
+      if (roleFromUrl) localStorage.setItem('role', roleFromUrl);
+      if (userFromUrl) localStorage.setItem('full_name', userFromUrl);
+      
+      // ลบ Query ออกจาก URL เพื่อความสวยงาม (Optional)
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // ⭐️ 2. โค้ดเดิมของคุณที่ดึงข้อมูลมาแสดงผล
     const role = localStorage.getItem('role');
     const fullName = localStorage.getItem('full_name');
 
@@ -47,7 +64,7 @@ export class LayoutComponent implements OnInit {
   logout() {
     localStorage.clear();
     this.isProfileMenuOpen = false;
-    this.router.navigate(['/dashboard']);
+    window.location.href = 'http://localhost:4200/login?action=logout';
   }
 
   // ⭐️ ฟังก์ชันสำหรับข้ามไป "ระบบที่ปรึกษา" (ระบบเพื่อน) พร้อมส่ง Token
@@ -58,7 +75,7 @@ export class LayoutComponent implements OnInit {
     const token = localStorage.getItem('token') || '';
     const fullName = localStorage.getItem('full_name') || '';
 
-    // สร้าง URL ไปที่พอร์ต 4201 พร้อมแนบพารามิเตอร์ยืนยันตัวตน
+    // สร้าง URL ไปที่พอร์ต 4200 พร้อมแนบพารามิเตอร์ยืนยันตัวตน
     const advisorUrl = `http://localhost:4200/home?role=${role}&token=${token}&user=${fullName}`;
 
     window.location.href = advisorUrl;
