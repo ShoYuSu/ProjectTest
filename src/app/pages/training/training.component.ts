@@ -1,22 +1,26 @@
-import { Component, signal, computed, OnInit } from '@angular/core';
+import { Component, signal, computed, OnInit, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router'; // 👈 นำเข้า RouterLink
+import { Router } from '@angular/router'; 
 
 @Component({
   selector: 'app-training',
   standalone: true,
-  imports: [CommonModule, RouterLink], // 👈 เพิ่มใน imports
+  imports: [CommonModule], 
   templateUrl: './training.component.html',
   styleUrl: './training.component.css'
 })
 export class TrainingComponent implements OnInit {
+  private router = inject(Router); 
+
   isAdmin = false;
   
+  // ⭐️ แก้ไข Mock Data แยก startDate และ endDate
   mockTrainings = Array.from({ length: 12 }, (_, i) => ({
     id: i + 1,
     staffName: i % 2 === 0 ? 'ผศ.ดร. สมชาย ใจดี' : 'อ. สมหญิง รักเรียน',
     topic: i % 2 === 0 ? 'AI ในการสอนยุคใหม่' : 'การเขียนขอทุนวิจัยระดับชาติ',
-    date: '15 พ.ค. 2568',
+    startDate: '15 พ.ค. 2568', // 👈 วันที่เริ่ม
+    endDate: '18 พ.ค. 2568',   // 👈 วันที่สิ้นสุด
     location: 'โรงแรมเซ็นทารา แกรนด์',
     benefits: 'เข้าใจเทคนิคการเขียน Prompt...',
     implementation: 'นำไปปรับใช้ในรายวิชา CS101...',
@@ -28,9 +32,13 @@ export class TrainingComponent implements OnInit {
   itemsPerPage = 10;
 
   ngOnInit() {
-    // ⭐️ ตรวจสอบสิทธิ์ว่าเป็น admin หรือไม่
     const role = localStorage.getItem('role');
     this.isAdmin = (role === 'admin');
+  }
+
+  goToAddTraining() {
+    console.log('กำลังไปหน้า Add Training...');
+    this.router.navigate(['/training/add']);
   }
 
   paginatedTrainings = computed(() => {

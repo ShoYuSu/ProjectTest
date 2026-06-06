@@ -11,14 +11,11 @@ import { ProfileComponent } from './pages/staff/profile/profile.component';
 import { AddResearchComponent } from './pages/research/researchcomponent/add-research/add-research.component';
 import { AddArticleComponent } from './pages/research/research-article/add-article/add-article.component';
 
-
-// ⭐️ เพิ่มการนำเข้าหน้า Training
+// ⭐️ หมวด Training (เพิ่ม AddTrainingComponent)
 import { TrainingComponent } from './pages/training/training.component';
+import { AddTrainingComponent } from './pages/training/add-training/add-training.component';
 
 export const routes: Routes = [
-  // หน้า Login แยกออกมาต่างหาก (ไม่มี Sidebar)
-
-
   // โครงสร้างที่มี Sidebar (หน้าอื่นๆ ทั้งหมดให้มาใส่ข้างใน children)
   {
     path: '',
@@ -32,10 +29,10 @@ export const routes: Routes = [
 
       // หมวด Research
       { path: 'research', component: ResearchComponent },
-      // ⭐️ แก้ไข Path ตรงนี้ให้เป็น 'research/add-research' เพื่อให้ตรงกับปุ่ม
       { path: 'research/add-research', component: AddResearchComponent },
       { path: 'research/article', component: ResearchArticleComponent },
       { path: 'research/article/add', component: AddArticleComponent },
+      
       // หมวด Staff
       { path: 'staff', component: StaffComponent },
       { path: 'staff/add-staff', component: AddStaffComponent },
@@ -43,12 +40,11 @@ export const routes: Routes = [
 
       // หมวด Training
       { path: 'training', component: TrainingComponent },
+      { path: 'training/add', component: AddTrainingComponent }, // ⭐️ เพิ่มบรรทัดนี้
 
       // Default Path
-
     ]
   },
 
   // ถ้าพิมพ์ path มั่วๆ หรือหาไม่เจอ ให้เด้งกลับไปหน้า login
-
 ];

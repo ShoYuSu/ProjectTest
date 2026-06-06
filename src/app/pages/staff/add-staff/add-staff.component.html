@@ -13,8 +13,9 @@
         </div>
         <div class="flex items-center gap-4">
           <button routerLink="/staff" class="text-gray-400 font-bold hover:text-[#2A1D1A] px-4 transition-colors">ยกเลิก</button>
-          <button (click)="onSubmit()" class="bg-[#F9BD15] px-8 py-3 rounded-xl font-black text-[#2A1D1A] shadow-md hover:brightness-105 active:scale-95 transition-all">
-            บันทึกข้อมูล
+          
+          <button (click)="onSubmit()" [disabled]="loading" class="bg-[#F9BD15] px-8 py-3 rounded-xl font-black text-[#2A1D1A] shadow-md hover:brightness-105 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ loading ? 'กำลังบันทึก...' : 'บันทึกข้อมูล' }}
           </button>
         </div>
     </div>
@@ -38,26 +39,26 @@
           <div class="space-y-5">
             <div>
               <label class="block text-xs font-bold text-gray-400 mb-2">ชื่อ-นามสกุล</label>
-              <input type="text" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
+              <input type="text" [(ngModel)]="staffData.fullName" name="fullName" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
             </div>
             <div>
               <label class="block text-xs font-bold text-gray-400 mb-2">รหัสประจำตัว</label>
-              <input type="text" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
+              <input type="text" [(ngModel)]="staffData.staffCode" name="staffCode" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
             </div>
             <div>
               <label class="block text-xs font-bold text-gray-400 mb-2">อีเมล</label>
-              <input type="email" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
+              <input type="email" [(ngModel)]="staffData.email" name="email" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
             </div>
             <div>
               <label class="block text-xs font-bold text-gray-400 mb-2">สาขา/ภาควิชา</label>
               <div class="relative">
-                <select class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none appearance-none transition-all text-gray-500">
-                  <option value="" disabled selected>เลือกสาขา/ภาควิชา</option>
-                  <option value="math">Mathematics (ภาควิชาคณิตศาสตร์)</option>
-                  <option value="chem">Chemistry (ภาควิชาเคมี)</option>
-                  <option value="food">Food Technology (ภาควิชาเทคโนโลยีการอาหาร)</option>
-                  <option value="physics">Physics (ภาควิชาฟิสิกส์)</option>
-                  <option value="cs">Computer Science (ภาควิชาวิทยาการคอมพิวเตอร์)</option>
+                <select [(ngModel)]="staffData.deptId" name="deptId" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none appearance-none transition-all text-gray-500">
+                  <option [ngValue]="null" disabled selected>เลือกสาขา/ภาควิชา</option>
+                  <option [ngValue]="2">Mathematics (ภาควิชาคณิตศาสตร์)</option>
+                  <option [ngValue]="1">Chemistry (ภาควิชาเคมี)</option>
+                  <option [ngValue]="5">Food Technology (ภาควิชาเทคโนโลยีการอาหาร)</option>
+                  <option [ngValue]="4">Physics (ภาควิชาฟิสิกส์)</option>
+                  <option [ngValue]="3">Computer Science (ภาควิชาวิทยาการคอมพิวเตอร์)</option>
                 </select>
                 <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -75,11 +76,6 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>
               <h3 class="font-black text-[#2A1D1A] text-lg">การกำหนดสิทธิ์</h3>
-            </div>
-            
-            <div class="bg-[#FEF5DD] text-[#D97706] px-5 py-3 rounded-xl text-[11px] md:text-xs font-bold flex items-start gap-2 max-w-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                <span>เลือกขอบเขตข้อมูลสำหรับแต่ละการกระทำ (ส่วนตัว / ภาควิชา / คณะ)</span>
             </div>
           </div>
           
@@ -117,16 +113,16 @@
                       <td class="px-2 py-3 align-middle text-center">
                           @if (mod.isDashboard) {
                             <label class="relative inline-flex items-center cursor-pointer justify-center">
-                              <input type="checkbox" class="sr-only peer" [checked]="mod.viewAccess">
+                              <input type="checkbox" [(ngModel)]="mod.viewAccess" name="viewAccess_{{mod.id}}" class="sr-only peer">
                               <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F9BD15]"></div>
                             </label>
                           } @else {
                             <div class="relative w-full">
-                              <select class="w-full text-xs font-bold border rounded-xl py-3 pl-3 pr-8 outline-none appearance-none transition-all bg-white border-gray-100 text-[#2A1D1A] cursor-pointer hover:border-[#F9BD15] focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15] shadow-sm">
-                                <option value="none" [selected]="mod.view === 'none'">ปิดการใช้งาน</option>
-                                <option value="own" [selected]="mod.view === 'own'">เฉพาะของตนเอง</option>
-                                <option value="dept" [selected]="mod.view === 'dept'">เฉพาะในภาควิชา</option>
-                                <option value="all" [selected]="mod.view === 'all'">ข้อมูลทั้งหมด</option>
+                              <select [(ngModel)]="mod.view" name="view_{{mod.id}}" class="w-full text-xs font-bold border rounded-xl py-3 pl-3 pr-8 outline-none appearance-none transition-all bg-white border-gray-100 text-[#2A1D1A] cursor-pointer hover:border-[#F9BD15] focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15] shadow-sm">
+                                <option value="none">ปิดการใช้งาน</option>
+                                <option value="own">เฉพาะของตนเอง</option>
+                                <option value="dept">เฉพาะในภาควิชา</option>
+                                <option value="all">ข้อมูลทั้งหมด</option>
                               </select>
                               <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -137,14 +133,11 @@
 
                       <td class="px-2 py-3 align-middle text-center">
                           <div class="relative w-full">
-                            <select [disabled]="mod.isDashboard"
-                                    class="w-full text-xs font-bold border rounded-xl py-3 pl-3 pr-8 outline-none appearance-none transition-all cursor-pointer shadow-sm
-                                          bg-white border-gray-100 text-[#2A1D1A] hover:border-[#F9BD15] focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15]
-                                          disabled:bg-gray-50 disabled:text-gray-400 disabled:border-transparent disabled:shadow-none disabled:cursor-not-allowed">
-                              <option value="none" [selected]="mod.add === 'none'">ปิดการใช้งาน</option>
-                              <option value="own" [selected]="mod.add === 'own'">เฉพาะของตนเอง</option>
-                              <option value="dept" [selected]="mod.add === 'dept'">เฉพาะในภาควิชา</option>
-                              <option value="all" [selected]="mod.add === 'all'">ข้อมูลทั้งหมด</option>
+                            <select [(ngModel)]="mod.add" name="add_{{mod.id}}" [disabled]="mod.isDashboard" class="w-full text-xs font-bold border rounded-xl py-3 pl-3 pr-8 outline-none appearance-none transition-all cursor-pointer shadow-sm bg-white border-gray-100 text-[#2A1D1A] hover:border-[#F9BD15] focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15] disabled:bg-gray-50 disabled:text-gray-400 disabled:border-transparent disabled:shadow-none disabled:cursor-not-allowed">
+                              <option value="none">ปิดการใช้งาน</option>
+                              <option value="own">เฉพาะของตนเอง</option>
+                              <option value="dept">เฉพาะในภาควิชา</option>
+                              <option value="all">ข้อมูลทั้งหมด</option>
                             </select>
                             <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400" [class.opacity-50]="mod.isDashboard">
                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -154,14 +147,11 @@
 
                       <td class="px-2 py-3 align-middle text-center">
                           <div class="relative w-full">
-                            <select [disabled]="mod.isDashboard"
-                                    class="w-full text-xs font-bold border rounded-xl py-3 pl-3 pr-8 outline-none appearance-none transition-all cursor-pointer shadow-sm
-                                          bg-white border-gray-100 text-[#2A1D1A] hover:border-[#F9BD15] focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15]
-                                          disabled:bg-gray-50 disabled:text-gray-400 disabled:border-transparent disabled:shadow-none disabled:cursor-not-allowed">
-                              <option value="none" [selected]="mod.edit === 'none'">ปิดการใช้งาน</option>
-                              <option value="own" [selected]="mod.edit === 'own'">เฉพาะของตนเอง</option>
-                              <option value="dept" [selected]="mod.edit === 'dept'">เฉพาะในภาควิชา</option>
-                              <option value="all" [selected]="mod.edit === 'all'">ข้อมูลทั้งหมด</option>
+                            <select [(ngModel)]="mod.edit" name="edit_{{mod.id}}" [disabled]="mod.isDashboard" class="w-full text-xs font-bold border rounded-xl py-3 pl-3 pr-8 outline-none appearance-none transition-all cursor-pointer shadow-sm bg-white border-gray-100 text-[#2A1D1A] hover:border-[#F9BD15] focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15] disabled:bg-gray-50 disabled:text-gray-400 disabled:border-transparent disabled:shadow-none disabled:cursor-not-allowed">
+                              <option value="none">ปิดการใช้งาน</option>
+                              <option value="own">เฉพาะของตนเอง</option>
+                              <option value="dept">เฉพาะในภาควิชา</option>
+                              <option value="all">ข้อมูลทั้งหมด</option>
                             </select>
                             <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none text-gray-400" [class.opacity-50]="mod.isDashboard">
                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -178,7 +168,7 @@
   </div>
 </div>
 
-@if (showSuccessModal()) {
+@if (showSuccessModal) {
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1a1a1a]/80 backdrop-blur-sm animate-in fade-in duration-300">
     <div class="bg-white rounded-3xl p-10 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95 duration-300">
         <h3 class="text-xl font-black text-[#2A1D1A] mb-6">บัญชีถูกสร้างขึ้นแล้ว</h3>

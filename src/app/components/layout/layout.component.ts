@@ -22,12 +22,13 @@ export class LayoutComponent implements OnInit {
   userRoleDisplay: string = 'SYSTEM ADMIN';
   userInitial: string = 'A';
 
-ngOnInit() {
-    // ⭐️ 1. ดักจับข้อมูล (Token, Role, User) ที่เพื่อนส่งมาทาง URL
+  ngOnInit() {
+    // ⭐️ 1. ดักจับข้อมูลที่เพื่อนส่งมาทาง URL
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('token');
     const roleFromUrl = urlParams.get('role');
     const userFromUrl = urlParams.get('user');
+    const permsFromUrl = urlParams.get('perms'); // 👈 รับค่าสิทธิ์ที่แนบมา
 
     // ถ้ามี Token ส่งมาทาง URL ให้เอามาเซฟลงความจำของ 4201 
     if (tokenFromUrl) {
@@ -35,11 +36,16 @@ ngOnInit() {
       if (roleFromUrl) localStorage.setItem('role', roleFromUrl);
       if (userFromUrl) localStorage.setItem('full_name', userFromUrl);
       
+      // ⭐️ ถอดรหัสและเซฟสิทธิ์ลง LocalStorage
+      if (permsFromUrl) {
+        localStorage.setItem('permissions', decodeURIComponent(permsFromUrl));
+      }
+      
       // ลบ Query ออกจาก URL เพื่อความสวยงาม (Optional)
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    // ⭐️ 2. โค้ดเดิมของคุณที่ดึงข้อมูลมาแสดงผล
+    // ⭐️ 2. โค้ดดึงข้อมูลมาแสดงผลบนเมนู
     const role = localStorage.getItem('role');
     const fullName = localStorage.getItem('full_name');
 
@@ -67,7 +73,7 @@ ngOnInit() {
     window.location.href = 'http://localhost:4200/login?action=logout';
   }
 
-  // ⭐️ ฟังก์ชันสำหรับข้ามไป "ระบบที่ปรึกษา" (ระบบเพื่อน) พร้อมส่ง Token
+  // ⭐️ ฟังก์ชันสำหรับข้ามไป "ระบบที่ปรึกษา" (ระบบเพื่อน) พร้อมส่งข้อมูลกลับ
   goToAdvisorSystem(event: Event) {
     event.preventDefault(); // ป้องกันการเปลี่ยนหน้าแบบปกติของแท็ก <a>
 
