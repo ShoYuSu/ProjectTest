@@ -32,59 +32,70 @@
     </div>
 
     <nav class="flex-1 space-y-2 overflow-y-auto no-scrollbar transition-all duration-300" [ngClass]="isMiniSidebar() ? 'px-3' : 'px-6'">
-      <button routerLink="/dashboard" routerLinkActive="bg-[#F9BD15] text-[#2A1D1A]" [routerLinkActiveOptions]="{exact: true}" (click)="closeSidebarOnMobile()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5 group relative" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-start px-6 py-4 gap-3'">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-        @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Dashboard</span> }
-      </button>
-
-      <div class="space-y-1">
-        <button (click)="toggleStaff()" [class.bg-[#F9BD15]]="isStaffExpanded()" [class.text-[#2A1D1A]]="isStaffExpanded()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-between px-6 py-4'">
-          <div class="flex items-center" [ngClass]="!isMiniSidebar() ? 'gap-3' : ''">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Staff Information</span> }
-          </div>
-          @if (!isMiniSidebar()) { <svg [class.rotate-180]="isStaffExpanded()" class="w-4 h-4 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg> }
+      
+      @if (canViewDashboard()) {
+        <button routerLink="/dashboard" routerLinkActive="bg-[#F9BD15] text-[#2A1D1A]" [routerLinkActiveOptions]="{exact: true}" (click)="closeSidebarOnMobile()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5 group relative" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-start px-6 py-4 gap-3'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Dashboard</span> }
         </button>
-        @if (isStaffExpanded() && !isMiniSidebar()) {
-          <div class="pl-11 space-y-1 py-2 animate-in fade-in slide-in-from-top-2 duration-300">
-            <a routerLink="/staff" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
-              <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">List All</span>
-              <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">บุคลากรทั้งหมด</span>
-            </a>
-            <a routerLink="/staff" [queryParams]="{ dept: 'math' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Mathematics</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาคณิตศาสตร์</span></a>
-            <a routerLink="/staff" [queryParams]="{ dept: 'chem' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Chemistry</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาเคมี</span></a>
-            <a routerLink="/staff" [queryParams]="{ dept: 'food' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Food Technology</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาเทคโนโลยีการอาหาร</span></a>
-            <a routerLink="/staff" [queryParams]="{ dept: 'physics' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Physics</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาฟิสิกส์</span></a>
-            <a routerLink="/staff" [queryParams]="{ dept: 'cs' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Computer Science</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาวิทยาการคอมพิวเตอร์</span></a>
-          </div>
-        }
-      </div>
+      }
 
-      <div class="space-y-1">
-        <button (click)="toggleResearch()" [class.bg-[#F9BD15]]="isResearchExpanded()" [class.text-[#2A1D1A]]="isResearchExpanded()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-between px-6 py-4'">
-          <div class="flex items-center" [ngClass]="!isMiniSidebar() ? 'gap-3' : ''">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg>
-              @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Research Information</span> }
-          </div>
-          @if (!isMiniSidebar()) { <svg [class.rotate-180]="isResearchExpanded()" class="w-4 h-4 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg> }
+      @if (canViewStaff()) {
+        <div class="space-y-1">
+          <button (click)="toggleStaff()" [class.bg-[#F9BD15]]="isStaffExpanded()" [class.text-[#2A1D1A]]="isStaffExpanded()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-between px-6 py-4'">
+            <div class="flex items-center" [ngClass]="!isMiniSidebar() ? 'gap-3' : ''">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Staff Information</span> }
+            </div>
+            @if (!isMiniSidebar()) { <svg [class.rotate-180]="isStaffExpanded()" class="w-4 h-4 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg> }
+          </button>
+          @if (isStaffExpanded() && !isMiniSidebar()) {
+            <div class="pl-11 space-y-1 py-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <a routerLink="/staff" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">List All</span>
+                <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">บุคลากรทั้งหมด</span>
+              </a>
+              <a routerLink="/staff" [queryParams]="{ dept: 'math' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Mathematics</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาคณิตศาสตร์</span></a>
+              <a routerLink="/staff" [queryParams]="{ dept: 'chem' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Chemistry</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาเคมี</span></a>
+              <a routerLink="/staff" [queryParams]="{ dept: 'food' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Food Technology</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาเทคโนโลยีการอาหาร</span></a>
+              <a routerLink="/staff" [queryParams]="{ dept: 'physics' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Physics</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาฟิสิกส์</span></a>
+              <a routerLink="/staff" [queryParams]="{ dept: 'cs' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Computer Science</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาวิทยาการคอมพิวเตอร์</span></a>
+            </div>
+          }
+        </div>
+      }
+
+      @if (canViewResearch()) {
+        <div class="space-y-1">
+          <button (click)="toggleResearch()" [class.bg-[#F9BD15]]="isResearchExpanded()" [class.text-[#2A1D1A]]="isResearchExpanded()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-between px-6 py-4'">
+            <div class="flex items-center" [ngClass]="!isMiniSidebar() ? 'gap-3' : ''">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg>
+                @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Research Information</span> }
+            </div>
+            @if (!isMiniSidebar()) { <svg [class.rotate-180]="isResearchExpanded()" class="w-4 h-4 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg> }
+          </button>
+          @if (isResearchExpanded() && !isMiniSidebar()) {
+            <div class="pl-11 space-y-1 py-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              <a routerLink="/research" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Research Project</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">โครงการวิจัย</span></a>
+              <a routerLink="/research/article" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Research Article</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">บทความวิจัย</span></a>
+            </div>
+          }
+        </div>
+      }
+
+      @if (canViewTraining()) {
+        <button routerLink="/training" routerLinkActive="bg-[#F9BD15] text-[#2A1D1A]" (click)="closeSidebarOnMobile()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-start px-6 py-4 gap-3'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Training & Seminars</span> }
         </button>
-        @if (isResearchExpanded() && !isMiniSidebar()) {
-          <div class="pl-11 space-y-1 py-2 animate-in fade-in slide-in-from-top-2 duration-300">
-            <a routerLink="/research" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Research Project</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">โครงการวิจัย</span></a>
-            <a routerLink="/research/article" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Research Article</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">บทความวิจัย</span></a>
-          </div>
-        }
-      </div>
+      }
 
-      <button routerLink="/training" routerLinkActive="bg-[#F9BD15] text-[#2A1D1A]" (click)="closeSidebarOnMobile()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-start px-6 py-4 gap-3'">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-        @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Training & Seminars</span> }
-      </button>
-
-      <button routerLink="/plans" routerLinkActive="bg-[#F9BD15] text-[#2A1D1A]" (click)="closeSidebarOnMobile()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-start px-6 py-4 gap-3'">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
-        @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Plans / Projects</span> }
-      </button>
+      @if (canViewProjects()) {
+        <button routerLink="/plans" routerLinkActive="bg-[#F9BD15] text-[#2A1D1A]" (click)="closeSidebarOnMobile()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-start px-6 py-4 gap-3'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Plans / Projects</span> }
+        </button>
+      }
     </nav>
 
     <div class="mt-auto flex flex-col gap-3 transition-all duration-300" [ngClass]="isMiniSidebar() ? 'p-3' : 'p-6'">
@@ -150,7 +161,7 @@
               }
           </div>
       </div>
-      </div>
+    </div>
   </aside>
 
   <div class="flex-1 flex flex-col h-screen overflow-hidden">

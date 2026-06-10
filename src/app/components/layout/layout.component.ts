@@ -17,6 +17,13 @@ export class LayoutComponent implements OnInit {
   isSidebarOpen = signal(false);
   isMiniSidebar = signal(false);
 
+  // 🌟 1. ประกาศ Signals ควบคุมเมนูหลักตามที่ใช้ใน HTML (แก้ปัญหาตัวแดง/เมนูไม่ขึ้น)
+  canViewDashboard = signal(false);
+  canViewStaff = signal(false);
+  canViewResearch = signal(false);
+  canViewTraining = signal(false);
+  canViewProjects = signal(false);
+
   isProfileMenuOpen = false;
   userName: string = 'ADMIN';
   userRoleDisplay: string = 'SYSTEM ADMIN';
@@ -28,20 +35,17 @@ export class LayoutComponent implements OnInit {
     const tokenFromUrl = urlParams.get('token');
     const roleFromUrl = urlParams.get('role');
     const userFromUrl = urlParams.get('user');
-    const permsFromUrl = urlParams.get('perms'); // 👈 รับค่าสิทธิ์ที่แนบมา
+    const permsFromUrl = urlParams.get('perms');
 
-    // ถ้ามี Token ส่งมาทาง URL ให้เอามาเซฟลงความจำของ 4201 
     if (tokenFromUrl) {
       localStorage.setItem('token', tokenFromUrl);
       if (roleFromUrl) localStorage.setItem('role', roleFromUrl);
       if (userFromUrl) localStorage.setItem('full_name', userFromUrl);
       
-      // ⭐️ ถอดรหัสและเซฟสิทธิ์ลง LocalStorage
       if (permsFromUrl) {
         localStorage.setItem('permissions', decodeURIComponent(permsFromUrl));
       }
       
-      // ลบ Query ออกจาก URL เพื่อความสวยงาม (Optional)
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
@@ -61,6 +65,20 @@ export class LayoutComponent implements OnInit {
     } else if (role === 'student') {
       this.userRoleDisplay = 'STUDENT';
     }
+
+    // ⭐️ 3. ตรวจสอบสิทธิ์ย่อยในการเข้าถึงโมดูลต่างๆ (รองรับโครงสร้างฐานข้อมูลจริง)
+    const permsString = localStorage.getItem('permissions') || '';
+    
+    // แปลงข้อมูลสิทธิ์ทั้งหมดให้เป็นตัวพิมพ์เล็ก (lowercase) เพื่อป้องกันบั๊กพิมพ์เล็กพิมพ์ใหญ่ไม่ตรงกับ DB
+    const permsArray = permsString.split(',').map(p => p.trim().toLowerCase());
+    const isAdmin = role === 'admin';
+
+    // เช็คสิทธิ์โดยดูว่ามีชื่อโมดูล + คำว่า view + และต้องไม่เป็นสิทธิ์รูปแบบ none
+    this.canViewDashboard.set(isAdmin || permsArray.some(p => p.includes('dashboard') && p.includes('view') && !p.includes('none')));
+    this.canViewStaff.set(isAdmin || permsArray.some(p => p.includes('staff_info') && p.includes('view') && !p.includes('none')));
+    this.canViewResearch.set(isAdmin || permsArray.some(p => p.includes('research_info') && p.includes('view') && !p.includes('none')));
+    this.canViewTraining.set(isAdmin || permsArray.some(p => p.includes('training') && p.includes('view') && !p.includes('none')));
+    this.canViewProjects.set(isAdmin || permsArray.some(p => p.includes('plan_project') && p.includes('view') && !p.includes('none')));
   }
 
   toggleProfileMenu() {
@@ -73,17 +91,12 @@ export class LayoutComponent implements OnInit {
     window.location.href = 'http://localhost:4200/login?action=logout';
   }
 
-  // ⭐️ ฟังก์ชันสำหรับข้ามไป "ระบบที่ปรึกษา" (ระบบเพื่อน) พร้อมส่งข้อมูลกลับ
   goToAdvisorSystem(event: Event) {
-    event.preventDefault(); // ป้องกันการเปลี่ยนหน้าแบบปกติของแท็ก <a>
-
+    event.preventDefault();
     const role = localStorage.getItem('role') || '';
     const token = localStorage.getItem('token') || '';
     const fullName = localStorage.getItem('full_name') || '';
-
-    // สร้าง URL ไปที่พอร์ต 4200 พร้อมแนบพารามิเตอร์ยืนยันตัวตน
     const advisorUrl = `http://localhost:4200/home?role=${role}&token=${token}&user=${fullName}`;
-
     window.location.href = advisorUrl;
   }
 
