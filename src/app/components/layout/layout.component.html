@@ -49,17 +49,50 @@
             </div>
             @if (!isMiniSidebar()) { <svg [class.rotate-180]="isStaffExpanded()" class="w-4 h-4 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg> }
           </button>
+          
           @if (isStaffExpanded() && !isMiniSidebar()) {
             <div class="pl-11 space-y-1 py-2 animate-in fade-in slide-in-from-top-2 duration-300">
+              
               <a routerLink="/staff" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
                 <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">List All</span>
                 <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">บุคลากรทั้งหมด</span>
               </a>
-              <a routerLink="/staff" [queryParams]="{ dept: 'math' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Mathematics</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาคณิตศาสตร์</span></a>
-              <a routerLink="/staff" [queryParams]="{ dept: 'chem' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Chemistry</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาเคมี</span></a>
-              <a routerLink="/staff" [queryParams]="{ dept: 'food' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Food Technology</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาเทคโนโลยีการอาหาร</span></a>
-              <a routerLink="/staff" [queryParams]="{ dept: 'physics' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Physics</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาฟิสิกส์</span></a>
-              <a routerLink="/staff" [queryParams]="{ dept: 'cs' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Computer Science</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาวิทยาการคอมพิวเตอร์</span></a>
+
+              @if (canViewAllDepts() || userDept() === 'math') {
+                <a routerLink="/staff" [queryParams]="{ dept: 'math' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                  <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Mathematics</span>
+                  <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาคณิตศาสตร์</span>
+                </a>
+              }
+
+              @if (canViewAllDepts() || userDept() === 'chem') {
+                <a routerLink="/staff" [queryParams]="{ dept: 'chem' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                  <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Chemistry</span>
+                  <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาเคมี</span>
+                </a>
+              }
+
+              @if (canViewAllDepts() || userDept() === 'food') {
+                <a routerLink="/staff" [queryParams]="{ dept: 'food' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                  <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Food Technology</span>
+                  <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาเทคโนโลยีการอาหาร</span>
+                </a>
+              }
+
+              @if (canViewAllDepts() || userDept() === 'physics') {
+                <a routerLink="/staff" [queryParams]="{ dept: 'physics' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                  <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Physics</span>
+                  <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาฟิสิกส์</span>
+                </a>
+              }
+
+              @if (canViewAllDepts() || userDept() === 'cs') {
+                <a routerLink="/staff" [queryParams]="{ dept: 'cs' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                  <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Computer Science</span>
+                  <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาวิทยาการคอมพิวเตอร์</span>
+                </a>
+              }
+
             </div>
           }
         </div>
@@ -118,7 +151,6 @@
       </a>
 
       <div class="relative w-full">
-            
           @if (isProfileMenuOpen) {
             <div class="absolute bottom-[calc(100%+8px)] left-0 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50"
                  [ngClass]="isMiniSidebar() ? 'w-[200px]' : 'w-full'">
@@ -134,7 +166,6 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
                 <span>ออกจากระบบ</span>
               </button>
-              
             </div>
           }
 

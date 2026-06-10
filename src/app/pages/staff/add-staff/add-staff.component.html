@@ -31,9 +31,23 @@
           </div>
 
           <div class="flex flex-col items-center justify-center mb-8">
-            <div class="w-32 h-32 rounded-full bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center mb-4 cursor-pointer hover:bg-gray-100 transition-colors relative group">
-              <svg class="w-8 h-8 text-gray-300 group-hover:text-[#F9BD15] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.66-.9l.82-1.23A2 2 0 0110.07 4h3.86a2 2 0 011.66.9l.82 1.23A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 10-6 0 3 3 0 006 0z"/></svg>
+            <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" class="hidden">
+            <div (click)="fileInput.click()" class="w-32 h-32 rounded-full bg-gray-50 border-2 border-dashed border-gray-300 flex items-center justify-center mb-4 cursor-pointer hover:bg-gray-100 transition-colors relative group overflow-hidden shadow-sm">
+              
+              @if (imagePreview()) {
+                <img [src]="imagePreview()" alt="Profile Preview" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span class="text-white text-xs font-bold">เปลี่ยนรูปภาพ</span>
+                </div>
+              } @else {
+                <svg class="w-8 h-8 text-gray-300 group-hover:text-[#F9BD15] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.66-.9l.82-1.23A2 2 0 0110.07 4h3.86a2 2 0 011.66.9l.82 1.23A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 10-6 0 3 3 0 006 0z"/>
+                </svg>
+              }
+
             </div>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">กดที่รูปเพื่ออัปโหลดไฟล์</p>
           </div>
 
           <div class="space-y-5">
@@ -49,11 +63,25 @@
               <label class="block text-xs font-bold text-gray-400 mb-2">อีเมล</label>
               <input type="email" [(ngModel)]="staffData.email" name="email" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
             </div>
+            
+            <div>
+              <label class="block text-xs font-bold text-gray-400 mb-2">ประเภทสายงาน / ตำแหน่ง</label>
+              <div class="relative">
+                <select [(ngModel)]="staffData.position" name="position" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none appearance-none transition-all text-gray-700">
+                  <option value="อาจารย์">สายวิชาการ (อาจารย์ประจำ)</option>
+                  <option value="ฝ่ายสนับสนุน">สายสนับสนุน (เจ้าหน้าที่ประจำคณะ)</option>
+                </select>
+                <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label class="block text-xs font-bold text-gray-400 mb-2">สาขา/ภาควิชา</label>
               <div class="relative">
-                <select [(ngModel)]="staffData.deptId" name="deptId" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none appearance-none transition-all text-gray-500">
-                  <option [ngValue]="null" disabled selected>เลือกสาขา/ภาควิชา</option>
+                <select [(ngModel)]="staffData.deptId" name="deptId" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none appearance-none transition-all text-gray-700">
+                  <option [ngValue]="null">ไม่ระบุสังกัด (กรณีฝ่ายสนับสนุนส่วนกลาง)</option>
                   <option [ngValue]="2">Mathematics (ภาควิชาคณิตศาสตร์)</option>
                   <option [ngValue]="1">Chemistry (ภาควิชาเคมี)</option>
                   <option [ngValue]="5">Food Technology (ภาควิชาเทคโนโลยีการอาหาร)</option>

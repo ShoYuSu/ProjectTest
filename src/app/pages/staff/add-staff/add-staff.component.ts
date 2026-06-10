@@ -1,7 +1,7 @@
-import { Component, inject } from '@angular/core'; // 👈 ลบ signal ออกแล้ว
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms'; 
 
 @Component({
@@ -20,8 +20,10 @@ export class AddStaffComponent {
     fullName: '',
     email: '',
     deptId: null, 
-    position: 'อาจารย์'
+    position: 'อาจารย์' 
   };
+
+  imagePreview = signal<string | null>(null);
 
   modules: any[] = [
     { id: 1, name: 'Dashboard', subName: 'แดชบอร์ด', moduleCode: 'Dashboard', isDashboard: true, viewAccess: true, view: 'all', add: 'none', edit: 'none' },
@@ -31,46 +33,75 @@ export class AddStaffComponent {
     { id: 5, name: 'Training', subName: 'ข้อมูลอบรม', moduleCode: 'Training', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' }
   ];
 
-  // ⭐️ เปลี่ยนมาใช้ Boolean ธรรมดา
   showSuccessModal = false; 
   loading = false;
 
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreview.set(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  private mapScopeToDatabase(scopeValue: string): string {
+    if (scopeValue === 'own') return 'self';
+    if (scopeValue === 'dept') return 'department';
+    return scopeValue; 
+  }
+
   onSubmit() {
+    if (!this.staffData.fullName || !this.staffData.staffCode || !this.staffData.email) {
+      alert('กรุณากรอกข้อมูลพื้นฐานให้ครบถ้วน');
+      return;
+    }
+
     this.loading = true;
 
     const permissionsToSend = this.modules.map(mod => ({
       module_name: mod.moduleCode,
-      view: mod.isDashboard ? (mod.viewAccess ? 'all' : 'none') : mod.view,
-      add: mod.add,
-      edit: mod.edit
+      view: mod.isDashboard ? (mod.viewAccess ? 'all' : 'none') : this.mapScopeToDatabase(mod.view),
+      add: this.mapScopeToDatabase(mod.add),
+      edit: this.mapScopeToDatabase(mod.edit)
     }));
 
     const payload = {
-      ...this.staffData,
+      fullName: this.staffData.fullName,
+      staffCode: this.staffData.staffCode,
+      email: this.staffData.email,
+      deptId: this.staffData.deptId,
+      position: this.staffData.position,
+      image: this.imagePreview(), 
       permissions: permissionsToSend
     };
 
-    console.log('กำลังส่งข้อมูล:', payload);
+    const currentUserId = localStorage.getItem('user_id') || '14';
+    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
 
-    this.http.post('http://localhost/api/add_staff.php', payload).subscribe({
+    // ยิงไปพอร์ต 8080 อย่างแม่นยำ
+    this.http.post('http://localhost:8080/api/add_staff.php', payload, { headers }).subscribe({
       next: (res: any) => {
         this.loading = false;
-        if (res.success) {
-          this.showSuccessModal = true; // ⭐️ กำหนดค่าแบบปกติ
+        if (res && res.success) {
+          this.showSuccessModal = true; 
         } else {
-          alert('บันทึกไม่สำเร็จ: ' + res.message);
+          // ถ้าเกิดบั๊กจากฝั่ง DB มันจะแจ้งเตือนขึ้นมาตรงๆ ทันที
+          alert('บันทึกไม่สำเร็จ: ' + (res?.message || 'ข้อผิดพลาดไม่ทราบสาเหตุ'));
         }
       },
       error: (err) => {
         this.loading = false;
-        alert('เชื่อมต่อ API ผิดพลาด');
-        console.error(err);
+        console.error('API Error:', err);
+        alert(`เชื่อมต่อเซิร์ฟเวอร์เพื่อบันทึกข้อมูลล้มเหลว (Add Staff)\nสถานะ: ${err.status}\nพอร์ต 8080 ถูกต้องหรือไม่?`);
       }
     });
   }
 
   closeModal() {
-    this.showSuccessModal = false; // ⭐️ กำหนดค่าแบบปกติ
+    this.showSuccessModal = false; 
     this.router.navigate(['/staff']);
   }
 }
