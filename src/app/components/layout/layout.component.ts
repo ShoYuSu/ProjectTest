@@ -41,11 +41,11 @@ export class LayoutComponent implements OnInit {
       localStorage.setItem('token', tokenFromUrl);
       if (roleFromUrl) localStorage.setItem('role', roleFromUrl);
       if (userFromUrl) localStorage.setItem('full_name', userFromUrl);
-      
+
       if (permsFromUrl) {
         localStorage.setItem('permissions', decodeURIComponent(permsFromUrl));
       }
-      
+
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
@@ -68,7 +68,7 @@ export class LayoutComponent implements OnInit {
 
     // ⭐️ 3. ตรวจสอบสิทธิ์ย่อยในการเข้าถึงโมดูลต่างๆ (รองรับโครงสร้างฐานข้อมูลจริง)
     const permsString = localStorage.getItem('permissions') || '';
-    
+
     // แปลงข้อมูลสิทธิ์ทั้งหมดให้เป็นตัวพิมพ์เล็ก (lowercase) เพื่อป้องกันบั๊กพิมพ์เล็กพิมพ์ใหญ่ไม่ตรงกับ DB
     const permsArray = permsString.split(',').map(p => p.trim().toLowerCase());
     const isAdmin = role === 'admin';
@@ -92,11 +92,24 @@ export class LayoutComponent implements OnInit {
   }
 
   goToAdvisorSystem(event: Event) {
-    event.preventDefault();
+    event.preventDefault(); // ป้องกันการเปลี่ยนหน้าแบบปกติของแท็ก <a>
+
     const role = localStorage.getItem('role') || '';
     const token = localStorage.getItem('token') || '';
     const fullName = localStorage.getItem('full_name') || '';
-    const advisorUrl = `http://localhost:4200/home?role=${role}&token=${token}&user=${fullName}`;
+
+    // 🎯 กำหนด Path ปลายทางตาม Role
+    let targetPath = '/home'; // ค่าเริ่มต้นให้ไป /home
+
+    if (role === 'admin') {
+      targetPath = '/system-dashboard';
+    } else if (role === 'teacher') {
+      targetPath = '/home';
+    }
+
+    // สร้าง URL ไปที่พอร์ต 4200 พร้อมแนบพารามิเตอร์ยืนยันตัวตน
+    const advisorUrl = `http://localhost:4200${targetPath}?role=${role}&token=${token}&user=${fullName}`;
+
     window.location.href = advisorUrl;
   }
 
