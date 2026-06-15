@@ -1,43 +1,12 @@
-<<<<<<< HEAD
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms'; // 👈 นำเข้า FormsModule เพื่อใช้ ngModel
-=======
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
->>>>>>> 8baf7027f9f6be3155fdb25be2078051f44dc5e3
 
 @Component({
   selector: 'app-add-research',
   standalone: true,
-<<<<<<< HEAD
-  imports: [CommonModule, RouterLink, FormsModule], // 👈 เพิ่ม FormsModule ตรงนี้
-  templateUrl: './add-research.component.html',
-  styleUrl: './add-research.component.css'
-})
-export class AddResearchComponent {
-  
-  // ตัวแปรสำหรับช่องค้นหา
-  searchQuery: string = '';
-
-  // ใช้รูปแบบ Array ปกติ เพื่อให้จัดการข้อมูลและการแก้ไขบทบาท (isEditingRole) ได้ง่ายขึ้น
-  participants = [
-    { name: '', role: 'หัวหน้าโครงการวิจัย', isEditingRole: false }
-  ];
-
-  addParticipant() {
-    this.participants.push({ name: '', role: 'ผู้ร่วมวิจัย', isEditingRole: false });
-  }
-
-  removeParticipant(index: number) {
-    if (this.participants.length > 1) {
-      this.participants.splice(index, 1);
-    }
-=======
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './add-research.component.html',
   styleUrl: './add-research.component.css'
@@ -51,21 +20,19 @@ export class AddResearchComponent implements OnInit {
   isSubmitting = signal(false);
   userScope = signal<string>('none'); 
 
-  // 🌟 ปรับกลับมาเก็บเป็นตัวเลขปี พ.ศ. โดยตรง (Default เป็นปี พ.ศ. ปัจจุบัน)
   formData = {
     title: '',
     dept_id: '3', 
-    year_funded: new Date().getFullYear() + 543, // ปี พ.ศ. ที่ได้รับทุน
-    year_ended: new Date().getFullYear() + 543,  // ปี พ.ศ. ที่สิ้นสุดทุน
+    year_funded: new Date().getFullYear() + 543,
+    year_ended: new Date().getFullYear() + 543,
     funding_source: '',
-    budget: null,
+    budget: null as number | null,
     authors: [] as Array<{ staff_id: string; role: string }>
   };
 
   ngOnInit() {
     this.addAuthorRow(); 
     this.loadActiveStaff();
->>>>>>> 8baf7027f9f6be3155fdb25be2078051f44dc5e3
   }
 
   loadActiveStaff() {
@@ -116,7 +83,6 @@ export class AddResearchComponent implements OnInit {
       return;
     }
 
-    // 🌟 ตรวจสอบเงื่อนไขปีสิ้นสุดต้องไม่น้อยกว่าปีที่เริ่มได้รับทุน
     if (Number(this.formData.year_funded) > Number(this.formData.year_ended)) {
       alert('❌ ข้อผิดพลาดข้อมูล: ปี พ.ศ. ที่สิ้นสุดทุน จะต้องไม่น้อยกว่าปี พ.ศ. ที่เริ่มได้รับทุนสนับสนุนครับ');
       return;
@@ -132,7 +98,6 @@ export class AddResearchComponent implements OnInit {
     const currentUserId = localStorage.getItem('user_id') || '14';
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
 
-    // 🌟 ส่งค่า formData ไปหา PHP ตรงๆ ได้เลย เพราะค่าเป็นตัวเลขปี พ.ศ. อยู่แล้ว
     this.http.post<any>('http://localhost:8080/api/add_research.php', this.formData, { headers })
       .subscribe({
         next: (res) => {
