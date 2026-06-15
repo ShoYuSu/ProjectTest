@@ -1,46 +1,141 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-research-article',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './research-article.component.html',
   styleUrl: './research-article.component.css'
 })
-export class ResearchArticleComponent {
-  activeTab = 'conference'; 
+export class ResearchArticleComponent implements OnInit {
+  private http = inject(HttpClient);
 
-  // ข้อมูลจำลอง (เพิ่มฟิลด์ของวารสารเข้าไปด้วย เพื่อให้สลับแสดงผลได้)
-  mockArticles = Array.from({ length: 12 }, (_, i) => ({
-    id: i + 1,
-    title: `การพัฒนาแอปพลิเคชัน "Reach You" สำหรับการบริหารจัดการขยะ (ฉบับที่ ${i + 1})`,
-    authors: 'จรรยา แหยมเจริญ,\nพัสรัฐ อาจหาญศิริวงศ์,\nอัตพล ยมพ้วย\nและ ณพงษ์ สมัครกิจ',
-    
-    // --- ฟิลด์สำหรับ ประชุมวิชาการ ---
-    conferenceName: 'การประชุมวิชาการระดับชาติ ครั้งที่ 17 มหาวิทยาลัยราชภัฏนครปฐม',
-    location: 'โรงแรม ไมด้า แกรนด์ ทวารวดี นครปฐม',
-    
-    // --- ฟิลด์สำหรับ วารสาร ---
-    journalName: 'วารสารวิชาการวิทยาศาสตร์และเทคโนโลยี',
-    issue: `Vol. ${i + 1} No. 2`,
-    page: `${10 + i}-${25 + i}`,
-    
-    // --- ใช้ร่วมกัน ---
-    date: '3 กรกฎาคม 2568'
-  }));
+  allArticles = signal<any[]>([]);
+  filteredArticles = signal<any[]>([]);
+  
+  canAdd = signal(false);
+  errorMessage = signal<string>('');
+  loading = signal(true);
+  
+  searchQuery = signal<string>('');
+  currentDept = signal<string>('ทั้งหมด');
+  activeTab = signal<string>('conference'); 
 
-  // --- ระบบ Pagination ---
   currentPage = signal(1);
   itemsPerPage = 10;
 
+  ngOnInit() {
+    this.checkPermissions();
+    this.fetchArticleData();
+  }
+
+  // 🌟 ฟังก์ชันตรวจสอบสิทธิ์ (ตัดการยกเว้น Admin ออก บังคับใช้สิทธิ์ตามตาราง 100%)
+  checkPermissions() {
+    const permsString = localStorage.getItem('permissions') || '';
+    let hasAdd = false;
+
+    try {
+      const permsObj = JSON.parse(permsString);
+      
+      if (permsObj && typeof permsObj === 'object' && !Array.isArray(permsObj)) {
+        const researchKey = Object.keys(permsObj).find(k => k.toLowerCase() === 'research_info');
+        if (researchKey && permsObj[researchKey]) {
+          const addScope = permsObj[researchKey]['add'];
+          // ถ้ามีสิทธิ์ add และไม่ใช่ none ถือว่าผ่าน
+          if (addScope && addScope.toLowerCase() !== 'none') {
+            hasAdd = true;
+          }
+        }
+      } 
+      else if (Array.isArray(permsObj)) {
+        const perm = permsObj.find(p => p.module_name?.toLowerCase() === 'research_info' && p.action?.toLowerCase() === 'add');
+        if (perm && perm.scope?.toLowerCase() !== 'none') {
+          hasAdd = true;
+        }
+      }
+    } catch (e) {
+      const cleanStr = permsString.toLowerCase().replace(/[\s"'{}\[\]]/g, '');
+      if (cleanStr.includes('research_info')) {
+        const idx = cleanStr.indexOf('research_info');
+        const subStr = cleanStr.substring(idx, idx + 50);
+        if (subStr.includes('add') && !subStr.includes('none')) {
+          hasAdd = true;
+        }
+      }
+    }
+
+    this.canAdd.set(hasAdd);
+  }
+
+  fetchArticleData() {
+    this.loading.set(true);
+    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '14');
+
+    this.http.get<any[]>('http://localhost:8080/api/get_research_articles.php', { headers })
+      .subscribe({
+        next: (data) => {
+          this.allArticles.set(data || []);
+          this.applyFilters();
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error(err);
+          this.errorMessage.set('ไม่สามารถโหลดข้อมูลบทความวิจัยได้ (กรุณาตรวจสอบการเชื่อมต่อหรือสิทธิ์)');
+          this.loading.set(false);
+        }
+      });
+  }
+
+  applyFilters() {
+    let result = this.allArticles();
+    const query = this.searchQuery().toLowerCase().trim();
+    const dept = this.currentDept();
+    const tab = this.activeTab();
+
+    result = result.filter(a => a.type === tab);
+
+    if (dept !== 'ทั้งหมด') {
+      result = result.filter(a => a.department === dept);
+    }
+
+    if (query) {
+      result = result.filter(a => 
+        (a.title && a.title.toLowerCase().includes(query)) ||
+        (a.author && a.author.toLowerCase().includes(query)) ||
+        (a.journal_name && a.journal_name.toLowerCase().includes(query)) ||
+        (a.conference_name && a.conference_name.toLowerCase().includes(query))
+      );
+    }
+
+    this.filteredArticles.set(result);
+    this.currentPage.set(1);
+  }
+
+  setTab(tabName: string) {
+    this.activeTab.set(tabName);
+    this.applyFilters();
+  }
+
+  setDepartment(deptName: string) {
+    this.currentDept.set(deptName);
+    this.applyFilters();
+  }
+
+  onSearchChange(val: string) {
+    this.searchQuery.set(val);
+    this.applyFilters();
+  }
+
   paginatedArticles = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.itemsPerPage;
-    return this.mockArticles.slice(startIndex, startIndex + this.itemsPerPage);
+    return this.filteredArticles().slice(startIndex, startIndex + this.itemsPerPage);
   });
 
-  totalPages = computed(() => Math.ceil(this.mockArticles.length / this.itemsPerPage));
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredArticles().length / this.itemsPerPage)));
   pagesArray = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
 
   goToPage(page: number) { this.currentPage.set(page); }

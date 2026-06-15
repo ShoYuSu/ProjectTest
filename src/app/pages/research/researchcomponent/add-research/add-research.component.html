@@ -1,120 +1,139 @@
-<div class="max-w-[1000px] mx-auto animate-in fade-in duration-500 pb-20">
-      
-  <div class="flex items-center gap-3 mb-8 mt-4">
-    <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
-    <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Add Research Project</h2>
+<div class="max-w-[1000px] mx-auto animate-in fade-in duration-500 pb-20 space-y-6">
+  
+  <div class="mb-8 mt-4 flex items-center justify-between border-b border-gray-100 pb-6">
+    <div class="flex items-center gap-3">
+      <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
+      <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">เพิ่มข้อมูลโครงการวิจัยใหม่</h2>
+    </div>
+    <button routerLink="/research" class="text-sm font-bold text-gray-400 hover:text-[#2A1D1A] transition-colors">
+      ← ยกเลิกและกลับหน้าหลัก
+    </button>
   </div>
 
-  <div class="space-y-6">
+  <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-gray-100 space-y-6 relative">
     
-    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></svg>
-          <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลโครงการวิจัย</h3>
-        </div>
-        
+    <div class="space-y-5">
+      <div>
+        <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ชื่อโครงการวิจัย (ภาษาไทย) <span class="text-red-500">*</span></label>
+        <textarea [(ngModel)]="formData.title" rows="3" placeholder="ระบุชื่อโครงการวิจัยฉบับเต็ม..." 
+                  class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all leading-relaxed text-[#2A1D1A]"></textarea>
+      </div>
+
+      <div>
+        <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ภาควิชาที่สังกัดโครงการ</label>
+        <select [(ngModel)]="formData.dept_id" 
+                [disabled]="userScope() === 'department' || userScope() === 'self'"
+                [ngClass]="{'opacity-60 cursor-not-allowed bg-gray-200/70 border-gray-200': userScope() === 'department' || userScope() === 'self'}"
+                class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
+          <option value="1">ภาควิชาเคมี</option>
+          <option value="2">ภาควิชาคณิตศาสตร์</option>
+          <option value="3">ภาควิชาวิทยาการคอมพิวเตอร์</option>
+          <option value="4">ภาควิชาฟิสิกส์</option>
+          <option value="5">ภาควิชาเทคโนโลยีการอาหาร</option>
+        </select>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อโครงการวิจัย</label>
-          <input type="text" placeholder="ระบุชื่อโครงการวิจัย..." class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+          <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ปี พ.ศ. ที่ได้รับทุนสนับสนุน <span class="text-red-500">*</span></label>
+          <input type="number" [(ngModel)]="formData.year_funded" placeholder="ตัวอย่างเช่น 2567"
+                 class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
         </div>
+        <div>
+          <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ปี พ.ศ. ที่สิ้นสุดโครงการทุนวิจัย <span class="text-red-500">*</span></label>
+          <input type="number" [(ngModel)]="formData.year_ended" placeholder="ตัวอย่างเช่น 2570"
+                 class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">แหล่งทุน / หน่วยงานที่มอบทุน <span class="text-red-500">*</span></label>
+          <input type="text" [(ngModel)]="formData.funding_source" placeholder="เช่น สวทช. หรือ กองทุนมหาวิทยาลัย" 
+                 class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
+        </div>
+        <div>
+          <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">งบประมาณวิจัยทั้งหมด (บาท)</label>
+          <input type="number" [(ngModel)]="formData.budget" placeholder="เช่น 500000" 
+                 class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
+        </div>
+      </div>
     </div>
 
-    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-          <div class="flex items-center gap-3 text-[#F9BD15]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <h3 class="font-black text-[#2A1D1A] text-lg">คณะผู้จัดทำผลงาน</h3>
-          </div>
-          <button (click)="addParticipant()" class="text-sm font-bold text-[#F9BD15] hover:text-yellow-600 transition-colors flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
-            เพิ่มผู้จัดทำ
+    <div class="border-t border-gray-100 pt-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-[#F9BD15]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <h4 class="font-black text-[#2A1D1A] text-base">รายชื่อผู้จัดทำและคณะผู้ร่วมวิจัย</h4>
+        </div>
+        
+        @if (userScope() !== 'self') {
+          <button type="button" (click)="addAuthorRow()" class="px-4 py-2 border border-[#F9BD15] text-[#2A1D1A] bg-[#F9BD15]/5 hover:bg-[#F9BD15] hover:text-white rounded-xl text-xs font-black transition-all">
+            + เพิ่มรายชื่อผู้ร่วมวิจัย
           </button>
+        }
+      </div>
+
+      @if (loading()) {
+        <div class="text-center py-4 text-xs font-bold text-gray-400/80 flex items-center justify-center gap-2">
+          <div class="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+          กำลังดึงบัญชีรายชื่ออาจารย์...
         </div>
-        
-        <div class="relative mb-6">
-          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          </div>
-          <input type="text" [(ngModel)]="searchQuery" placeholder="ค้นหาชื่อผู้จัดทำผลงานเพื่อเพิ่มลงในรายการ" class="w-full pl-11 p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
-        </div>
-        
-        <div class="bg-gray-50/50 rounded-2xl overflow-hidden border border-gray-50">
-          <div class="grid grid-cols-12 px-6 py-4 border-b border-gray-100 bg-gray-50/80">
-            <div class="col-span-6 text-xs font-bold text-gray-400">ชื่อ-นามสกุล</div>
-            <div class="col-span-4 text-xs font-bold text-gray-400">บทบาท/หน้าที่</div>
-            <div class="col-span-2 text-xs font-bold text-gray-400 text-right">จัดการ</div>
-          </div>
-          
-          <div class="divide-y divide-gray-100">
-            @for (p of participants; track $index) {
-              <div class="grid grid-cols-12 px-6 py-4 items-center bg-white hover:bg-gray-50 transition-colors">
-                
-                <div class="col-span-6 pr-4">
-                   <input type="text" [(ngModel)]="p.name" placeholder="กรอกชื่อ-นามสกุล..." class="w-full p-2 bg-transparent text-sm font-black text-[#2A1D1A] outline-none border-b border-transparent focus:border-[#F9BD15] transition-colors">
-                </div>
-                
-                <div class="col-span-4 pr-4">
-                   @if (p.isEditingRole) {
-                     <select [(ngModel)]="p.role" (change)="p.isEditingRole = false" (blur)="p.isEditingRole = false" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-600 outline-none focus:border-[#F9BD15] shadow-sm">
-                       <option value="หัวหน้าโครงการวิจัย">หัวหน้าโครงการวิจัย</option>
-                       <option value="ผู้ร่วมวิจัย">ผู้ร่วมวิจัย</option>
-                       <option value="ผู้ช่วยวิจัย">ผู้ช่วยวิจัย</option>
-                       <option value="ที่ปรึกษาโครงการ">ที่ปรึกษาโครงการ</option>
-                     </select>
-                   } @else {
-                     <div class="flex items-center">
-                       <span class="text-[10px] sm:text-xs font-black tracking-wide px-4 py-1.5 rounded-full transition-colors" 
-                             [class.bg-[#FEF5DD]]="p.role === 'หัวหน้าโครงการวิจัย'" [class.text-[#D97706]]="p.role === 'หัวหน้าโครงการวิจัย'"
-                             [class.bg-gray-100]="p.role !== 'หัวหน้าโครงการวิจัย'" [class.text-gray-600]="p.role !== 'หัวหน้าโครงการวิจัย'">
-                         {{ p.role || 'ระบุบทบาท' }}
-                       </span>
-                     </div>
-                   }
-                </div>
-  
-                <div class="col-span-2 flex justify-end items-center gap-1">
-                  <button (click)="p.isEditingRole = !p.isEditingRole" title="แก้ไขบทบาท" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                  </button>
-                  <button (click)="removeParticipant($index)" [disabled]="participants.length === 1" class="text-xs font-bold text-red-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed px-2 py-1 transition-colors">
-                    ลบ
+      }
+
+      @if (!loading()) {
+        <div class="space-y-3">
+          @for (author of formData.authors; track $index) {
+            <div class="flex flex-col sm:flex-row gap-3 p-4 bg-gray-50 rounded-2xl relative border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
+              
+              <div class="flex-1">
+                <label class="text-[10px] font-bold text-gray-400 mb-1 block">ชื่ออาจารย์บุคลากร</label>
+                <select [(ngModel)]="author.staff_id" 
+                        [disabled]="userScope() === 'self'"
+                        [ngClass]="{'opacity-70 cursor-not-allowed bg-gray-200/50': userScope() === 'self'}"
+                        class="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-[#F9BD15] text-[#2A1D1A]">
+                  <option value="" disabled selected>--- เลือกรายชื่ออาจารย์ ---</option>
+                  @for (member of staffMembers(); track member.staff_id) {
+                    <option [value]="member.staff_id">
+                      {{ member.full_name }} ({{ member.position || 'อาจารย์ประจำ' }})
+                    </option>
+                  }
+                </select>
+              </div>
+
+              <div class="w-full sm:w-56">
+                <label class="text-[10px] font-bold text-gray-400 mb-1 block">บทบาทในโครงการ</label>
+                <select [(ngModel)]="author.role" 
+                        [disabled]="userScope() === 'self'"
+                        [ngClass]="{'opacity-70 cursor-not-allowed bg-gray-200/50': userScope() === 'self'}"
+                        class="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-[#F9BD15] text-[#2A1D1A]">
+                  <option value="หัวหน้าโครงการ">หัวหน้าโครงการ (Principal)</option>
+                  <option value="ผู้ร่วมวิจัย">ผู้ร่วมวิจัย (Co-Researcher)</option>
+                  <option value="ที่ปรึกษาโครงการ">ที่ปรึกษาโครงการ (Advisor)</option>
+                </select>
+              </div>
+
+              @if (userScope() !== 'self') {
+                <div class="flex items-end justify-end pb-0.5">
+                  <button type="button" (click)="removeAuthorRow($index)" class="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-colors" title="ลบชื่อออก">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                   </button>
                 </div>
-  
-              </div>
-            }
-          </div>
+              }
+
+            </div>
+          }
         </div>
+      }
     </div>
 
-    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
-            <h3 class="font-black text-[#2A1D1A] text-lg">งบประมาณ</h3>
-        </div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <div>
-              <label class="text-xs font-bold text-gray-400 mb-2 block">วันเดือนปีที่ได้รับ</label>
-              <div class="relative">
-                <input type="date" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all text-[#2A1D1A] cursor-pointer">
-              </div>
-          </div>
-          <div>
-              <label class="text-xs font-bold text-gray-400 mb-2 block">แหล่งทุนวิจัย</label>
-              <input type="text" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
-          </div>
-        </div>
-
-        <div class="w-full md:w-1/2 md:pr-3">
-          <label class="text-xs font-bold text-gray-400 mb-2 block">งบประมาณรวม (บาท)</label>
-          <input type="number" placeholder="0.00" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
-        </div>
-    </div>
-
-    <div class="flex justify-end gap-4 pt-6">
-        <button routerLink="/research" class="px-8 py-3 rounded-xl font-bold text-gray-400 hover:text-[#2A1D1A] transition-colors">ยกเลิก</button>
-        <button class="px-10 py-3 rounded-xl font-black bg-[#F9BD15] text-[#2A1D1A] shadow-md hover:brightness-105 active:scale-95 transition-all">บันทึกข้อมูล</button>
+    <div class="border-t border-gray-100 pt-8 flex items-center justify-end gap-3">
+      <button routerLink="/research" [disabled]="isSubmitting()" class="text-sm font-bold text-gray-400 hover:text-[#2A1D1A] px-4 py-2 transition-colors disabled:opacity-50">
+        ยกเลิก
+      </button>
+      <button (click)="submitForm()" [disabled]="isSubmitting()" class="bg-[#2A1D1A] text-[#F9BD15] px-8 py-3.5 rounded-2xl font-black text-sm shadow-md hover:bg-black transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+        {{ isSubmitting() ? 'กำลังบันทึกข้อมูล...' : 'บันทึกโครงการวิจัย' }}
+      </button>
     </div>
 
   </div>

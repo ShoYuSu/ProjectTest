@@ -1,170 +1,184 @@
-<div class="max-w-[1000px] mx-auto animate-in fade-in duration-500 pb-20">
-      
-  <div class="flex items-center gap-3 mb-8 mt-4">
-    <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
-    <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Add Research Article</h2>
+<div class="max-w-[1000px] mx-auto animate-in fade-in duration-500 pb-20 space-y-6">
+  
+  <div class="mb-8 mt-4 flex items-center justify-between border-b border-gray-100 pb-6">
+    <div class="flex items-center gap-3">
+      <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
+      <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">เพิ่มบทความวิชาการใหม่</h2>
+    </div>
+    <button routerLink="/research/article" class="text-sm font-bold text-gray-400 hover:text-[#2A1D1A] transition-colors">
+      ← ยกเลิกและกลับหน้าหลัก
+    </button>
   </div>
 
-  <div class="space-y-6">
+  <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-gray-100 space-y-8 relative">
     
-    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-          <h3 class="font-black text-[#2A1D1A] text-lg">ประเภทบทความวิจัย</h3>
-        </div>
-        <select (change)="activeType.set($any($event.target).value)" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all cursor-pointer">
-            <option value="conference">ประชุมวิชาการ (Conference)</option>
-            <option value="journal">วารสาร (Journal)</option>
-        </select>
+    <div>
+      <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-3 block">ประเภทของบทความ <span class="text-red-500">*</span></label>
+      <div class="flex flex-col md:flex-row gap-4">
+        
+        <button type="button" (click)="formData.article_type = 'journal'"
+                [ngClass]="formData.article_type === 'journal' ? 'border-[#F9BD15] bg-[#F9BD15]/10 shadow-sm' : 'border-gray-100 bg-white hover:bg-gray-50'"
+                class="flex-1 p-5 rounded-2xl border-2 text-left transition-all flex items-center gap-4 group">
+           <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors" 
+                [ngClass]="formData.article_type === 'journal' ? 'border-[#F9BD15]' : 'border-gray-300 group-hover:border-gray-400'">
+              @if (formData.article_type === 'journal') {
+                <div class="w-2.5 h-2.5 rounded-full bg-[#F9BD15] animate-in zoom-in duration-200"></div>
+              }
+           </div>
+           <span class="font-black text-[#2A1D1A]">วารสารวิชาการ (Journal)</span>
+        </button>
+        
+        <button type="button" (click)="formData.article_type = 'conference'"
+                [ngClass]="formData.article_type === 'conference' ? 'border-[#F9BD15] bg-[#F9BD15]/10 shadow-sm' : 'border-gray-100 bg-white hover:bg-gray-50'"
+                class="flex-1 p-5 rounded-2xl border-2 text-left transition-all flex items-center gap-4 group">
+           <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors" 
+                [ngClass]="formData.article_type === 'conference' ? 'border-[#F9BD15]' : 'border-gray-300 group-hover:border-gray-400'">
+              @if (formData.article_type === 'conference') {
+                <div class="w-2.5 h-2.5 rounded-full bg-[#F9BD15] animate-in zoom-in duration-200"></div>
+              }
+           </div>
+           <span class="font-black text-[#2A1D1A]">การประชุมวิชาการ (Conference)</span>
+        </button>
+
+      </div>
     </div>
 
-    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></svg>
-          <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลบทความวิจัย</h3>
+    <div class="space-y-4 border-t border-gray-100 pt-6">
+      <div>
+        <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ชื่อบทความวิชาการ <span class="text-red-500">*</span></label>
+        <textarea [(ngModel)]="formData.title" rows="2" placeholder="ระบุชื่อบทความฉบับเต็ม..." 
+                  class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all leading-relaxed text-[#2A1D1A]"></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ภาควิชาที่สังกัดบทความ</label>
+          <select [(ngModel)]="formData.dept_id" 
+                  [disabled]="userScope() === 'department' || userScope() === 'self'"
+                  [ngClass]="{'opacity-60 cursor-not-allowed bg-gray-200/70 border-gray-200': userScope() === 'department' || userScope() === 'self'}"
+                  class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
+            <option value="1">ภาควิชาเคมี</option>
+            <option value="2">ภาควิชาคณิตศาสตร์</option>
+            <option value="3">ภาควิชาวิทยาการคอมพิวเตอร์</option>
+            <option value="4">ภาควิชาฟิสิกส์</option>
+            <option value="5">ภาควิชาเทคโนโลยีการอาหาร</option>
+          </select>
         </div>
-        <div class="space-y-4">
-            <div>
-                <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อเรื่อง</label>
-                <input type="text" placeholder="ระบุชื่อเรื่องบทความ..." class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
-            </div>
-            <div>
-                <label class="text-xs font-bold text-gray-400 mb-2 block">ภาควิชา</label>
-                <select class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all cursor-pointer">
-                    <option>เลือกภาควิชา</option>
-                    <option>ภาควิชาคณิตศาสตร์</option>
-                    <option>ภาควิชาเคมี</option>
-                    <option>ภาควิชาเทคโนโลยีการอาหาร</option>
-                    <option>ภาควิชาฟิสิกส์</option>
-                    <option>ภาควิชาวิทยาการคอมพิวเตอร์</option>
-                </select>
-            </div>
+        
+        <div>
+          <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ปี พ.ศ. ที่ตีพิมพ์ / นำเสนอ <span class="text-red-500">*</span></label>
+          <input type="number" [(ngModel)]="formData.publish_year" placeholder="เช่น 2567"
+                 class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
         </div>
+      </div>
     </div>
 
-    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-          <div class="flex items-center gap-3 text-[#F9BD15]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <h3 class="font-black text-[#2A1D1A] text-lg">รายชื่อผู้เขียนบทความ</h3>
-          </div>
-          <button (click)="addAuthor()" class="text-sm font-bold text-[#F9BD15] hover:text-yellow-600 transition-colors flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
-            เพิ่มผู้ร่วมเขียน
-          </button>
-        </div>
-        
-        <div class="relative mb-6">
-          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          </div>
-          <input type="text" [(ngModel)]="searchQuery" placeholder="ค้นหาชื่อผู้ร่วมเขียนบทความเพื่อเพิ่มลงในรายการ" class="w-full pl-11 p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
-        </div>
-        
-        <div class="bg-gray-50/50 rounded-2xl overflow-hidden border border-gray-50">
-          <div class="grid grid-cols-12 px-6 py-4 border-b border-gray-100 bg-gray-50/80">
-            <div class="col-span-6 text-xs font-bold text-gray-400">ชื่อ-นามสกุล</div>
-            <div class="col-span-4 text-xs font-bold text-gray-400">บทบาท/หน้าที่</div>
-            <div class="col-span-2 text-xs font-bold text-gray-400 text-right">จัดการ</div>
-          </div>
-          
-          <div class="divide-y divide-gray-100">
-            @for (author of authors; track $index) {
-              <div class="grid grid-cols-12 px-6 py-4 items-center bg-white hover:bg-gray-50 transition-colors">
-                
-                <div class="col-span-6 pr-4">
-                   <input type="text" [(ngModel)]="author.name" placeholder="กรอกชื่อ-นามสกุล..." class="w-full p-2 bg-transparent text-sm font-black text-[#2A1D1A] outline-none border-b border-transparent focus:border-[#F9BD15] transition-colors">
-                </div>
-                
-                <div class="col-span-4 pr-4">
-                   @if (author.isEditingRole) {
-                     <select [(ngModel)]="author.role" (change)="author.isEditingRole = false" (blur)="author.isEditingRole = false" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-bold text-gray-600 outline-none focus:border-[#F9BD15] shadow-sm cursor-pointer">
-                       <option value="ผู้ประพันธ์หลัก">ผู้ประพันธ์หลัก (First Author)</option>
-                       <option value="ผู้ประพันธ์บรรณกิจ">ผู้ประพันธ์บรรณกิจ (Corresponding)</option>
-                       <option value="ผู้ร่วมประพันธ์">ผู้ร่วมประพันธ์ (Co-Author)</option>
-                     </select>
-                   } @else {
-                     <div class="flex items-center">
-                       <span class="text-[10px] sm:text-xs font-black tracking-wide px-4 py-1.5 rounded-full transition-colors" 
-                             [class.bg-[#FEF5DD]]="author.role === 'ผู้ประพันธ์หลัก'" [class.text-[#D97706]]="author.role === 'ผู้ประพันธ์หลัก'"
-                             [class.bg-blue-50]="author.role === 'ผู้ประพันธ์บรรณกิจ'" [class.text-blue-600]="author.role === 'ผู้ประพันธ์บรรณกิจ'"
-                             [class.bg-gray-100]="author.role === 'ผู้ร่วมประพันธ์'" [class.text-gray-600]="author.role === 'ผู้ร่วมประพันธ์'">
-                         {{ author.role || 'ระบุบทบาท' }}
-                       </span>
-                     </div>
-                   }
-                </div>
-  
-                <div class="col-span-2 flex justify-end items-center gap-1">
-                  <button (click)="author.isEditingRole = !author.isEditingRole" title="แก้ไขบทบาท" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                  </button>
-                  <button (click)="removeAuthor($index)" [disabled]="authors.length === 1" class="text-xs font-bold text-red-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed px-2 py-1 transition-colors">
-                    ลบ
-                  </button>
-                </div>
-  
-              </div>
-            }
-          </div>
-        </div>
-    </div>
-
-    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        
-        @if (activeType() === 'conference') {
-            <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลการประชุมวิชาการ</h3>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อการประชุม</label>
-                  <input type="text" placeholder="ระบุชื่อการประชุม..." class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
-                </div>
-                <div>
-                  <label class="text-xs font-bold text-gray-400 mb-2 block">วันเดือนปีในการนำเสนอ</label>
-                  <div class="relative">
-                    <input type="date" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all text-[#2A1D1A] cursor-pointer">
-                  </div>
-                </div>
-                <div class="col-span-1 md:col-span-2">
-                  <label class="text-xs font-bold text-gray-400 mb-2 block">สถานที่จัดงาน</label>
-                  <input type="text" placeholder="ระบุสถานที่จัดงาน..." class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
-                </div>
-            </div>
-            
-        } @else {
-            <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-              <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลวารสาร (Journal)</h3>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-6">
+    <div class="bg-[#2A1D1A]/5 p-6 rounded-2xl border border-gray-100">
+        @if (formData.article_type === 'journal') {
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div class="md:col-span-2">
-                  <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อวารสาร</label>
-                  <input type="text" placeholder="ระบุชื่อวารสาร..." class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+                    <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ชื่อวารสารที่ตีพิมพ์ (Journal Name) <span class="text-red-500">*</span></label>
+                    <input type="text" [(ngModel)]="formData.journal_name" placeholder="เช่น Journal of Computer Science" class="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all text-[#2A1D1A]">
                 </div>
-                <div class="md:col-span-1">
-                  <label class="text-xs font-bold text-gray-400 mb-2 block">ฉบับที่</label>
-                  <input type="text" placeholder="Vol. / No." class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+                <div>
+                    <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ปีที่ / ฉบับที่ (Vol. / Issue)</label>
+                    <input type="text" [(ngModel)]="formData.journal_vol_issue" placeholder="เช่น Vol.12 No.4" class="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all text-[#2A1D1A]">
                 </div>
-                <div class="md:col-span-1">
-                  <label class="text-xs font-bold text-gray-400 mb-2 block">วัน/เดือน/ปี</label>
-                  <div class="relative">
-                    <input type="date" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all text-[#2A1D1A] cursor-pointer">
-                  </div>
+                <div class="md:col-span-3">
+                    <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ฐานข้อมูลที่ตีพิมพ์ (Quartile / Database)</label>
+                    <input type="text" [(ngModel)]="formData.journal_quartile" placeholder="เช่น TCI กลุ่ม 1, Scopus Q2, ISI" class="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all text-[#2A1D1A]">
                 </div>
-                <div class="md:col-span-1">
-                  <label class="text-xs font-bold text-gray-400 mb-2 block">หน้า (Pages)</label>
-                  <input type="text" placeholder="เช่น 12-25" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+            </div>
+        } @else {
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div class="md:col-span-2">
+                    <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ชื่องานประชุมวิชาการ (Conference Name) <span class="text-red-500">*</span></label>
+                    <input type="text" [(ngModel)]="formData.conference_name" placeholder="เช่น The 10th International Conference on IT" class="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all text-[#2A1D1A]">
+                </div>
+                <div>
+                    <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">วันที่จัดงานประชุม (ปฏิทิน)</label>
+                    <input type="date" [(ngModel)]="formData.conference_date" class="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all text-[#2A1D1A] cursor-pointer">
+                </div>
+                <div>
+                    <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">สถานที่จัดงาน / ประเทศ (Location)</label>
+                    <input type="text" [(ngModel)]="formData.conference_location" placeholder="เช่น Bangkok, Thailand" class="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all text-[#2A1D1A]">
                 </div>
             </div>
         }
     </div>
 
-    <div class="flex justify-end gap-4 pt-6">
-        <button routerLink="/research/article" class="px-8 py-3 rounded-xl font-bold text-gray-400 hover:text-[#2A1D1A] transition-colors">ยกเลิก</button>
-        <button class="px-10 py-3 rounded-xl font-black bg-[#F9BD15] text-[#2A1D1A] shadow-md hover:brightness-105 active:scale-95 transition-all">บันทึกข้อมูล</button>
+    <div class="border-t border-gray-100 pt-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2 text-[#F9BD15]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <h4 class="font-black text-[#2A1D1A] text-base">รายชื่อผู้นิพนธ์ (Authors)</h4>
+        </div>
+        
+        @if (userScope() !== 'self') {
+          <button type="button" (click)="addAuthorRow()" class="px-4 py-2 border border-[#F9BD15] text-[#2A1D1A] bg-[#F9BD15]/5 hover:bg-[#F9BD15] hover:text-white rounded-xl text-xs font-black transition-all">
+            + เพิ่มรายชื่อผู้นิพนธ์
+          </button>
+        }
+      </div>
+
+      @if (loading()) {
+        <div class="text-center py-4 text-xs font-bold text-gray-400 flex items-center justify-center gap-2">
+          <div class="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+          กำลังดึงข้อมูลรายชื่อ...
+        </div>
+      }
+
+      @if (!loading()) {
+        <div class="space-y-3">
+          @for (author of formData.authors; track $index) {
+            <div class="flex flex-col sm:flex-row gap-3 p-4 bg-gray-50 rounded-2xl relative border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
+              
+              <div class="flex-1">
+                <label class="text-[10px] font-bold text-gray-400 mb-1 block">ชื่ออาจารย์บุคลากร</label>
+                <select [(ngModel)]="author.staff_id" 
+                        [disabled]="userScope() === 'self'"
+                        [ngClass]="{'opacity-70 cursor-not-allowed bg-gray-200/50': userScope() === 'self'}"
+                        class="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-[#F9BD15] text-[#2A1D1A]">
+                  <option value="" disabled selected>--- เลือกรายชื่ออาจารย์ ---</option>
+                  @for (member of staffMembers(); track member.staff_id) {
+                    <option [value]="member.staff_id">{{ member.full_name }} ({{ member.position || 'อาจารย์' }})</option>
+                  }
+                </select>
+              </div>
+
+              <div class="w-full sm:w-64">
+                <label class="text-[10px] font-bold text-gray-400 mb-1 block">บทบาทในบทความ</label>
+                <select [(ngModel)]="author.role" 
+                        [disabled]="userScope() === 'self'"
+                        [ngClass]="{'opacity-70 cursor-not-allowed bg-gray-200/50': userScope() === 'self'}"
+                        class="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-[#F9BD15] text-[#2A1D1A]">
+                  <option value="ผู้นิพนธ์ชื่อแรก (First Author)">ผู้นิพนธ์ชื่อแรก (First Author)</option>
+                  <option value="ผู้นิพนธ์ร่วม (Co-Author)">ผู้นิพนธ์ร่วม (Co-Author)</option>
+                  <option value="ผู้รับผิดชอบบทความ (Corresponding Author)">ผู้รับผิดชอบบทความ (Corresponding Author)</option>
+                </select>
+              </div>
+
+              @if (userScope() !== 'self') {
+                <div class="flex items-end justify-end pb-0.5">
+                  <button type="button" (click)="removeAuthorRow($index)" class="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-colors" title="ลบชื่อออก">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                  </button>
+                </div>
+              }
+
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="border-t border-gray-100 pt-8 flex items-center justify-end gap-3">
+      <button routerLink="/research/article" [disabled]="isSubmitting()" class="text-sm font-bold text-gray-400 hover:text-[#2A1D1A] px-4 py-2 transition-colors disabled:opacity-50">
+        ยกเลิก
+      </button>
+      <button (click)="submitForm()" [disabled]="isSubmitting()" class="bg-[#2A1D1A] text-[#F9BD15] px-8 py-3.5 rounded-2xl font-black text-sm shadow-md hover:bg-black transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+        {{ isSubmitting() ? 'กำลังบันทึกข้อมูล...' : 'บันทึกบทความวิจัย' }}
+      </button>
     </div>
 
   </div>
