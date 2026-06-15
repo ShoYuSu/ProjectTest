@@ -1,8 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Component({
   selector: 'app-add-training',
@@ -10,21 +9,18 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './add-training.component.html'
 })
-export class AddTrainingComponent implements OnInit {
+export class AddTrainingComponent {
   private router = inject(Router);
-  private http = inject(HttpClient);
 
+  // --- ตัวแปรสำหรับใช้หน้า UI ---
   searchQuery = '';
-  // 🌟 ใช้ staff_id เพื่อบันทึกลงฐานข้อมูลอย่างถูกต้อง
-  participants = [{ staff_id: '' }]; 
-  
-  staffMembers = signal<any[]>([]);
-  userScope = signal<string>('none'); 
+  participants = [{ name: '' }];
 
+  // --- ตัวแปรสำหรับจัดการ Custom Dropdown ---
   isDropdownOpen = false;
-  newBenefit = '';               
-  editingIndex: number | null = null; 
-  editValue = '';                
+  newBenefit = '';               // ค่าสำหรับเพิ่มรายการใหม่
+  editingIndex: number | null = null; // เช็คว่ากำลังแก้ไขรายการไหนอยู่
+  editValue = '';                // ค่าชั่วคราวตอนกำลังพิมพ์แก้ไข
 
   benefitOptions = [
     'ด้านการบริหารหลักสูตร',
@@ -33,10 +29,12 @@ export class AddTrainingComponent implements OnInit {
     'ด้านการบริหารจัดการ'
   ];
 
+  // --- ⭐️ ตัวแปรหลัก (แยกวันที่เริ่มและสิ้นสุดแล้ว) ---
   trainingData = {
+    staffName: '',       
     topic: '',           
-    startDate: '',       
-    endDate: '',         
+    startDate: '',       // 👈 แยกวันที่เริ่ม
+    endDate: '',         // 👈 แยกวันที่สิ้นสุด
     location: '',        
     benefits: '',        
     implementation: '',  
@@ -47,43 +45,34 @@ export class AddTrainingComponent implements OnInit {
   loading = false;
   showSuccessModal = false;
 
-  ngOnInit() {
-    this.loadActiveStaff();
+  // --- ฟังก์ชันรายชื่อ ---
+  addParticipant() {
+    this.participants.push({ name: '' });
   }
 
-  // 🌟 ดึงข้อมูลอาจารย์ที่อิงตามสิทธิ์
-  loadActiveStaff() {
-    const currentUserId = localStorage.getItem('user_id') || '14';
-    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
-    
-    this.http.get<any>('http://localhost:8080/api/add_training.php', { headers })
-      .subscribe({
-        next: (res) => {
-          if (res && res.success) {
-            this.userScope.set(res.scope);
-            this.staffMembers.set(res.staff_list || []);
-            
-            // ล็อคชื่อถ้าเป็นสิทธิ์ self
-            if (res.scope === 'self' && res.staff_list.length > 0) {
-              this.participants[0].staff_id = res.staff_list[0].staff_id.toString();
-            }
-          }
-        }
-      });
+  removeParticipant(index: number) {
+    if (this.participants.length > 1) {
+      this.participants.splice(index, 1);
+    }
   }
 
-  addParticipant() { this.participants.push({ staff_id: '' }); }
-  removeParticipant(index: number) { if (this.participants.length > 1) this.participants.splice(index, 1); }
+  // --- ฟังก์ชันจัดการ Dropdown (เพิ่ม, ลบ, แก้ไข, เลือก) ---
+  toggleDropdown() {
+    this.isDropdownOpen = !this.isDropdownOpen;
+    this.editingIndex = null; // ปิดโหมดแก้ไขทุกครั้งที่เปิด/ปิด dropdown
+  }
 
-  toggleDropdown() { this.isDropdownOpen = !this.isDropdownOpen; this.editingIndex = null; }
-  selectBenefit(opt: string) { this.trainingData.benefits = opt; this.isDropdownOpen = false; }
+  selectBenefit(opt: string) {
+    this.trainingData.benefits = opt;
+    this.isDropdownOpen = false; // เลือกเสร็จให้พับเก็บ
+  }
 
   addNewBenefit(event: Event) {
-    event.stopPropagation();
+    event.stopPropagation(); // กัน dropdown หุบ
     if (this.newBenefit.trim()) {
       this.benefitOptions.push(this.newBenefit.trim());
-      this.trainingData.benefits = this.newBenefit.trim();
-      this.newBenefit = '';
+      this.trainingData.benefits = this.newBenefit.trim(); // เลือกอันที่เพิ่งเพิ่มให้อัตโนมัติ
+      this.newBenefit = ''; // เคลียร์ช่องพิมพ์
     }
   }
 
@@ -96,66 +85,39 @@ export class AddTrainingComponent implements OnInit {
   saveEdit(index: number, event: Event) {
     event.stopPropagation();
     if (this.editValue.trim()) {
+      // ถ้าอันที่แก้ ดันเป็นอันที่เลือกไว้อยู่ ต้องอัพเดทค่าที่เลือกด้วย
       if (this.trainingData.benefits === this.benefitOptions[index]) {
         this.trainingData.benefits = this.editValue.trim();
       }
       this.benefitOptions[index] = this.editValue.trim();
     }
-    this.editingIndex = null;
+    this.editingIndex = null; // ออกจากโหมดแก้ไข
   }
 
   deleteBenefit(index: number, event: Event) {
     event.stopPropagation();
     if (confirm('ยืนยันการลบรายการนี้?')) {
       if (this.trainingData.benefits === this.benefitOptions[index]) {
-        this.trainingData.benefits = ''; 
+        this.trainingData.benefits = ''; // ถ้าลบอันที่เลือกอยู่ ให้ล้างค่าทิ้ง
       }
       this.benefitOptions.splice(index, 1);
     }
   }
 
+  // --- ฟังก์ชันบันทึกข้อมูล ---
   onSubmit() {
-    if (!this.trainingData.topic.trim() || !this.trainingData.startDate) {
-      alert('กรุณากรอกหัวข้ออบรมและวันที่เริ่มต้นให้ครบถ้วน');
-      return;
-    }
-    
-    // ตรวจสอบว่าเลือกรายชื่ออาจารย์ครบหรือยัง
-    if (this.participants.some(p => !p.staff_id)) {
-      alert('กรุณาเลือกรายชื่อผู้เข้าอบรมในช่องว่างให้ครบ');
-      return;
-    }
-
-    if (this.trainingData.endDate && new Date(this.trainingData.startDate) > new Date(this.trainingData.endDate)) {
-      alert('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น');
-      return;
-    }
-
     this.loading = true;
-    const currentUserId = localStorage.getItem('user_id') || '14';
-    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
-
-    const payload = {
-      ...this.trainingData,
-      participants: this.participants
-    };
     
-    this.http.post<any>('http://localhost:8080/api/add_training.php', payload, { headers })
-      .subscribe({
-        next: (res) => {
-          if (res && res.success) {
-            this.showSuccessModal = true;
-          } else {
-            alert('❌ ' + res.message);
-          }
-          this.loading = false;
-        },
-        error: (err) => {
-          console.error(err);
-          alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
-          this.loading = false;
-        }
-      });
+    // รวบชื่อทุกคนในตาราง
+    this.trainingData.staffName = this.participants.map(p => p.name).join(', ');
+    
+    // ⭐️ ไม่ต้องเอาวันที่มาต่อกันแล้ว ส่งไปตรงๆ ได้เลย
+    console.log('ข้อมูลที่พร้อมส่งเข้า DB (แยกวันที่แล้ว):', this.trainingData);
+    
+    setTimeout(() => {
+      this.loading = false;
+      this.showSuccessModal = true;
+    }, 1000);
   }
 
   closeModal() {

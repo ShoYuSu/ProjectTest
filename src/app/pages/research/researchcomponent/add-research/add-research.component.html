@@ -13,7 +13,6 @@
   <div class="bg-white p-8 md:p-10 rounded-[2rem] shadow-sm border border-gray-100 space-y-6 relative">
     
     <div class="space-y-5">
-      
       <div>
         <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ชื่อโครงการวิจัย (ภาษาไทย) <span class="text-red-500">*</span></label>
         <textarea [(ngModel)]="formData.title" rows="3" placeholder="ระบุชื่อโครงการวิจัยฉบับเต็ม..." 
@@ -40,7 +39,6 @@
           <input type="number" [(ngModel)]="formData.year_funded" placeholder="ตัวอย่างเช่น 2567"
                  class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
         </div>
-
         <div>
           <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">ปี พ.ศ. ที่สิ้นสุดโครงการทุนวิจัย <span class="text-red-500">*</span></label>
           <input type="number" [(ngModel)]="formData.year_ended" placeholder="ตัวอย่างเช่น 2570"
@@ -54,7 +52,6 @@
           <input type="text" [(ngModel)]="formData.funding_source" placeholder="เช่น สวทช. หรือ กองทุนมหาวิทยาลัย" 
                  class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
         </div>
-
         <div>
           <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">งบประมาณวิจัยทั้งหมด (บาท)</label>
           <input type="number" [(ngModel)]="formData.budget" placeholder="เช่น 500000" 

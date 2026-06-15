@@ -119,7 +119,6 @@ export class AddArticleComponent implements OnInit {
         next: (res) => {
           if (res && res.success) {
             alert('✅ บันทึกสำเร็จ: ' + res.message);
-            // 🌟 แก้ไขให้กลับไปที่หน้าหลักอย่างถูกต้อง
             this.router.navigate(['/research/article']); 
           } else {
             alert('❌ ปฏิเสธการบันทึก: ' + res.message);

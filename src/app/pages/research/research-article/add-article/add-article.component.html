@@ -21,7 +21,9 @@
                 class="flex-1 p-5 rounded-2xl border-2 text-left transition-all flex items-center gap-4 group">
            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors" 
                 [ngClass]="formData.article_type === 'journal' ? 'border-[#F9BD15]' : 'border-gray-300 group-hover:border-gray-400'">
-              <div *ngIf="formData.article_type === 'journal'" class="w-2.5 h-2.5 rounded-full bg-[#F9BD15] animate-in zoom-in duration-200"></div>
+              @if (formData.article_type === 'journal') {
+                <div class="w-2.5 h-2.5 rounded-full bg-[#F9BD15] animate-in zoom-in duration-200"></div>
+              }
            </div>
            <span class="font-black text-[#2A1D1A]">วารสารวิชาการ (Journal)</span>
         </button>
@@ -31,7 +33,9 @@
                 class="flex-1 p-5 rounded-2xl border-2 text-left transition-all flex items-center gap-4 group">
            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors" 
                 [ngClass]="formData.article_type === 'conference' ? 'border-[#F9BD15]' : 'border-gray-300 group-hover:border-gray-400'">
-              <div *ngIf="formData.article_type === 'conference'" class="w-2.5 h-2.5 rounded-full bg-[#F9BD15] animate-in zoom-in duration-200"></div>
+              @if (formData.article_type === 'conference') {
+                <div class="w-2.5 h-2.5 rounded-full bg-[#F9BD15] animate-in zoom-in duration-200"></div>
+              }
            </div>
            <span class="font-black text-[#2A1D1A]">การประชุมวิชาการ (Conference)</span>
         </button>
@@ -70,7 +74,6 @@
     </div>
 
     <div class="bg-[#2A1D1A]/5 p-6 rounded-2xl border border-gray-100">
-        
         @if (formData.article_type === 'journal') {
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div class="md:col-span-2">
@@ -102,7 +105,6 @@
                 </div>
             </div>
         }
-
     </div>
 
     <div class="border-t border-gray-100 pt-6 space-y-4">
