@@ -14,16 +14,20 @@ export class StaffComponent implements OnInit {
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
 
+  // Signals สำหรับเก็บสถานะสิทธิ์ปุ่มต่างๆ ของโมดูล Staff_info
   canAdd = signal(false);
   canEdit = signal(false);
   canDelete = signal(false);
 
+  // รายการบุคลากรทั้งหมดเต็มจำนวนที่ดึงมาจากฐานข้อมูล (สอดคล้องกับสิทธิ์หลัก)
   allStaffList = signal<any[]>([]);
+  // รายการบุคลากรที่ผ่านการกรอง (Filter) เรียบร้อยแล้วเพื่อใช้แสดงผลบนเทมเพลตหน้าจอ
   filteredStaffList = signal<any[]>([]);
   errorMessage = signal<string>('');
   
+  // ตัวเก็บสถานะประเภทการกรอง
   currentDeptFilter = signal<string>('');
-  currentTypeFilter = signal<string>('all'); 
+  currentTypeFilter = signal<string>('all'); // 'all' | 'academic' | 'support'
 
   ngOnInit() {
     this.checkPermissions();
@@ -31,6 +35,7 @@ export class StaffComponent implements OnInit {
     this.listenToRouteParams();
   }
 
+  // 🌟 ฟังก์ชันตรวจสอบสิทธิ์ที่แก้ไขแล้ว: ตรวจสอบ String สิทธิ์อย่างแม่นยำ และปิดสิทธิ์ลบหากไม่มีสิทธิ์ edit
   checkPermissions() {
     const role = localStorage.getItem('role');
     if (role === 'admin') {
@@ -40,16 +45,26 @@ export class StaffComponent implements OnInit {
       return;
     }
 
-    const permsString = localStorage.getItem('permissions') || '';
-    const permsArray = permsString.split(',').map(p => p.trim().toLowerCase());
-
-    this.canAdd.set(permsArray.some(p => p.includes('staff_info') && p.includes('add') && !p.includes('none')));
-    this.canEdit.set(permsArray.some(p => p.includes('staff_info') && p.includes('edit') && !p.includes('none')));
+    const permsString = (localStorage.getItem('permissions') || '').toLowerCase();
     
-    // 🌟 ให้ปุ่มลบ (Delete) โชว์เมื่อมีสิทธิ์ Edit เหมือนกันตามที่ระบุ
-    this.canDelete.set(permsArray.some(p => p.includes('staff_info') && p.includes('edit') && !p.includes('none')));
+    // ตรวจสอบสิทธิ์ Add พนักงาน
+    const hasAdd = permsString.includes('staff_info,add,all') || 
+                   permsString.includes('staff_info,add,department') || 
+                   permsString.includes('staff_info,add,dept');
+                   
+    // ตรวจสอบสิทธิ์ Edit พนักงาน               
+    const hasEdit = permsString.includes('staff_info,edit,all') || 
+                    permsString.includes('staff_info,edit,department') || 
+                    permsString.includes('staff_info,edit,dept');
+
+    this.canAdd.set(hasAdd);
+    this.canEdit.set(hasEdit);
+    
+    // 🌟 บังคับเงื่อนไขตามกฎของท่าน: หากไม่มีสิทธิ์แก้ไข (Edit) จะไม่มีสิทธิ์มองเห็นและกดปุ่มลบอย่างเด็ดขาด
+    this.canDelete.set(hasEdit);
   }
 
+  // ดักฟังการเปลี่ยนค่า Query Params เมื่อผู้ใช้กดคลิกเมนูภาควิชาต่างๆ บน Sidebar
   listenToRouteParams() {
     this.route.queryParams.subscribe(params => {
       const dept = params['dept'] || '';
@@ -58,16 +73,19 @@ export class StaffComponent implements OnInit {
     });
   }
 
+  // ฟังก์ชันเปลี่ยนแท็บประเภทพนักงาน (วิชาการ / สนับสนุน)
   changeTypeFilter(type: string) {
     this.currentTypeFilter.set(type);
     this.applyFilter();
   }
 
+  // ฟังก์ชันรวมศูนย์การกรองข้อมูลแบบ Multi-Filter (กรองพร้อมกันทั้งภาควิชาและสายงาน)
   applyFilter() {
     const deptFilter = this.currentDeptFilter();
     const typeFilter = this.currentTypeFilter();
     let result = this.allStaffList();
 
+    // ขั้นตอนที่ 1: กรองตามประเภทของภาควิขาก่อน
     if (deptFilter) {
       let targetDeptName = '';
       switch (deptFilter) {
@@ -77,17 +95,21 @@ export class StaffComponent implements OnInit {
         case 'physics': targetDeptName = 'ฟิสิกส์'; break;
         case 'cs': targetDeptName = 'วิทยาการคอมพิวเตอร์'; break;
       }
+
       if (targetDeptName) {
         result = result.filter(staff => staff.department === targetDeptName);
       }
     }
 
+    // ขั้นตอนที่ 2: นำข้อมูลที่ได้มากรองประเภทสายงานต่อแบบต่อเนื่อง
     if (typeFilter !== 'all') {
       result = result.filter(staff => staff.type === typeFilter);
     }
+
     this.filteredStaffList.set(result);
   }
 
+  // ฟังก์ชันนับจำนวนพนักงานแยกตามแต่ละแท็บแบบไดนามิก สอดคล้องกับเมนูที่เลือกอยู่
   getStaffCount(type: string): number {
     const deptFilter = this.currentDeptFilter();
     let list = this.allStaffList();
@@ -103,10 +125,12 @@ export class StaffComponent implements OnInit {
       }
       list = list.filter(staff => staff.department === targetDeptName);
     }
+
     if (type === 'all') return list.length;
     return list.filter(staff => staff.type === type).length;
   }
 
+  // เรียกข้อมูลพนักงานจริงจาก get_staff.php โดยส่ง X-User-Id แนบไปด้วยทุกครั้ง
   fetchStaffData() {
     const currentUserId = localStorage.getItem('user_id') || '14'; 
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
@@ -125,26 +149,25 @@ export class StaffComponent implements OnInit {
       });
   }
 
-  // 🌟 ฟังก์ชันลบที่ได้รับการแก้ไขให้ยิง POST ไปหาไฟล์ delete_staff.php อย่างถูกต้อง
+  // ฟังก์ชันปรับสถานะเป็น Inactive ผ่านการส่ง Payload เข้าสู่หลังบ้านอย่างปลอดภัย
   deleteStaff(id: number, name: string) {
     if (!this.canDelete()) {
       alert('คุณไม่มีสิทธิ์ในการลบข้อมูลบุคลากร');
       return;
     }
 
-    if (confirm(`คำเตือน: คุณต้องการลบบัญชีของ "${name}" ใช่หรือไม่?\n(การกระทำนี้ไม่สามารถกู้คืนได้)`)) {
+    if (confirm(`คำเตือน: คุณต้องการลบบัญชีของ "${name}" ใช่หรือไม่?\n(การกระทำนี้จะเปลี่ยนสถานะเป็น Inactive)`)) {
       const currentUserId = localStorage.getItem('user_id') || '14';
       const headers = new HttpHeaders().set('X-User-Id', currentUserId);
-      const payload = { target_person_id: id }; // ส่งรูปแบบ JSON
 
-      this.http.post<any>('http://localhost:8080/api/delete_staff.php', payload, { headers })
+      this.http.post<any>('http://localhost:8080/api/delete_staff.php', { target_person_id: id }, { headers })
         .subscribe({
           next: (res: any) => {
             if (res && res.success) {
-              alert('✅ ลบบัญชีผู้ใช้งานเรียบร้อยแล้ว');
+              alert('✅ ' + res.message);
               this.fetchStaffData(); 
             } else {
-              alert('❌ ' + res.message);
+              alert('❌ ปฏิเสธการดำเนินการ: ' + (res.message || 'เกิดข้อผิดพลาด'));
             }
           },
           error: (err) => {
