@@ -32,7 +32,7 @@
                          [disabled]="userScope() === 'self'" 
                          [ngClass]="{'opacity-70 bg-gray-100': userScope() === 'self'}"
                          class="w-full md:w-3/4 p-2 bg-transparent text-sm font-black text-[#2A1D1A] outline-none border-b border-transparent focus:border-[#F9BD15] transition-colors cursor-pointer">
-                    <option value="" disabled selected>-- เลือกลายชื่อบุคลากร --</option>
+                    <option value="" disabled selected>-- เลือกรายชื่อบุคลากร --</option>
                     @for (member of staffMembers(); track member.staff_id) {
                       <option [value]="member.staff_id">{{ member.full_name }}</option>
                     }

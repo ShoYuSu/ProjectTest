@@ -1,6 +1,11 @@
 <div class="max-w-[1200px] mx-auto animate-in fade-in duration-500 pb-10 space-y-6">
       
-  <div class="mb-8 mt-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+  <div class="mb-8 mt-4 flex items-center gap-3">
+    <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
+    <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Research Project</h2>
+  </div>
+
+  <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
     <div>
       <h2 class="text-2xl font-black text-[#2A1D1A] mb-2">คลังข้อมูลโครงการวิจัย</h2>
       <p class="text-sm text-gray-400 font-bold">ศูนย์รวมโครงการวิจัยของบุคลากรในคณะ สำหรับจัดเก็บ ค้นหา และแสดงผลงานทางวิชาการอย่างเป็นระบบ</p>
@@ -56,7 +61,7 @@
         <div class="text-[#F9BD15]">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
         </div>
-        <h3 class="font-black text-[#2A1D1A] text-lg">โครงการวิจัย <span class="text-gray-400 text-sm font-bold">({{ filteredProjects().length }} รายการ)</span></h3>
+        <h3 class="font-black text-[#2A1D1A] text-lg">โครงการวิจัย <span class="text-gray-400 text-sm font-bold ml-2">({{ filteredProjects().length }} รายการ)</span></h3>
       </div>
       
       <div class="overflow-x-auto">
