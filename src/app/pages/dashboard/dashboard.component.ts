@@ -1,6 +1,6 @@
-import { Component, signal, OnInit, inject } from '@angular/core';
+import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,66 +10,86 @@ import { ActivatedRoute } from '@angular/router';
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
+  private http = inject(HttpClient);
 
-  // ====== ดึงค่าจาก URL มาลง localStorage ======
-  private route = inject(ActivatedRoute);
+  // 🌟 โครงสร้างข้อมูลที่รับจาก Database
+  stats = signal<any>({
+    staff: { total: 0, academic: 0, support: 0 },
+    research_articles: { total: 0, conference: 0, journal: 0 },
+    research_projects: { total: 0, total_budget: 0 },
+    plan_status: { not_started: 0, in_progress: 0, completed: 0, total: 0 },
+    charts: {
+      research_projects_count: [], research_projects_budget: [], 
+      research_articles_conference: [], research_articles_journal: []
+    }
+  });
 
-  ngOnInit() {
-    this.route.queryParams.subscribe(params => {
-      if (params['role']) {
-        localStorage.setItem('role', params['role']);
-      }
-      if (params['token']) {
-        localStorage.setItem('token', params['token']);
-      }
-    });
-  }
-  // ==========================================
+  loading = signal(true);
+  chartData1 = signal<any[]>([]);
+  chartData2 = signal<any[]>([]);
 
-  // ================= ข้อมูลกราฟ =================
-  chartData1 = [
-    { year: 2565, value: 20 },
-    { year: 2566, value: 27 },
-    { year: 2567, value: 37 },
-    { year: 2568, value: 49 },
-    { year: 2569, value: 75 }
-  ];
-
-  chartData2 = [
-    { year: 2565, value: 20 },
-    { year: 2566, value: 27 },
-    { year: 2567, value: 37 },
-    { year: 2568, value: 49 },
-    { year: 2569, value: 75 }
-  ];
-
-  // ================= ควบคุม Dropdown 1 =================
+  // ================= ควบคุม Dropdown กราฟ =================
   options1 = ['จำนวน', 'งบประมาณ'];
   isDropdown1Open = signal(false);
   selectedOption1 = signal(this.options1[0]);
 
-  toggleDropdown1() {
-    this.isDropdown1Open.set(!this.isDropdown1Open());
-    this.isDropdown2Open.set(false); // ปิดอันล่างถ้าเปิดอันบน
-  }
-
-  selectOption1(option: string) {
-    this.selectedOption1.set(option);
-    this.isDropdown1Open.set(false);
-  }
-
-  // ================= ควบคุม Dropdown 2 =================
   options2 = ['ประชุมวิจัย', 'วารสาร'];
   isDropdown2Open = signal(false);
   selectedOption2 = signal(this.options2[0]);
 
-  toggleDropdown2() {
-    this.isDropdown2Open.set(!this.isDropdown2Open());
-    this.isDropdown1Open.set(false); // ปิดอันบนถ้าเปิดอันล่าง
+  ngOnInit() {
+    this.fetchDashboardData();
   }
 
-  selectOption2(option: string) {
-    this.selectedOption2.set(option);
-    this.isDropdown2Open.set(false);
+  fetchDashboardData() {
+    this.http.get<any>('http://localhost:8080/api/get_dashboard.php').subscribe({
+      next: (res) => {
+        this.stats.set(res);
+        this.updateChart1();
+        this.updateChart2();
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to fetch dashboard stats', err);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  // คำนวณความสูงกราฟ 1 (โครงการวิจัย)
+  updateChart1() {
+    const dataObj = this.stats().charts;
+    const sourceData = this.selectedOption1() === 'จำนวน' ? dataObj.research_projects_count : dataObj.research_projects_budget;
+    const maxVal = Math.max(...sourceData.map((d: any) => d.value), 1);
+    this.chartData1.set(sourceData.map((d: any) => ({ ...d, percentage: (d.value / maxVal) * 100 })));
+  }
+
+  // คำนวณความสูงกราฟ 2 (บทความวิจัย)
+  updateChart2() {
+    const dataObj = this.stats().charts;
+    const sourceData = this.selectedOption2() === 'ประชุมวิจัย' ? dataObj.research_articles_conference : dataObj.research_articles_journal;
+    const maxVal = Math.max(...sourceData.map((d: any) => d.value), 1);
+    this.chartData2.set(sourceData.map((d: any) => ({ ...d, percentage: (d.value / maxVal) * 100 })));
+  }
+
+  // Event เลือกตัวเลือกกราฟ
+  toggleDropdown1() { this.isDropdown1Open.set(!this.isDropdown1Open()); this.isDropdown2Open.set(false); }
+  selectOption1(option: string) { this.selectedOption1.set(option); this.isDropdown1Open.set(false); this.updateChart1(); }
+
+  toggleDropdown2() { this.isDropdown2Open.set(!this.isDropdown2Open()); this.isDropdown1Open.set(false); }
+  selectOption2(option: string) { this.selectedOption2.set(option); this.isDropdown2Open.set(false); this.updateChart2(); }
+
+  // 🌟 คำนวณสีและสัดส่วนของกราฟโดนัทอัตโนมัติ
+  donutStyle = computed(() => {
+    const s = this.stats().plan_status;
+    const total = s.total || 1;
+    const p1 = (s.not_started / total) * 100;
+    const p2 = p1 + ((s.in_progress / total) * 100);
+    return `conic-gradient(#FDE68A 0% ${p1}%, #FBBF24 ${p1}% ${p2}%, #D97706 ${p2}% 100%)`;
+  });
+
+  statusPercent(value: number) {
+    const total = this.stats().plan_status.total || 1;
+    return Math.round((value / total) * 100);
   }
 }
