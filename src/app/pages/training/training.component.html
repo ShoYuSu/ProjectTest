@@ -44,46 +44,48 @@
       </div>
       
       <div class="overflow-x-auto min-h-[300px] custom-scrollbar pb-4"> 
-        <table class="w-full text-left min-w-[1800px]">
-            <thead class="bg-white text-xs text-gray-400 font-bold border-b border-gray-100">
-              <tr>
-                  <th class="py-5 px-8 w-20">ลำดับ</th>
-                  <th class="py-5 px-4 w-48 sticky left-0 bg-white z-10 border-r border-gray-50 shadow-[inset_-4px_0_10px_-6px_rgba(0,0,0,0.05)]">รายชื่อ</th>
-                  <th class="py-5 px-4 w-64">หัวข้ออบรม สัมมนา</th>
-                  <th class="py-5 px-4 w-56">วันที่เริ่ม ถึง วันที่สิ้นสุด</th>
-                  <th class="py-5 px-4 w-56">หน่วยงานที่จัด/สถานที่</th>
-                  <th class="py-5 px-4 w-64">ประโยชน์ที่ได้รับ</th>
-                  <th class="py-5 px-4 w-64">รายละเอียดการนำไปใช้</th>
-                  <th class="py-5 px-4 w-48">หมายเหตุ</th>
-                  <th class="py-5 px-8 w-32 text-right">ค่าใช้จ่าย (บาท)</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50">
-              @if (paginatedTrainings().length > 0) {
-                  @for (training of paginatedTrainings(); track training.id) {
-                    <tr class="group hover:bg-gray-50/50 transition-colors">
-                        <td class="py-6 px-8 text-sm font-bold text-gray-500 align-top">{{ training.id }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] align-top sticky left-0 bg-white group-hover:bg-gray-50/50 z-10 border-r border-gray-50 transition-colors shadow-[inset_-4px_0_10px_-6px_rgba(0,0,0,0.05)]">{{ training.staffName }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.topic }}</td>
-                        
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 align-top">
-                           {{ training.startDate }} - {{ training.endDate }}
-                        </td>
-                        
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.location }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.benefits }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.implementation }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.remarks }}</td>
-                        <td class="py-6 px-8 text-sm font-black text-[#2A1D1A] text-right align-top">{{ training.cost | number }}</td>
-                    </tr>
-                  }
-              } @else {
-                  <tr>
-                    <td colspan="9" class="py-20 text-center text-gray-400 font-bold">ยังไม่มีข้อมูลการอบรม</td>
-                  </tr>
-              }
-            </tbody>
-        </table>
+<table class="w-full text-left min-w-[1800px]">
+    <thead class="bg-white text-xs text-gray-400 font-bold border-b border-gray-100">
+      <tr>
+          <th class="py-5 px-4 w-[80px] min-w-[80px] text-center sticky left-0 bg-white z-20">ลำดับ</th>
+          
+          <th class="py-5 px-4 w-48 sticky left-[80px] bg-white z-20 border-r border-gray-50 shadow-[inset_-4px_0_10px_-6px_rgba(0,0,0,0.05)]">รายชื่อ</th>
+          
+          <th class="py-5 px-4 w-64">หัวข้ออบรม สัมมนา</th>
+          <th class="py-5 px-4 w-56">วันที่เริ่ม ถึง วันที่สิ้นสุด</th>
+          <th class="py-5 px-4 w-56">หน่วยงานที่จัด/สถานที่</th>
+          <th class="py-5 px-4 w-64">ประโยชน์ที่ได้รับ</th>
+          <th class="py-5 px-4 w-64">รายละเอียดการนำไปใช้</th>
+          <th class="py-5 px-4 w-48">หมายเหตุ</th>
+          <th class="py-5 px-8 w-32 text-right">ค่าใช้จ่าย (บาท)</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-50">
+      @if (paginatedTrainings().length > 0) {
+          @for (training of paginatedTrainings(); track training.id) {
+            <tr class="group hover:bg-gray-50 transition-colors">
+                <td class="py-6 px-4 w-[80px] min-w-[80px] text-center text-sm font-bold text-gray-500 align-top sticky left-0 bg-white group-hover:bg-gray-50 z-10">{{ training.id }}</td>
+                
+                <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] align-top sticky left-[80px] bg-white group-hover:bg-gray-50 z-10 border-r border-gray-50 transition-colors shadow-[inset_-4px_0_10px_-6px_rgba(0,0,0,0.05)]">{{ training.staffName }}</td>
+                
+                <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.topic }}</td>
+                <td class="py-6 px-4 text-sm font-bold text-gray-500 align-top">
+                   {{ training.startDate }} - {{ training.endDate }}
+                </td>
+                <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.location }}</td>
+                <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.benefits }}</td>
+                <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.implementation }}</td>
+                <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.remarks }}</td>
+                <td class="py-6 px-8 text-sm font-black text-[#2A1D1A] text-right align-top">{{ training.cost | number }}</td>
+            </tr>
+          }
+      } @else {
+          <tr>
+            <td colspan="9" class="py-20 text-center text-gray-400 font-bold">ยังไม่มีข้อมูลการอบรม</td>
+          </tr>
+      }
+    </tbody>
+</table>
       </div>
   </div> 
   

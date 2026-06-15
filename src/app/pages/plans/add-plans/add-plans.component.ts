@@ -1,11 +1,12 @@
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-add-plans',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './add-plans.component.html',
   styleUrl: './add-plans.component.css'
 })
@@ -29,6 +30,23 @@ export class AddPlansComponent {
     );
   }
 
+  // ================= 🟢 ข้อมูลผู้รับผิดชอบ (เหลือแค่ชื่อ ไม่มีบทบาทแล้ว) =================
+  searchQuery: string = '';
+  
+  participants = [
+    { name: '' } // 👈 ลบตัวแปร role ออกเกลี้ยง
+  ];
+
+  addParticipant() {
+    this.participants.push({ name: '' });
+  }
+
+  removeParticipant(index: number) {
+    if (this.participants.length > 1) {
+      this.participants.splice(index, 1);
+    }
+  }
+
   // ================= ข้อมูล Dropdowns =================
   strategiesList = signal([
     '1. Future Research and Innovation',
@@ -48,17 +66,17 @@ export class AddPlansComponent {
   isStrategyOpen = signal(false);
   selectedStrategy = signal('เลือกแผนยุทธศาสตร์');
   isAddingStrategy = signal(false);
-  editingStrategyIndex = signal<number | null>(null); // จำตำแหน่งที่กำลังแก้ไข
+  editingStrategyIndex = signal<number | null>(null);
 
   isPlanOpen = signal(false);
   selectedPlan = signal('เลือกแผนงาน');
   isAddingPlan = signal(false);
-  editingPlanIndex = signal<number | null>(null); // จำตำแหน่งที่กำลังแก้ไข
+  editingPlanIndex = signal<number | null>(null);
 
   isStatusOpen = signal(false);
   selectedStatus = signal('ระบุสถานะ');
 
-  // ================= 🎯 ฟังก์ชันควบคุมยุทธศาสตร์ 🎯 =================
+  // ================= 🎯 ฟังก์ชันควบคุมยุทธศาสตร์ =================
   toggleStrategy() {
     this.isStrategyOpen.set(!this.isStrategyOpen());
     this.isPlanOpen.set(false);
@@ -82,7 +100,7 @@ export class AddPlansComponent {
   }
 
   startEditStrategy(index: number, event: Event) {
-    event.stopPropagation(); // ไม่ให้ Dropdown ปิด
+    event.stopPropagation();
     this.editingStrategyIndex.set(index);
     this.isAddingStrategy.set(false);
   }
@@ -93,7 +111,6 @@ export class AddPlansComponent {
     if (trimmedValue) {
       this.strategiesList.update(list => {
         const newList = [...list];
-        // ถ้าค่าที่ถูกแก้คือค่าที่เลือกอยู่ ให้เปลี่ยนค่าที่เลือกตามไปด้วย
         if (this.selectedStrategy() === newList[index]) {
           this.selectedStrategy.set(trimmedValue);
         }
@@ -113,7 +130,6 @@ export class AddPlansComponent {
     event.stopPropagation();
     const itemToDelete = this.strategiesList()[index];
     this.strategiesList.update(list => list.filter((_, i) => i !== index));
-    // ถ้ารายการที่ลบ คือรายการที่ถูกเลือกอยู่ ให้รีเซ็ตค่ากลับ
     if (this.selectedStrategy() === itemToDelete) {
       this.selectedStrategy.set('เลือกแผนยุทธศาสตร์');
     }
@@ -122,7 +138,7 @@ export class AddPlansComponent {
     }
   }
 
-  // ================= 🎯 ฟังก์ชันควบคุมแผนงาน 🎯 =================
+  // ================= 🎯 ฟังก์ชันควบคุมแผนงาน =================
   togglePlan() {
     this.isPlanOpen.set(!this.isPlanOpen());
     this.isStrategyOpen.set(false);
