@@ -3,169 +3,263 @@
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 mt-4">
     <div class="flex items-center gap-3">
       <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
-      <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Profile บุคลากร</h2>
+      <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Profile</h2>
     </div>
 
-    @if (isCurrentUser() && !errorMessage()) {
-      <div class="flex gap-2 shrink-0">
-          @if (!isEditMode()) {
-              <button type="button" (click)="toggleEdit()" class="flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm bg-[#2A1D1A] text-[#F9BD15] hover:bg-black transition-all shadow-md active:scale-95">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                  แก้ไขโปรไฟล์
-              </button>
-          } @else {
-              <button type="button" (click)="cancelEdit()" class="px-6 py-2.5 rounded-xl font-bold text-sm bg-gray-200 text-gray-600 hover:bg-gray-300 transition-all active:scale-95">
-                  ยกเลิก
-              </button>
-              <button type="button" (click)="saveProfile()" class="px-6 py-2.5 rounded-xl font-black text-sm bg-[#F9BD15] text-[#2A1D1A] shadow-md hover:brightness-105 transition-all active:scale-95 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                  บันทึกข้อมูล
-              </button>
-          }
-      </div>
-    }
+    <div class="flex items-center gap-3">
+      <button *ngIf="canEditProfile && !isEditProfileMode && !isEditPermissionMode" (click)="toggleEditProfile()" class="bg-[#2A1D1A] text-[#F9BD15] px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-black transition-all">
+        แก้ไขข้อมูลส่วนตัว
+      </button>
+
+      <button *ngIf="canEditPermissions && !isEditProfileMode && !isEditPermissionMode" (click)="toggleEditPermissions()" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-blue-700 transition-all">
+        จัดการสิทธิ์การใช้งาน
+      </button>
+
+      <ng-container *ngIf="isEditProfileMode || isEditPermissionMode">
+        <button (click)="isEditProfileMode ? cancelEditProfile() : cancelEditPermissions()" class="text-gray-400 font-bold text-sm px-4 hover:text-[#2A1D1A] transition-colors">ยกเลิก</button>
+        <button (click)="saveData()" class="bg-[#F9BD15] text-[#2A1D1A] px-6 py-2.5 rounded-xl text-sm font-black shadow-md hover:brightness-105 transition-all">
+          บันทึกข้อมูล
+        </button>
+      </ng-container>
+
+      <button routerLink="/staff" class="text-sm font-bold text-gray-400 hover:text-[#2A1D1A] px-3 transition-colors border-l border-gray-200 ml-2">
+        ← กลับ
+      </button>
+    </div>
   </div>
 
-  @if (errorMessage()) {
-    <div class="bg-red-50 border border-red-200 text-red-700 px-6 py-5 rounded-[2rem] font-bold text-sm shadow-sm text-center">
-      {{ errorMessage() }}
-    </div>
-  } @else {
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+  <div *ngIf="loading" class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm">
+    <div class="w-10 h-10 border-4 border-[#F9BD15] border-t-transparent rounded-full animate-spin mb-4"></div>
+  </div>
 
-      <div class="lg:col-span-4 space-y-6">
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-          <div class="flex items-center gap-3 mb-8 text-[#F9BD15]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลเบื้องต้น</h3>
-          </div>
+  <div *ngIf="!loading && errorMessage" class="text-center py-20 bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
+    <p class="font-bold text-red-500 text-base mb-2">❌ {{ errorMessage }}</p>
+  </div>
 
-          <div class="flex justify-center mb-8">
-            <input type="file" #profileFile (change)="onFileSelected($event)" accept="image/*" class="hidden">
-            <div class="w-36 h-36 rounded-full overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] border-4 border-white bg-gray-50 relative group">
-              
-              @if (isEditMode()) {
-                <img [src]="editData.image ? editData.image : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" alt="Profile Edit" class="w-full h-full object-cover">
-                <div (click)="profileFile.click()" class="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer hover:bg-black/50 transition-colors">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                </div>
-              } @else {
-                <img [src]="userProfile().image ? userProfile().image : 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" alt="Profile Data" class="w-full h-full object-cover">
-              }
+  <div *ngIf="!loading && profileData" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-            </div>
-          </div>
+    <div class="lg:col-span-4 space-y-6">
+      <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100" [class.opacity-50]="isEditPermissionMode">
+        <div class="flex items-center gap-3 mb-8 text-[#F9BD15]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลเบื้องต้น</h3>
+        </div>
 
-          <div class="space-y-4">
-            <div>
-              <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อเต็ม-นามสกุล</label>
-              @if (!isEditMode()) {
-                <div class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-gray-500 border border-transparent">{{ userProfile().fullName || 'ไม่มีข้อมูลชื่อ' }}</div>
-              } @else {
-                <input type="text" [(ngModel)]="editData.fullName" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
-              }
-            </div>
-            <div>
-              <label class="text-xs font-bold text-gray-400 mb-2 block">อีเมลติดต่อ</label>
-              @if (!isEditMode()) {
-                <div class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-gray-500 border border-transparent break-all">{{ userProfile().email || 'ไม่มีข้อมูลอีเมล' }}</div>
-              } @else {
-                <input type="email" [(ngModel)]="editData.email" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
-              }
-            </div>
-            <div>
-              <label class="text-xs font-bold text-gray-400 mb-2 block">รหัสประจำตัวบุคลากร</label>
-              @if (!isEditMode()) {
-                <div class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-gray-500 border border-transparent">{{ userProfile().staffCode || 'ไม่มีรหัสบุคลากร' }}</div>
-              } @else {
-                <input type="text" [(ngModel)]="editData.staffCode" disabled class="w-full p-4 bg-gray-100 text-gray-400 rounded-xl font-bold text-sm border border-transparent cursor-not-allowed outline-none shadow-none">
-              }
+        <div class="flex justify-center mb-8 relative">
+          <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" class="hidden">
+          <div class="w-36 h-36 rounded-full overflow-hidden shadow-sm border-4 border-white bg-gray-50 flex items-center justify-center relative group">
+            <img *ngIf="imagePreview || profileData.basic_info?.img_profile; else noImg" 
+                 [src]="imagePreview ? imagePreview : profileData.basic_info.img_profile" 
+                 alt="Profile" class="w-full h-full object-cover">
+            <ng-template #noImg>
+              <div class="text-[#2A1D1A] font-black text-3xl">{{ profileData.basic_info?.full_name?.charAt(0) || 'S' }}</div>
+            </ng-template>
+            <div *ngIf="isEditProfileMode" (click)="fileInput.click()" class="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+              <span class="text-white text-xs font-bold">เปลี่ยนรูป</span>
             </div>
           </div>
         </div>
 
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-          <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17"></path></svg>
-            <h3 class="font-black text-[#2A1D1A] text-lg">ใบรับรอง (Certificate)</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs font-bold text-gray-400 mb-2 block">ชื่อเต็ม</label>
+            <div *ngIf="!isEditProfileMode" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-[#2A1D1A]">{{ profileData.basic_info?.full_name || '-' }}</div>
+            <input *ngIf="isEditProfileMode" type="text" [(ngModel)]="editData.fullName" class="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all">
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="aspect-square bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center text-gray-300 italic relative cursor-pointer hover:bg-gray-100 transition-colors">
-              @if (isEditMode()) { <span class="absolute text-xs font-bold text-gray-400">+ เพิ่มรูป</span> }
-              @else { ไม่มีใบรับรอง }
-            </div>
-            <div class="aspect-square bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center text-gray-300 italic relative cursor-pointer hover:bg-gray-100 transition-colors">
-              @if (isEditMode()) { <span class="absolute text-xs font-bold text-gray-400">+ เพิ่มรูป</span> }
-              @else { ไม่มีใบรับรอง }
-            </div>
+          <div>
+            <label class="text-xs font-bold text-gray-400 mb-2 block">อีเมล</label>
+            <div *ngIf="!isEditProfileMode" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-[#2A1D1A] break-all">{{ profileData.basic_info?.email || '-' }}</div>
+            <input *ngIf="isEditProfileMode" type="email" [(ngModel)]="editData.email" class="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-gray-400 mb-2 block">รหัสประจำตัวพนักงาน</label>
+            <div class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-[#2A1D1A]">{{ profileData.basic_info?.staff_code || '-' }}</div>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="lg:col-span-8 space-y-6">
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-          <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-            <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลประวัติการศึกษา</h3>
+    <div class="lg:col-span-8 space-y-6">
+      
+      <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100" [class.opacity-50]="isEditPermissionMode">
+        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M6 18.8v-4L2 13v6a1 1 0 0 0 1 1h3z"/><path d="M12 22c4 0 7-3 7-7v-3.5l-7 3.2-7-3.2V15c0 4 3 7 7 7z"/></svg>
+          <h3 class="font-black text-[#2A1D1A] text-lg">ประวัติการศึกษา</h3>
+        </div>
+        
+        <div *ngIf="!isEditProfileMode">
+          <div *ngIf="!profileData?.education || profileData?.education?.length === 0" class="text-sm text-gray-400 font-bold py-2">ไม่มีข้อมูลการศึกษา</div>
+          <div class="space-y-4" *ngIf="profileData?.education && profileData?.education?.length > 0">
+            <div *ngFor="let edu of profileData.education" class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-2xl">
+              <div><label class="text-xs font-bold text-gray-400 mb-1 block">ระดับการศึกษา</label><div class="font-bold text-sm text-[#2A1D1A]">{{ edu.degree_level }}</div></div>
+              <div><label class="text-xs font-bold text-gray-400 mb-1 block">สาขาวิชา</label><div class="font-bold text-sm text-[#2A1D1A]">{{ edu.field_of_study }}</div></div>
+              <div><label class="text-xs font-bold text-gray-400 mb-1 block">สถาบัน (ปีที่สำเร็จ)</label><div class="font-bold text-sm text-[#2A1D1A]">{{ edu.university }} ({{ edu.graduation_year }})</div></div>
+            </div>
           </div>
-          
-          <div class="bg-gray-50 p-6 rounded-3xl grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label class="text-xs font-bold text-gray-400 mb-2 block">ระดับปริญญาที่สำเร็จ</label>
-              @if (!isEditMode()) {
-                <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-500 border border-transparent shadow-sm">{{ userProfile().degree || '-' }}</div>
-              } @else {
-                <input type="text" [(ngModel)]="editData.degree" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
-              }
+        </div>
+        
+        <div *ngIf="isEditProfileMode" class="space-y-4">
+          <div *ngFor="let edu of editData.education; let i = index" class="p-4 border border-gray-200 rounded-xl relative group">
+            <button (click)="removeEducation(i)" class="absolute top-2 right-2 w-6 h-6 bg-red-50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors" title="ลบประวัติการศึกษานี้">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+              <div><label class="text-xs font-bold text-gray-400 mb-2 block">ระดับการศึกษา</label><input type="text" [(ngModel)]="edu.degree_level" class="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all"></div>
+              <div><label class="text-xs font-bold text-gray-400 mb-2 block">สาขาวิชา</label><input type="text" [(ngModel)]="edu.field_of_study" class="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all"></div>
+              <div><label class="text-xs font-bold text-gray-400 mb-2 block">สถาบัน</label><input type="text" [(ngModel)]="edu.university" class="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all"></div>
+              <div><label class="text-xs font-bold text-gray-400 mb-2 block">ปี พ.ศ. ที่สำเร็จ</label><input type="text" [(ngModel)]="edu.graduation_year" class="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all"></div>
             </div>
-            <div>
-              <label class="text-xs font-bold text-gray-400 mb-2 block">สาขาวิชาเอก</label>
-              @if (!isEditMode()) {
-                <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-500 border border-transparent shadow-sm">{{ userProfile().major || '-' }}</div>
-              } @else {
-                <input type="text" [(ngModel)]="editData.major" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
-              }
-            </div>
-            <div>
-              <label class="text-xs font-bold text-gray-400 mb-2 block">สถาบันการศึกษา / มหาวิทยาลัย</label>
-              @if (!isEditMode()) {
-                <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-500 border border-transparent shadow-sm">{{ userProfile().university || '-' }}</div>
-              } @else {
-                <input type="text" [(ngModel)]="editData.university" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
-              }
-            </div>
-            <div>
-              <label class="text-xs font-bold text-gray-400 mb-2 block">ปี พ.ศ. ที่สำเร็จการศึกษา</label>
-              @if (!isEditMode()) {
-                <div class="w-full p-4 bg-white rounded-xl font-bold text-sm text-gray-500 border border-transparent shadow-sm">{{ userProfile().gradYear || '-' }}</div>
-              } @else {
-                <input type="text" [(ngModel)]="editData.gradYear" class="w-full p-4 bg-white rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:border-[#F9BD15] outline-none shadow-sm transition-all">
-              }
+          </div>
+          <button (click)="addEducation()" class="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-sm font-bold text-gray-400 hover:text-[#F9BD15] hover:border-[#F9BD15] hover:bg-[#F9BD15]/10 transition-colors mt-2">
+            + เพิ่มประวัติการศึกษา
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100" [class.opacity-50]="isEditPermissionMode">
+        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลความเชี่ยวชาญ</h3>
+        </div>
+        <div *ngIf="!isEditProfileMode">
+          <div class="flex flex-wrap gap-2" *ngIf="profileData?.expertise && profileData?.expertise?.length > 0">
+            <span *ngFor="let exp of profileData.expertise" class="px-4 py-2 bg-[#F9BD15]/10 text-[#F9BD15] rounded-xl font-bold text-xs">{{ exp }}</span>
+          </div>
+        </div>
+        <div *ngIf="isEditProfileMode">
+          <label class="text-xs font-bold text-gray-400 mb-2 block">ระบุความเชี่ยวชาญ (คั่นด้วยคอมม่า ,)</label>
+          <input type="text" [(ngModel)]="editData.expertise" class="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all">
+        </div>
+      </div>
+
+      <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100" [class.opacity-50]="isEditPermissionMode">
+        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+          <h3 class="font-black text-[#2A1D1A] text-lg">ใบประกาศนียบัตร / เกียรติบัตร</h3>
+        </div>
+
+        <div *ngIf="!isEditProfileMode">
+          <div *ngIf="!profileData?.certificates || profileData?.certificates?.length === 0" class="text-sm text-gray-400 font-bold">ไม่มีข้อมูลเกียรติบัตร</div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" *ngIf="profileData?.certificates && profileData?.certificates?.length > 0">
+            <div *ngFor="let certUrl of profileData.certificates" class="aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
+              <img [src]="certUrl" alt="Certificate" class="w-full h-full object-cover">
             </div>
           </div>
         </div>
 
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-          <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-            <h3 class="font-black text-[#2A1D1A] text-lg">ข้อมูลความเชี่ยวชาญพิเศษ</h3>
-          </div>
-          
-          @if (!isEditMode()) {
-            <div class="flex flex-wrap gap-3">
-              @for (skill of expertiseArray; track skill) {
-                <span class="px-5 py-2 bg-[#FEF5DD] text-[#E0A812] font-black text-sm rounded-full">{{ skill }}</span>
-              } @empty {
-                <span class="text-xs font-bold text-gray-400 italic">ยังไม่มีการระบุข้อมูลความเชี่ยวชาญ</span>
-              }
+        <div *ngIf="isEditProfileMode">
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div *ngFor="let certUrl of editData.existingCertificates; let i = index" class="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm group">
+              <img [src]="certUrl" alt="Certificate" class="w-full h-full object-cover">
+              <button (click)="removeExistingCertificate(certUrl, i)" class="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
             </div>
-          } @else {
-            <label class="text-xs font-bold text-gray-400 mb-2 block">ระบุหัวข้อความเชี่ยวชาญ (คั่นด้วยเครื่องหมายคอมม่า ,)</label>
-            <input type="text" [(ngModel)]="editData.expertise" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-[#2A1D1A] border border-gray-200 focus:bg-white focus:border-[#F9BD15] outline-none shadow-sm transition-all">
-          }
+            <div *ngFor="let prev of editData.newCertificatesPreview; let i = index" class="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border-2 border-green-400 shadow-sm group">
+              <img [src]="prev" alt="New Certificate" class="w-full h-full object-cover">
+              <div class="absolute bottom-0 left-0 w-full bg-green-500/80 text-white text-[10px] font-bold text-center py-1">รออัปโหลด...</div>
+              <button (click)="removeNewCertificate(i)" class="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            <label class="aspect-[4/3] rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-[#F9BD15]/10 hover:border-[#F9BD15] transition-colors group">
+              <span class="text-3xl text-gray-300 group-hover:text-[#F9BD15] transition-colors">+</span>
+              <span class="text-xs font-bold text-gray-400 mt-2 group-hover:text-[#F9BD15] transition-colors">เพิ่มรูปภาพใหม่</span>
+              <input type="file" multiple accept="image/*" (change)="onCertificateSelected($event)" class="hidden">
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100" [class.opacity-50]="isEditPermissionMode">
+        <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <h3 class="font-black text-[#2A1D1A] text-lg">รางวัลและความสำเร็จ</h3>
+        </div>
+
+        <div *ngIf="!isEditProfileMode">
+          <div *ngIf="!profileData?.achievements || profileData?.achievements?.length === 0" class="text-sm text-gray-400 font-bold">ไม่มีข้อมูลรางวัลและความสำเร็จ</div>
+          <div class="space-y-3" *ngIf="profileData?.achievements && profileData?.achievements?.length > 0">
+            <div *ngFor="let ach of profileData.achievements" class="flex justify-between items-center p-4 bg-gray-50 rounded-2xl text-sm font-bold text-[#2A1D1A]">
+              <span>🏆 {{ ach.achievement_name }}</span>
+              <span class="text-xs text-gray-400 bg-white px-3 py-1 rounded-full border border-gray-100">{{ ach.achievement_year }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="isEditProfileMode" class="space-y-3">
+          <div *ngFor="let ach of editData.achievements; let i = index" class="flex gap-2 items-center">
+            <input type="text" [(ngModel)]="ach.achievement_name" placeholder="ชื่อรางวัล/ความสำเร็จ" class="flex-1 p-3.5 border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-colors">
+            <input type="text" [(ngModel)]="ach.achievement_year" placeholder="ปี พ.ศ." class="w-24 p-3.5 border border-gray-200 rounded-xl text-sm font-bold text-center outline-none focus:border-[#F9BD15] transition-colors">
+            <button (click)="removeAchievement(i)" class="p-3.5 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-colors" title="ลบรางวัล">
+               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+            </button>
+          </div>
+          <button (click)="addAchievement()" class="w-full py-4 border-2 border-dashed border-gray-300 rounded-xl text-sm font-bold text-gray-400 hover:text-[#F9BD15] hover:border-[#F9BD15] hover:bg-[#F9BD15]/10 transition-colors mt-2">
+            + เพิ่มรางวัล / ความสำเร็จ
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="canViewPermissions" class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100" [class.ring-2]="isEditPermissionMode" [class.ring-blue-400]="isEditPermissionMode" [class.opacity-50]="isEditProfileMode">
+        <div class="flex flex-col md:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div class="flex items-center gap-3">
+            <div class="text-[#F9BD15]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M9 12h6"/><path d="M12 9v6"/></svg>
+            </div>
+            <h3 class="font-black text-[#2A1D1A] text-lg">สิทธิ์การใช้งานระบบ</h3>
+          </div>
+          <div *ngIf="isEditPermissionMode" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold">
+            กำลังอยู่ในโหมดจัดการสิทธิ์
+          </div>
+        </div>
+        
+        <div class="overflow-x-auto mt-4">
+          <table class="w-full min-w-[700px]">
+            <thead class="text-xs text-gray-400 font-bold border-b border-gray-100">
+                <tr>
+                  <th class="text-left py-4 px-2">ฟีเจอร์ / โมดูล</th>
+                  <th class="py-4 text-center w-36">ดูข้อมูล (VIEW)</th>
+                  <th class="py-4 text-center w-36">เพิ่มข้อมูล (ADD)</th>
+                  <th class="py-4 text-center w-36">แก้ไข/ลบ (EDIT)</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                <tr *ngFor="let mod of modules" class="hover:bg-gray-50/50 transition-colors">
+                  <td class="py-4 px-2">
+                    <p class="font-black text-sm text-[#2A1D1A]">{{ mod.name }}</p>
+                    <p class="text-[10px] text-gray-400 font-bold mt-0.5">{{ mod.subName }}</p>
+                  </td>
+                  <td class="px-2 py-3 align-middle text-center">
+                    <ng-container *ngIf="mod.isDashboard">
+                      <label class="relative inline-flex items-center cursor-pointer justify-center">
+                        <input type="checkbox" [(ngModel)]="mod.viewAccess" [disabled]="!isEditPermissionMode" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#F9BD15] peer-disabled:opacity-50"></div>
+                      </label>
+                    </ng-container>
+                    <ng-container *ngIf="!mod.isDashboard">
+                      <select [(ngModel)]="mod.view" [disabled]="!isEditPermissionMode" class="w-full text-xs font-bold border rounded-xl py-2 px-3 outline-none appearance-none bg-white text-[#2A1D1A] disabled:bg-gray-50 disabled:text-gray-400">
+                        <option value="all">ทั้งหมด (All)</option><option value="dept">ภายในภาค</option><option value="own">เฉพาะตนเอง</option><option value="none">ไม่มีสิทธิ์</option>
+                      </select>
+                    </ng-container>
+                  </td>
+                  <td class="px-2 py-3 align-middle text-center">
+                    <select [(ngModel)]="mod.add" [disabled]="!isEditPermissionMode || mod.isDashboard" class="w-full text-xs font-bold border rounded-xl py-2 px-3 outline-none appearance-none bg-white text-[#2A1D1A] disabled:bg-gray-50 disabled:text-gray-400 disabled:opacity-50">
+                      <option value="all">ทั้งหมด (All)</option><option value="dept">ภายในภาค</option><option value="own">เฉพาะตนเอง</option><option value="none">ไม่มีสิทธิ์</option>
+                    </select>
+                  </td>
+                  <td class="px-2 py-3 align-middle text-center">
+                    <select [(ngModel)]="mod.edit" [disabled]="!isEditPermissionMode || mod.isDashboard" class="w-full text-xs font-bold border rounded-xl py-2 px-3 outline-none appearance-none bg-white text-[#2A1D1A] disabled:bg-gray-50 disabled:text-gray-400 disabled:opacity-50">
+                      <option value="all">ทั้งหมด (All)</option><option value="dept">ภายในภาค</option><option value="own">เฉพาะตนเอง</option><option value="none">ไม่มีสิทธิ์</option>
+                    </select>
+                  </td>
+                </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
     </div>
-  }
+  </div>
 </div>

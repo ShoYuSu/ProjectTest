@@ -1,119 +1,140 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms'; 
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
 export class ProfileComponent implements OnInit {
-  private http = inject(HttpClient);
-  private route = inject(ActivatedRoute);
+  profileData: any = null;
+  loading = true;
+  errorMessage = '';
 
-  // 🌟 ใช้ Signal เพื่อบังคับให้ Angular วาดหน้าจอใหม่เสมอเมื่อค่าเปลี่ยน
-  isEditMode = signal<boolean>(false);
-  isCurrentUser = signal<boolean>(false); 
-  errorMessage = signal<string>(''); 
-  personIdFromUrl: string | null = null;
-
-  userProfile = signal<any>({
-    person_id: 0,
-    fullName: '',
-    email: '',
-    staffCode: '',
-    position: '',
-    deptId: null,
-    image: null,
-    degree: '',
-    major: '',
-    university: '',
-    gradYear: '',
-    expertise: ''
-  });
-
-  // ตัวแปร editData เป็น Object ธรรมดาเพื่อใช้คู่กับ [(ngModel)] ในแบบฟอร์ม
+  canEditProfile = false;     
+  canViewPermissions = false; 
+  canEditPermissions = false; 
+  
+  isEditProfileMode = false;
+  isEditPermissionMode = false;
+  
   editData: any = {};
+  selectedFile: File | null = null;
+  imagePreview: string | null = null;
 
-  get expertiseArray() {
-    if (!this.userProfile().expertise) return [];
-    return this.userProfile().expertise.split(',').map((item: string) => item.trim()).filter((item: string) => item !== '');
-  }
+  modules = [
+    { id: 1, name: 'Dashboard', subName: 'แดชบอร์ด', moduleCode: 'Dashboard', isDashboard: true, viewAccess: false, view: 'none', add: 'none', edit: 'none' },
+    { id: 2, name: 'Staff Info', subName: 'ข้อมูลบุคลากร', moduleCode: 'Staff_info', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' },
+    { id: 3, name: 'Research Info', subName: 'ข้อมูลวิจัย', moduleCode: 'Research_info', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' },
+    { id: 4, name: 'Plans / Projects', subName: 'แผนงาน / โครงการ', moduleCode: 'Plan_Project', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' },
+    { id: 5, name: 'Training', subName: 'ข้อมูลอบรม', moduleCode: 'Training', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' }
+  ];
 
-  ngOnInit() {
+  constructor(
+    private route: ActivatedRoute,
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone          
+  ) {}
+
+  ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      this.personIdFromUrl = params['id'] || null;
-      this.loadProfileData();
-    });
-  }
-
-  loadProfileData() {
-    const currentUserId = localStorage.getItem('user_id') || '14';
-    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
-    
-    let url = 'http://localhost:8080/api/get_staff_profile.php';
-    if (this.personIdFromUrl) {
-      url += `?id=${this.personIdFromUrl}`;
-    }
-
-    this.http.get<any>(url, { headers }).subscribe({
-      next: (res) => {
-        // 🌟 เพิ่มจุดเช็ค Log: กด F12 ดูใน Console ว่าข้อมูลจาก DB มาครบไหม
-        console.log('📡 ข้อมูลจาก API:', res); 
-
-        if (res && res.status === 'success' && res.data) {
-          const basic = res.data.basic_info || {};
-          
-          let degree = ''; let major = ''; let university = ''; let gradYear = '';
-          if (res.data.education && res.data.education.length > 0) {
-            const edu = res.data.education[0];
-            degree = edu.degree || '';
-            major = edu.major || '';
-            university = edu.university || '';
-            gradYear = edu.graduation_year || '';
-          }
-
-          const expertiseStr = (res.data.expertise && Array.isArray(res.data.expertise)) 
-                                ? res.data.expertise.join(', ') : '';
-
-          // 🌟 อัปเดตข้อมูลเข้า Signal
-          this.userProfile.set({
-            person_id: res.data.person_id || 0,
-            fullName: basic.full_name || '',
-            email: basic.email || '',
-            staffCode: basic.staff_code || '',
-            position: basic.position || '',
-            deptId: basic.dept_id || null,
-            image: basic.img_profile || null,
-            degree: degree,
-            major: major,
-            university: university,
-            gradYear: gradYear,
-            expertise: expertiseStr
-          });
-          
-          this.editData = { ...this.userProfile() };
-          this.errorMessage.set('');
-
-          const role = localStorage.getItem('role') || '';
-          const permsString = localStorage.getItem('permissions') || '';
-          const isAdmin = role === 'admin';
-          const hasEditAllPermission = permsString.toLowerCase().includes('staff_info,edit,all');
-
-          this.isCurrentUser.set(res.is_owner || isAdmin || hasEditAllPermission);
-        } else {
-          this.errorMessage.set(res?.message || 'ไม่สามารถเข้าถึงประวัติพนักงานท่านนี้ได้');
-        }
-      },
-      error: (err) => {
-        console.error('API Error:', err);
-        this.errorMessage.set('ไม่สามารถเชื่อมต่อฐานข้อมูล หรือเกิดข้อผิดพลาดจากเซิร์ฟเวอร์');
+      const id = params['id'];
+      if (id) {
+        this.fetchProfileData(id);
+      } else {
+        this.errorMessage = 'ไม่พบรหัสบุคลากร';
+        this.loading = false;
       }
     });
+  }
+
+  fetchProfileData(id: string): void {
+    this.loading = true;
+    this.errorMessage = '';
+
+    const currentUserId = localStorage.getItem('user_id') || '';
+    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+
+    this.http.get<any>(`http://localhost:8080/api/get_staff_profile.php?id=${id}`, { headers })
+      .subscribe({
+        next: (response) => {
+          this.ngZone.run(() => {
+            if (response && response.status === 'success') {
+              this.profileData = response.data;
+              
+              const perms = localStorage.getItem('permissions') || '';
+              const myDeptId = localStorage.getItem('dept_id') || '';
+              const role = localStorage.getItem('role') || '';
+              
+              this.canEditProfile = response.is_owner;
+              
+              const hasEditAll = perms.toLowerCase().includes('staff_info,edit,all') || role === 'admin';
+              const hasEditDept = perms.toLowerCase().includes('staff_info,edit,department') || perms.toLowerCase().includes('staff_info,edit,dept');
+              
+              let isSameDept = false;
+              if (myDeptId && this.profileData.basic_info.dept_id) {
+                isSameDept = (myDeptId == this.profileData.basic_info.dept_id);
+              }
+
+              const hasEditPermission = hasEditAll || (hasEditDept && isSameDept);
+
+              this.canViewPermissions = hasEditPermission;
+              this.canEditPermissions = !response.is_owner && hasEditPermission;
+
+              this.mapPermissionsToModules(response.data.permissions);
+            } else {
+              this.errorMessage = response?.message || 'เกิดข้อผิดพลาด';
+            }
+            this.loading = false;
+            this.cdr.detectChanges(); 
+          });
+        },
+        error: (err) => {
+          this.ngZone.run(() => {
+            this.errorMessage = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ PHP ได้ (ตรวจสอบพอร์ต 8080)';
+            this.loading = false;
+            this.cdr.detectChanges();
+          });
+        }
+      });
+  }
+
+  toggleEditProfile() {
+    this.isEditProfileMode = true;
+    this.isEditPermissionMode = false;
+    this.imagePreview = null;
+    
+    this.editData = {
+      update_type: 'profile',
+      person_id: this.profileData.person_id,
+      fullName: this.profileData.basic_info.full_name,
+      email: this.profileData.basic_info.email,
+      expertise: ''
+    };
+
+    // 🌟 ดึงข้อมูลการศึกษา (Education) เข้าเป็น Array เพื่อให้เพิ่ม/ลบได้หลายใบ
+    this.editData.education = this.profileData.education ? JSON.parse(JSON.stringify(this.profileData.education)) : [];
+
+    if (this.profileData.expertise && this.profileData.expertise.length > 0) {
+      this.editData.expertise = this.profileData.expertise.join(', ');
+    }
+
+    this.editData.achievements = this.profileData.achievements ? JSON.parse(JSON.stringify(this.profileData.achievements)) : [];
+    this.editData.existingCertificates = this.profileData.certificates ? [...this.profileData.certificates] : [];
+    this.editData.deletedCertificates = []; 
+    this.editData.newCertificates = []; 
+    this.editData.newCertificatesPreview = []; 
+  }
+
+  cancelEditProfile() {
+    this.isEditProfileMode = false;
+    this.imagePreview = null;
   }
 
   onFileSelected(event: any) {
@@ -121,44 +142,138 @@ export class ProfileComponent implements OnInit {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        this.editData.image = reader.result as string;
+        this.editData.newImage = reader.result as string; 
+        this.imagePreview = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
   }
 
-  toggleEdit() {
-    this.isEditMode.set(true);
-    this.editData = { ...this.userProfile() }; 
+  // ==========================================
+  // 🌟 ฟังก์ชันจัดการประวัติการศึกษาหลายใบ
+  // ==========================================
+  addEducation() {
+    if (!this.editData.education) this.editData.education = [];
+    this.editData.education.push({ degree_level: '', field_of_study: '', university: '', graduation_year: '' });
   }
 
-  cancelEdit() {
-    this.isEditMode.set(false);
+  removeEducation(index: number) {
+    this.editData.education.splice(index, 1);
   }
 
-  saveProfile() {
-    const currentUserId = localStorage.getItem('user_id') || '14';
-    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+  // ==========================================
+  // ฟังก์ชันจัดการใบประกาศนียบัตร
+  // ==========================================
+  onCertificateSelected(event: any) {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      for (let i = 0; i < files.length; i++) {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          this.editData.newCertificatesPreview.push(e.target.result);
+          this.editData.newCertificates.push(e.target.result);
+        };
+        reader.readAsDataURL(files[i]);
+      }
+    }
+  }
 
-    const payload = {
-      ...this.editData,
-      newImage: this.editData.image 
-    };
+  removeExistingCertificate(url: string, index: number) {
+    this.editData.deletedCertificates.push(url);
+    this.editData.existingCertificates.splice(index, 1);
+  }
 
-    this.http.post('http://localhost:8080/api/get_staff_profile.php', payload, { headers }).subscribe({
-      next: (res: any) => {
-        if (res && res.status === 'success') {
-          this.isEditMode.set(false);
-          alert('อัปเดตข้อมูลโปรไฟล์เรียบร้อยแล้ว!');
-          this.loadProfileData(); 
+  removeNewCertificate(index: number) {
+    this.editData.newCertificates.splice(index, 1);
+    this.editData.newCertificatesPreview.splice(index, 1);
+  }
+
+  // ==========================================
+  // ฟังก์ชันจัดการรางวัลและความสำเร็จ
+  // ==========================================
+  addAchievement() {
+    if (!this.editData.achievements) this.editData.achievements = [];
+    this.editData.achievements.push({ achievement_name: '', achievement_year: new Date().getFullYear().toString() });
+  }
+
+  removeAchievement(index: number) {
+    this.editData.achievements.splice(index, 1);
+  }
+
+  toggleEditPermissions() {
+    this.isEditPermissionMode = true;
+    this.isEditProfileMode = false;
+  }
+
+  cancelEditPermissions() {
+    this.isEditPermissionMode = false;
+    this.mapPermissionsToModules(this.profileData.permissions);
+  }
+
+  mapPermissionsToModules(apiPerms: any[]) {
+    this.modules.forEach(m => { m.view = 'none'; m.add = 'none'; m.edit = 'none'; m.viewAccess = false; });
+    if (!apiPerms || apiPerms.length === 0) return;
+
+    apiPerms.forEach(p => {
+      const mod = this.modules.find(m => m.moduleCode === p.module_name);
+      if (mod) {
+        if (p.module_name === 'Dashboard' && p.action === 'view') {
+          mod.viewAccess = (p.scope === 'all');
         } else {
-          alert('บันทึกไม่สำเร็จ: ' + (res?.message || 'Unknown error'));
+          let scope = p.scope === 'self' ? 'own' : (p.scope === 'department' ? 'dept' : p.scope);
+          if (p.action === 'view') mod.view = scope;
+          if (p.action === 'add') mod.add = scope;
+          if (p.action === 'edit') mod.edit = scope;
         }
-      },
-      error: (err) => {
-        console.error(err);
-        alert('เชื่อมต่อเซิร์ฟเวอร์เพื่อบันทึกข้อมูลล้มเหลว');
       }
     });
+  }
+
+  private mapScopeToDatabase(scopeValue: string): string {
+    if (scopeValue === 'own') return 'self';
+    if (scopeValue === 'dept') return 'department';
+    return scopeValue; 
+  }
+
+  saveData() {
+    const currentUserId = localStorage.getItem('user_id') || '';
+    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+    
+    let payload: any = {};
+
+    if (this.isEditProfileMode) {
+      payload = { ...this.editData };
+    } 
+    else if (this.isEditPermissionMode) {
+      const permsToSend = this.modules.map(mod => ({
+        module_name: mod.moduleCode,
+        view: mod.isDashboard ? (mod.viewAccess ? 'all' : 'none') : this.mapScopeToDatabase(mod.view),
+        add: this.mapScopeToDatabase(mod.add),
+        edit: this.mapScopeToDatabase(mod.edit)
+      }));
+
+      payload = {
+        update_type: 'permissions',
+        target_user_id: this.profileData.basic_info.user_id,
+        permissions: permsToSend
+      };
+    }
+
+    this.http.post('http://localhost:8080/api/get_staff_profile.php', payload, { headers })
+      .subscribe({
+        next: (res: any) => {
+          if (res.status === 'success') {
+            this.isEditProfileMode = false;
+            this.isEditPermissionMode = false;
+            alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
+            this.fetchProfileData(this.profileData.person_id);
+          } else {
+            alert('บันทึกไม่สำเร็จ: ' + res.message);
+          }
+        },
+        error: (err) => {
+          alert('เชื่อมต่อเซิร์ฟเวอร์เพื่อบันทึกข้อมูลล้มเหลว (พอร์ต 8080)');
+        }
+      });
   }
 }
