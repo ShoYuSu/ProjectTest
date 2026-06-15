@@ -169,24 +169,46 @@
     </div>
 
     <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <div class="flex justify-between items-center mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <div class="flex items-center gap-3 text-[#F9BD15]">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <h3 class="font-black text-[#2A1D1A] text-lg">ชื่อผู้รับผิดชอบ</h3>
+            <h3 class="font-black text-[#2A1D1A] text-lg">รายชื่อผู้รับผิดชอบ</h3>
           </div>
-          <button class="text-[#F9BD15] font-black text-xs hover:brightness-110">+ เพิ่มรายชื่อ</button>
+          <button (click)="addParticipant()" class="text-sm font-bold text-[#F9BD15] hover:text-yellow-600 transition-colors flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
+            เพิ่มรายชื่อ
+          </button>
         </div>
         
-        <input type="text" placeholder="ค้นหาชื่อผู้รับผิดชอบ" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none mb-4 transition-all">
-        
-        <div class="bg-gray-50 rounded-2xl p-4">
-          <div class="flex justify-between py-3 px-4 border-b border-gray-200 text-xs font-bold text-gray-400">
-              <span>ชื่อ-นามสกุล</span>
-              <span>แก้ไข</span>
+        <div class="relative mb-6">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           </div>
-          <div class="flex justify-between py-4 px-4 items-center">
-              <span class="font-bold text-sm text-[#2A1D1A]">ดร. ลอร์ดโวลเดอมอร์</span>
-              <button class="text-red-400 hover:text-red-600 font-bold text-xs transition-colors">ลบ</button>
+          <input type="text" [(ngModel)]="searchQuery" placeholder="ค้นหาชื่อผู้รับผิดชอบ..." class="w-full pl-11 p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
+        </div>
+        
+        <div class="bg-gray-50/50 rounded-2xl overflow-hidden border border-gray-50">
+          <div class="grid grid-cols-12 px-6 py-4 border-b border-gray-100 bg-gray-50/80">
+            <div class="col-span-10 text-xs font-bold text-gray-400">ชื่อ-นามสกุล</div>
+            <div class="col-span-2 text-xs font-bold text-gray-400 text-right">จัดการ</div>
+          </div>
+          
+          <div class="divide-y divide-gray-100">
+            @for (p of participants; track $index) {
+              <div class="grid grid-cols-12 px-6 py-4 items-center bg-white hover:bg-gray-50 transition-colors">
+                
+                <div class="col-span-10 pr-4">
+                   <input type="text" [(ngModel)]="p.name" placeholder="กรอกชื่อ-นามสกุล..." class="w-full md:w-3/4 p-2 bg-transparent text-sm font-black text-[#2A1D1A] outline-none border-b border-transparent focus:border-[#F9BD15] transition-colors">
+                </div>
+  
+                <div class="col-span-2 flex justify-end items-center gap-1">
+                  <button (click)="removeParticipant($index)" [disabled]="participants.length === 1" class="text-xs font-bold text-red-400 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed px-2 py-1 transition-colors">
+                    ลบ
+                  </button>
+                </div>
+  
+              </div>
+            }
           </div>
         </div>
     </div>
@@ -199,11 +221,11 @@
           </div>
           <div class="space-y-4">
             <div>
-                <label class="text-xs font-bold text-gray-400 mb-2 block">งบประมาณอนุมัติ</label>
+                <label class="text-xs font-bold text-gray-400 mb-2 block">งบประมาณอนุมัติ (บาท)</label>
                 <input type="number" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
             </div>
             <div>
-                <label class="text-xs font-bold text-gray-400 mb-2 block">งบประมาณใช้จริง</label>
+                <label class="text-xs font-bold text-gray-400 mb-2 block">งบประมาณใช้จริง (บาท)</label>
                 <input type="number" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all">
             </div>
           </div>

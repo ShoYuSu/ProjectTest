@@ -1,6 +1,6 @@
 <div class="max-w-[800px] mx-auto animate-in fade-in duration-500 py-10">
 
-  <div class="bg-white rounded-[2rem] p-8 md:p-12 shadow-sm border border-gray-100 space-y-10">
+  <div class="bg-white rounded-[2rem] p-8 md:p-12 shadow-sm border border-gray-100 space-y-8">
     
     <div class="border border-gray-100 rounded-[1.5rem] p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
@@ -48,68 +48,38 @@
     <div class="border border-gray-100 rounded-[1.5rem] p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
       <div class="flex items-center gap-3 mb-6">
         <div class="text-[#F9BD15]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         </div>
-        <h3 class="text-lg font-black text-[#2A1D1A]">ข้อมูลอบรม สัมมนา</h3>
+        <h3 class="text-lg font-black text-[#2A1D1A]">รายละเอียดการอบรม สัมมนา</h3>
       </div>
-      <div>
-        <label class="block text-xs font-bold text-gray-500 mb-2">ชื่อหัวข้อการอบรม สัมมนา</label>
-        <input type="text" [(ngModel)]="trainingData.topic" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
-      </div>
-    </div>
-
-    <div class="border border-gray-100 rounded-[1.5rem] p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="text-[#F9BD15]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
-        </div>
-        <h3 class="text-lg font-black text-[#2A1D1A]">วันที่เข้าร่วม</h3>
-      </div>
+      
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-xs font-bold text-gray-500 mb-2">เลือกวันที่เข้าร่วม (เริ่ม)</label>
-<div class="border border-gray-100 rounded-[1.5rem] p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="text-[#F9BD15]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+        
+        <div class="md:col-span-2">
+          <label class="block text-xs font-bold text-gray-500 mb-2">ชื่อหัวข้อการอบรม สัมมนา</label>
+          <input type="text" [(ngModel)]="trainingData.topic" placeholder="ระบุชื่อหัวข้อ..." class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
         </div>
-        <h3 class="text-lg font-black text-[#2A1D1A]">วันที่เข้าร่วม</h3>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-xs font-bold text-gray-500 mb-2">เลือกวันที่เข้าร่วม (เริ่ม)</label>
-          <input type="date" [(ngModel)]="trainingData.startDate" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold text-gray-500 focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-500 mb-2">ถึงวันที่สิ้นสุด</label>
-          <input type="date" [(ngModel)]="trainingData.endDate" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold text-gray-500 focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
-        </div>
-      </div>
-    </div>
 
-    <div class="border border-gray-100 rounded-[1.5rem] p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="text-[#F9BD15]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-bold text-gray-500 mb-2">หน่วยงานหรือสถานที่ ที่จัด</label>
+          <input type="text" [(ngModel)]="trainingData.location" placeholder="ระบุสถานที่จัดงาน..." class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
         </div>
-        <h3 class="text-lg font-black text-[#2A1D1A]">หน่วยงานหรือสถานที่ ที่จัด</h3>
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-gray-500 mb-2">ชื่อหน่วยงานหรือสถานที่</label>
-        <input type="text" [(ngModel)]="trainingData.location" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
-      </div>
-    </div>
 
-    <div class="border border-gray-100 rounded-[1.5rem] p-6 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-      <div class="flex items-center gap-3 mb-6">
-        <div class="text-[#F9BD15]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
+        <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label class="block text-xs font-bold text-gray-500 mb-2">วันที่เข้าร่วม (เริ่ม)</label>
+            <input type="date" [(ngModel)]="trainingData.startDate" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold text-gray-500 focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-500 mb-2">ถึงวันที่สิ้นสุด</label>
+            <input type="date" [(ngModel)]="trainingData.endDate" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold text-gray-500 focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-500 mb-2">ค่าใช้จ่าย (บาท)</label>
+            <input type="number" [(ngModel)]="trainingData.cost" placeholder="0" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
+          </div>
         </div>
-        <h3 class="text-lg font-black text-[#2A1D1A]">ค่าใช้จ่าย</h3>
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-gray-500 mb-2">ใส่จำนวนเงินค่าใช้จ่ายในการจัดอบรม สัมมนา (บาท)</label>
-        <input type="number" [(ngModel)]="trainingData.cost" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
+
       </div>
     </div>
 
@@ -118,70 +88,69 @@
         <div class="text-[#F9BD15]">
           <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         </div>
-        <h3 class="text-lg font-black text-[#2A1D1A]">ประโยชน์ที่คาดว่าจะได้รับ</h3>
+        <h3 class="text-lg font-black text-[#2A1D1A]">ประโยชน์และการนำไปใช้</h3>
       </div>
       
       <div class="space-y-6">
-        <div class="relative w-full md:w-2/3">
-          
-          @if (isDropdownOpen) {
-            <div class="fixed inset-0 z-10" (click)="isDropdownOpen = false"></div>
-          }
+        
+        <div>
+          <label class="block text-xs font-bold text-gray-500 mb-2">ประโยชน์ที่คาดว่าจะได้รับ</label>
+          <div class="relative w-full">
+            @if (isDropdownOpen) {
+              <div class="fixed inset-0 z-10" (click)="isDropdownOpen = false"></div>
+            }
 
-          <button (click)="toggleDropdown()" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors flex justify-between items-center z-20 relative">
-            <span [class.text-gray-400]="!trainingData.benefits" [class.text-[#2A1D1A]]="trainingData.benefits">
-              {{ trainingData.benefits || 'เลือกหัวข้อประโยชน์ที่ได้รับ' }}
-            </span>
-            <svg class="text-gray-400 transition-transform duration-200" [class.rotate-180]="isDropdownOpen" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-          </button>
+            <button (click)="toggleDropdown()" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors flex justify-between items-center z-20 relative">
+              <span [class.text-gray-400]="!trainingData.benefits" [class.text-[#2A1D1A]]="trainingData.benefits">
+                {{ trainingData.benefits || 'เลือกหัวข้อประโยชน์ที่ได้รับ' }}
+              </span>
+              <svg class="text-gray-400 transition-transform duration-200" [class.rotate-180]="isDropdownOpen" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
 
-          @if (isDropdownOpen) {
-            <div class="absolute z-20 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              
-              <div class="max-h-60 overflow-y-auto">
-                @for (opt of benefitOptions; track $index) {
-                  <div class="group flex items-center justify-between p-3 hover:bg-gray-50 border-b border-gray-50 transition-colors">
-                    
-                    @if (editingIndex === $index) {
-                      <input type="text" [(ngModel)]="editValue" (click)="$event.stopPropagation()" class="flex-1 w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-bold outline-none focus:border-[#F9BD15]">
-                      <button (click)="saveEdit($index, $event)" class="ml-2 px-3 py-2 bg-[#F9BD15] text-[#2A1D1A] rounded-lg text-xs font-bold hover:brightness-105">บันทึก</button>
-                    } 
-                    @else {
-                      <div (click)="selectBenefit(opt)" class="flex-1 cursor-pointer text-sm font-bold text-gray-600 group-hover:text-[#2A1D1A] transition-colors py-1 pl-1">
-                        {{ opt }}
-                      </div>
-                      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button (click)="startEdit($index, opt, $event)" class="w-8 h-8 rounded-lg flex items-center justify-center text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        </button>
-                        <button (click)="deleteBenefit($index, $event)" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                        </button>
-                      </div>
-                    }
-                  </div>
-                }
+            @if (isDropdownOpen) {
+              <div class="absolute z-20 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div class="max-h-60 overflow-y-auto">
+                  @for (opt of benefitOptions; track $index) {
+                    <div class="group flex items-center justify-between p-3 hover:bg-gray-50 border-b border-gray-50 transition-colors">
+                      @if (editingIndex === $index) {
+                        <input type="text" [(ngModel)]="editValue" (click)="$event.stopPropagation()" class="flex-1 w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-bold outline-none focus:border-[#F9BD15]">
+                        <button (click)="saveEdit($index, $event)" class="ml-2 px-3 py-2 bg-[#F9BD15] text-[#2A1D1A] rounded-lg text-xs font-bold hover:brightness-105">บันทึก</button>
+                      } 
+                      @else {
+                        <div (click)="selectBenefit(opt)" class="flex-1 cursor-pointer text-sm font-bold text-gray-600 group-hover:text-[#2A1D1A] transition-colors py-1 pl-1">
+                          {{ opt }}
+                        </div>
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button (click)="startEdit($index, opt, $event)" class="w-8 h-8 rounded-lg flex items-center justify-center text-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                          </button>
+                          <button (click)="deleteBenefit($index, $event)" class="w-8 h-8 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+                <div class="p-3 bg-gray-50 flex items-center gap-2">
+                  <input type="text" [(ngModel)]="newBenefit" (click)="$event.stopPropagation()" placeholder="พิมพ์หัวข้อใหม่..." class="flex-1 w-full p-2.5 bg-white border border-gray-100 rounded-lg text-sm font-bold outline-none focus:border-[#F9BD15] transition-colors">
+                  <button (click)="addNewBenefit($event)" [disabled]="!newBenefit.trim()" class="px-4 py-2.5 bg-[#2A1D1A] text-[#F9BD15] rounded-lg text-xs font-bold hover:bg-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    เพิ่ม
+                  </button>
+                </div>
               </div>
-
-              <div class="p-3 bg-gray-50 flex items-center gap-2">
-                <input type="text" [(ngModel)]="newBenefit" (click)="$event.stopPropagation()" placeholder="พิมพ์หัวข้อใหม่..." class="flex-1 w-full p-2.5 bg-white border border-gray-100 rounded-lg text-sm font-bold outline-none focus:border-[#F9BD15] transition-colors">
-                <button (click)="addNewBenefit($event)" [disabled]="!newBenefit.trim()" class="px-4 py-2.5 bg-[#2A1D1A] text-[#F9BD15] rounded-lg text-xs font-bold hover:bg-black disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-                  เพิ่ม
-                </button>
-              </div>
-
-            </div>
-          }
+            }
+          </div>
         </div>
 
         <div>
           <label class="block text-xs font-bold text-gray-500 mb-2">รายละเอียดการนำไปใช้</label>
-          <textarea [(ngModel)]="trainingData.implementation" rows="3" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors resize-none"></textarea>
+          <textarea [(ngModel)]="trainingData.implementation" rows="3" placeholder="ระบุการนำไปใช้..." class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors resize-none"></textarea>
         </div>
 
         <div>
           <label class="block text-xs font-bold text-gray-500 mb-2">หมายเหตุ</label>
-          <input type="text" [(ngModel)]="trainingData.remarks" class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
+          <input type="text" [(ngModel)]="trainingData.remarks" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)..." class="w-full p-4 bg-gray-50 border border-transparent rounded-xl text-sm font-bold focus:border-[#F9BD15] focus:bg-white outline-none transition-colors">
         </div>
       </div>
     </div>
