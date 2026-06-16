@@ -30,88 +30,116 @@ export class LayoutComponent implements OnInit {
 
   isProfileMenuOpen = false;
   userName: string = 'ADMIN';
-  userRoleDisplay: string = 'SYSTEM ADMIN';
-  userInitial: string = 'A';
+  userRole: string = 'ผู้ดูแลระบบ';
+  userImage: string = 'https://upload.wikimedia.org/wikipedia/th/thumb/a/a2/Siam_University_logo.png/200px-Siam_University_logo.png';
 
   ngOnInit() {
-    // ⭐️ 1. ดักจับข้อมูลที่ส่งมาจาก URL ของระบบล็อกอินหลัก
-    const urlParams = new URLSearchParams(window.location.search);
-    const tokenFromUrl = urlParams.get('token');
-    const roleFromUrl = urlParams.get('role');
-    const userFromUrl = urlParams.get('user');
-    const permsFromUrl = urlParams.get('perms');
-    const deptFromUrl = urlParams.get('dept'); // รองรับกรณีแนบชื่อภาควิชามาโดยตรงจากลิงก์หลัก
+    this.loadUserProfile();
+    this.checkPermissions();
 
-    if (tokenFromUrl) {
-      localStorage.setItem('token', tokenFromUrl);
-      if (roleFromUrl) localStorage.setItem('role', roleFromUrl);
-      if (userFromUrl) localStorage.setItem('full_name', userFromUrl);
-      
-      // จัดเก็บค่า user_id ลงหน่วยความจำ Local เพื่อใช้ยืนยันกับ PHP API ตัวอื่น
-      if (roleFromUrl === 'teacher') {
-        localStorage.setItem('user_id', '14'); // รหัสอูเกวตามโครงสร้างข้อมูลจำลอง
-      } else if (roleFromUrl === 'admin') {
-        localStorage.setItem('user_id', '15'); // รหัสไอแซก
-      } else {
-        localStorage.setItem('user_id', '10');
-      }
-      
-      if (deptFromUrl) {
-        localStorage.setItem('user_dept', deptFromUrl.toLowerCase());
-      }
-      
-      if (permsFromUrl) {
-        localStorage.setItem('permissions', decodeURIComponent(permsFromUrl));
-      }
-      
-      window.history.replaceState({}, document.title, window.location.pathname);
+    // จัดการเปิด/ปิดเมนูย่อยตาม Route ปัจจุบัน (สำหรับรีเฟรชหน้าแล้วให้เมนูที่เกี่ยวข้องกางค้างไว้)
+    const currentUrl = this.router.url;
+    if (currentUrl.includes('/staff')) {
+      this.isStaffExpanded.set(true);
     }
-
-    // ⭐️ 2. ดึงสถานะประวัติผู้ใช้งานปัจจุบันขึ้นมาทำป้ายชื่อโปรไฟล์
-    const role = localStorage.getItem('role');
-    const fullName = localStorage.getItem('full_name');
-
-    if (fullName) {
-      this.userName = fullName;
-      this.userInitial = fullName.charAt(0).toUpperCase();
+    if (currentUrl.includes('/research')) {
+      this.isResearchExpanded.set(true);
     }
+  }
 
-    if (role === 'admin') {
-      this.userRoleDisplay = 'SYSTEM ADMIN';
-    } else if (role === 'teacher') {
-      this.userRoleDisplay = 'TEACHER / LECTURER';
-      // 🌟 จำลองข้อมูลภาควิชาอัตโนมัติหากเข้าด้วยบทบาทครูอูเกว (dept_id = 4 คือ ฟิสิกส์)
-      if (!localStorage.getItem('user_dept')) {
-        localStorage.setItem('user_dept', 'physics');
-      }
-    } else if (role === 'student') {
-      this.userRoleDisplay = 'STUDENT';
+  loadUserProfile() {
+    const role = localStorage.getItem('role') || 'student';
+    const fullName = localStorage.getItem('full_name') || 'ผู้ใช้งานระบบ';
+    const imageUrl = localStorage.getItem('img_profile');
+
+    this.userName = fullName;
+    if (role === 'admin') this.userRole = 'ผู้ดูแลระบบ';
+    else if (role === 'teacher') this.userRole = 'อาจารย์/บุคลากร';
+    else this.userRole = 'นักศึกษา';
+
+    if (imageUrl) {
+      this.userImage = imageUrl.startsWith('http') ? imageUrl : `http://localhost:8080/api/${imageUrl.replace(/^\//, '')}`;
     }
+  }
 
-    this.userDept.set(localStorage.getItem('user_dept') || '');
-
-    // ⭐️ 3. ตรวจสอบเงื่อนไข Permission Based Access Control
+  // 🌟 ฟังก์ชันเช็คสิทธิ์ (รวมถึงการตั้งค่าการเข้าถึงภาควิชา) ที่รองรับทั้งรูปแบบ String และ JSON
+  checkPermissions() {
     const permsString = localStorage.getItem('permissions') || '';
-    const permsArray = permsString.split(',').map(p => p.trim().toLowerCase());
-    const isAdmin = role === 'admin';
+    const myDeptId = localStorage.getItem('dept_id') || '';
+    console.log('📦 Permissions ใน Layout ตอนนี้คือ:', permsString);
 
-    // เช็คการเปิด-ปิดเมนูหลัก
-    this.canViewDashboard.set(isAdmin || permsArray.some(p => p.includes('dashboard') && p.includes('view') && !p.includes('none')));
-    this.canViewStaff.set(isAdmin || permsArray.some(p => p.includes('staff_info') && p.includes('view') && !p.includes('none')));
-    this.canViewResearch.set(isAdmin || permsArray.some(p => p.includes('research_info') && p.includes('view') && !p.includes('none')));
-    this.canViewTraining.set(isAdmin || permsArray.some(p => p.includes('training') && p.includes('view') && !p.includes('none')));
-    this.canViewProjects.set(isAdmin || permsArray.some(p => p.includes('plan_project') && p.includes('view') && !p.includes('none')));
-
-    // 🌟 เช็คสิทธิ์ควบคุม Dropdown เมนูย่อยของบุคลากรรายภาควิชา
-    const hasDepartmentScopeOnly = permsArray.some(p => p.includes('staff_info') && p.includes('view') && p.includes('department'));
-    
-    if (isAdmin) {
-      this.canViewAllDepts.set(true); // แอดมินดูได้หมดทุกแท็บ dropdown
-    } else if (hasDepartmentScopeOnly) {
-      this.canViewAllDepts.set(false); // จำกัดสิทธิ์ให้เห็นเฉพาะภาควิชาตนเอง
-    } else {
-      this.canViewAllDepts.set(true); // กรณีได้สิทธิ์เป็น 'all' จะเห็นครบทุกภาควิชา
+    // Map รหัสภาควิชากลับเป็นชื่อย่อภาษาอังกฤษ (เพื่อให้ตรงกับลิงก์ Dropdown)
+    switch (myDeptId) {
+      case '1': this.userDept.set('chemistry'); break;
+      case '2': this.userDept.set('math'); break;
+      case '3': this.userDept.set('cs'); break;
+      case '4': this.userDept.set('physics'); break;
+      case '5': this.userDept.set('food-tech'); break;
+      default: this.userDept.set('');
     }
+
+    // สร้างตัวแปรชั่วคราวเพื่อเก็บสถานะ
+    let viewDash = false;
+    let viewStaff = false;
+    let viewResearch = false;
+    let viewTraining = false;
+    let viewProjects = false;
+    let viewAllDepts = false;
+
+    if (permsString && !permsString.startsWith('[') && !permsString.startsWith('{')) {
+      // 1. กรณีที่ Permissions เก็บเป็น String (เช่น Dashboard:view:all,Staff_info:view:department)
+      const permsArray = permsString.split(','); 
+      for (const p of permsArray) {
+        const parts = p.split(':'); 
+        if (parts.length >= 3) {
+          const moduleName = parts[0].trim().toLowerCase();
+          const action = parts[1].trim().toLowerCase();
+          const scope = parts[2].trim().toLowerCase();
+
+          // ถ้า action เป็น view และ scope ไม่ใช่ none ให้เปิดเมนูนั้นๆ
+          if (action === 'view' && scope !== 'none') {
+            if (moduleName.includes('dashboard')) viewDash = true;
+            if (moduleName.includes('staff')) {
+              viewStaff = true;
+              if (scope === 'all') viewAllDepts = true;
+            }
+            if (moduleName.includes('research')) viewResearch = true;
+            if (moduleName.includes('training')) viewTraining = true;
+            if (moduleName.includes('plan') || moduleName.includes('project')) viewProjects = true;
+          }
+        }
+      }
+    } else {
+      // 2. กรณีที่ Permissions เก็บเป็น JSON (รองรับเผื่อไว้ในอนาคต)
+      try {
+        const permsObj = JSON.parse(permsString);
+        if (Array.isArray(permsObj)) {
+          permsObj.forEach(p => {
+            if (p.action?.toLowerCase() === 'view' && p.scope?.toLowerCase() !== 'none') {
+              const mod = p.module_name?.toLowerCase() || '';
+              if (mod.includes('dashboard')) viewDash = true;
+              if (mod.includes('staff')) {
+                viewStaff = true;
+                if (p.scope?.toLowerCase() === 'all') viewAllDepts = true;
+              }
+              if (mod.includes('research')) viewResearch = true;
+              if (mod.includes('training')) viewTraining = true;
+              if (mod.includes('plan') || mod.includes('project')) viewProjects = true;
+            }
+          });
+        }
+      } catch (e) { 
+        console.error('อ่านค่า Permissions ใน Layout ไม่สำเร็จ:', e);
+      }
+    }
+
+    // อัปเดตค่าไปยัง Signal เพื่อให้หน้า HTML แสดงผลเมนู
+    this.canViewDashboard.set(viewDash);
+    this.canViewStaff.set(viewStaff);
+    this.canViewResearch.set(viewResearch);
+    this.canViewTraining.set(viewTraining);
+    this.canViewProjects.set(viewProjects);
+    this.canViewAllDepts.set(viewAllDepts);
   }
 
   toggleProfileMenu() {
@@ -153,11 +181,5 @@ export class LayoutComponent implements OnInit {
 
   toggleSidebar() {
     this.isSidebarOpen.set(!this.isSidebarOpen());
-  }
-
-  closeSidebarOnMobile() {
-    if (window.innerWidth < 1024) {
-      this.isSidebarOpen.set(false);
-    }
   }
 }
