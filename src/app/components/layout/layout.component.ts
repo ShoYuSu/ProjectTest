@@ -129,7 +129,7 @@ export class LayoutComponent implements OnInit {
     const role = localStorage.getItem('role') || '';
     const token = localStorage.getItem('token') || '';
     const fullName = localStorage.getItem('full_name') || '';
-    const advisorUrl = `http://localhost:4200/home?role=${role}&token=${token}&user=${fullName}`;
+    const advisorUrl = `http://localhost:4200/system-dashboard?role=${role}&token=${token}&user=${fullName}`;
     window.location.href = advisorUrl;
   }
 
