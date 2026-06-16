@@ -56,14 +56,27 @@
               <input type="text" [(ngModel)]="staffData.fullName" name="fullName" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
             </div>
             <div>
-              <label class="block text-xs font-bold text-gray-400 mb-2">รหัสประจำตัว</label>
+              <label class="block text-xs font-bold text-gray-400 mb-2">รหัสประจำตัว (ใช้เป็นรหัสผ่านเริ่มต้น)</label>
               <input type="text" [(ngModel)]="staffData.staffCode" name="staffCode" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
             </div>
             <div>
-              <label class="block text-xs font-bold text-gray-400 mb-2">อีเมล</label>
+              <label class="block text-xs font-bold text-gray-400 mb-2">อีเมล (ใช้สำหรับเข้าสู่ระบบ)</label>
               <input type="email" [(ngModel)]="staffData.email" name="email" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
             </div>
             
+            <div>
+              <label class="block text-xs font-bold text-[#2A1D1A] mb-2">ระดับสิทธิ์ในระบบ (Role)</label>
+              <div class="relative">
+                <select [(ngModel)]="staffData.role" name="role" class="w-full p-3.5 bg-[#FEF5DD] rounded-xl text-sm font-bold border border-[#F9BD15]/30 focus:border-[#F9BD15] outline-none appearance-none transition-all text-[#2A1D1A]">
+                  <option value="teacher">ผู้ใช้งานทั่วไป (Teacher / Staff)</option>
+                  <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+                </select>
+                <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-[#F9BD15]">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label class="block text-xs font-bold text-gray-400 mb-2">ประเภทสายงาน / ตำแหน่ง</label>
               <div class="relative">
@@ -98,12 +111,50 @@
 
       <div class="xl:col-span-8">
           
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-            <div class="flex items-center gap-3">
+          <div class="flex flex-col mb-6 gap-3">
+            <div class="flex items-center gap-3 mb-2">
               <div class="text-[#F9BD15]">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
               </div>
-              <h3 class="font-black text-[#2A1D1A] text-lg">การกำหนดสิทธิ์</h3>
+              <h3 class="font-black text-[#2A1D1A] text-lg">การกำหนดสิทธิ์การเข้าถึงข้อมูล</h3>
+            </div>
+
+            <div class="flex flex-col gap-3 bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm">
+              
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-[11px] font-bold text-gray-400 mr-2 uppercase tracking-wider w-24 shrink-0">เลือกเทมเพลต:</span>
+                
+                @for (tpl of templates(); track tpl.name) {
+                  <div class="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm transition-all hover:border-[#F9BD15]" [class.border-[#F9BD15]]="currentTemplateName() === tpl.name" [class.bg-[#FEF5DD]]="currentTemplateName() === tpl.name">
+                    
+                    <button type="button" (click)="applyTemplate(tpl)" class="px-3 py-1.5 text-xs font-bold text-[#2A1D1A] hover:bg-[#F9BD15]/20 transition-colors">
+                      {{ tpl.name }}
+                    </button>
+                    
+                    <button type="button" (click)="deleteTemplate(tpl.name)" class="px-2 py-1.5 text-xs font-bold text-gray-400 hover:bg-red-500 hover:text-white transition-colors border-l border-gray-100" title="ลบเทมเพลตนี้">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                    
+                  </div>
+                }
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-gray-200 mt-1">
+                <button type="button" (click)="saveTemplate()" class="px-3 py-1.5 bg-white border border-dashed border-[#F9BD15] rounded-lg text-xs font-bold text-[#2A1D1A] hover:bg-[#F9BD15] transition-all shadow-sm active:scale-95 flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  บันทึกเทมเพลตปัจจุบัน / เขียนทับ
+                </button>
+                <div class="w-px h-4 bg-gray-300 mx-1"></div>
+                <button type="button" (click)="clearTable()" class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all shadow-sm active:scale-95 flex items-center gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                  ล้างตารางสิทธิ์
+                </button>
+                <button type="button" (click)="resetToDefaultTemplates()" class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm active:scale-95 flex items-center gap-1 sm:ml-auto">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                  คืนค่าเริ่มต้น (Reset)
+                </button>
+              </div>
+
             </div>
           </div>
           
