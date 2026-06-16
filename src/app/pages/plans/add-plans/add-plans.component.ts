@@ -1,6 +1,6 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router'; // 🌟 นำเข้า ActivatedRoute
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 
@@ -14,8 +14,13 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 export class AddPlansComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private route = inject(ActivatedRoute); // 🌟 ใช้รับค่า
 
-  // ฟิลด์ข้อมูลตรงกับ UI ของคุณ
+  // 🌟 ตัวแปรโหมดแก้ไข
+  isEditMode = signal(false);
+  editId: string | null = null;
+
+  // ฟิลด์ข้อมูลหลัก
   projectName = '';
   approvedBudget: number | null = null;
   usedBudget: number | null = null;
@@ -46,7 +51,61 @@ export class AddPlansComponent implements OnInit {
   isStatusOpen = signal(false);
   selectedStatus = signal('ระบุสถานะ');
 
-  ngOnInit() { this.loadStaff(); }
+  ngOnInit() { 
+    this.loadStaff(); 
+
+    // 🌟 ดักจับข้อมูล Edit Mode จากตาราง
+    this.route.queryParams.subscribe(params => {
+      if (params['edit']) {
+        this.isEditMode.set(true);
+        this.editId = params['edit'];
+        
+        const state = history.state;
+        if (state && state.planData) {
+          const data = state.planData;
+          
+          // โหลดข้อมูลเก่าลงฟอร์ม
+          this.projectName = data.projectName || '';
+          this.approvedBudget = data.approvedBudget ? Number(data.approvedBudget) : null;
+          this.usedBudget = data.usedBudget ? Number(data.usedBudget) : null;
+          this.details = data.details || '';
+          
+          // โหลดสถานะและยุทธศาสตร์
+          if (data.status && data.status !== '-') this.selectedStatus.set(data.status);
+          if (data.strategy && data.strategy !== '-') {
+            this.selectedStrategy.set(data.strategy);
+            // เพิ่มเข้า List หากไม่มีอยู่ใน List เริ่มต้น
+            if (!this.strategiesList().includes(data.strategy)) {
+              this.strategiesList.update(list => [...list, data.strategy]);
+            }
+          }
+          if (data.planType && data.planType !== '-') {
+            this.selectedPlan.set(data.planType);
+            // เพิ่มเข้า List หากไม่มีอยู่ใน List เริ่มต้น
+            if (!this.plansList().includes(data.planType)) {
+              this.plansList.update(list => [...list, data.planType]);
+            }
+          }
+
+          // แปลงข้อความ subActivity กลับเป็น Object 
+          if (data.subActivity && data.subActivity !== '-') {
+            const subs = data.subActivity.split(',').map((s: string) => s.trim());
+            const subArray = subs.map((val: string, index: number) => ({
+              id: index + 1,
+              value: val
+            }));
+            this.subActivities.set(subArray);
+            this.nextSubId = subArray.length + 1;
+          }
+
+          // โหลดข้อมูลผู้รับผิดชอบ (จำลองถ้าส่งมาเป็น Array)
+          if (data.participants_list && Array.isArray(data.participants_list) && data.participants_list.length > 0) {
+            this.participants = data.participants_list;
+          }
+        }
+      }
+    });
+  }
 
   loadStaff() {
     const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '14');
@@ -55,15 +114,19 @@ export class AddPlansComponent implements OnInit {
         if (res && res.success) {
           this.userScope.set(res.scope);
           this.staffMembers.set(res.staff_list || []);
+          
+          // ล็อคชื่อถ้าไม่ได้อยู่ในโหมดแก้แล้วมีชื่ออยู่แล้ว
           if (res.scope === 'self' && res.staff_list.length > 0) {
-            this.participants[0].staff_id = res.staff_list[0].staff_id.toString();
+            if (this.participants.length > 0 && !this.participants[0].staff_id) {
+              this.participants[0].staff_id = res.staff_list[0].staff_id.toString();
+            }
           }
         }
       }
     });
   }
 
-  // --- Functions ของ UI ยุทธศาสตร์/แผนงาน คงไว้เหมือนเดิมของคุณ 100% ---
+  // --- Functions ของ UI ยุทธศาสตร์/แผนงาน คงไว้เหมือนเดิม 100% ---
   addSubActivity() { this.subActivities.update(list => [...list, { id: this.nextSubId++, value: '' }]); }
   removeSubActivity(id: number) { this.subActivities.update(list => list.filter(item => item.id !== id)); }
   updateSubActivity(id: number, newValue: string) { this.subActivities.update(list => list.map(item => item.id === id ? { ...item, value: newValue } : item)); }
@@ -95,7 +158,10 @@ export class AddPlansComponent implements OnInit {
     if (this.participants.some(p => !p.staff_id)) { alert('กรุณาเลือกรหัสผู้รับผิดชอบให้ครบในช่องที่เพิ่มไว้ครับ'); return; }
 
     this.loading = true;
+    
+    // 🌟 ส่ง ID ไปให้ API เพื่ออัปเดตข้อมูล
     const payload = {
+      id: this.editId,
       plan_name: this.projectName,
       strategy: this.selectedStrategy() === 'เลือกแผนยุทธศาสตร์' ? '' : this.selectedStrategy(),
       plan_type: this.selectedPlan() === 'เลือกแผนงาน' ? '' : this.selectedPlan(),
@@ -108,12 +174,18 @@ export class AddPlansComponent implements OnInit {
     };
 
     const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '14');
-    this.http.post<any>('http://localhost:8080/api/add_plan.php', payload, { headers })
+    
+    // 🌟 สลับ API ยิงไป Update ถ้าเป็นโหมดแก้ไข
+    const apiUrl = this.isEditMode() 
+      ? 'http://localhost:8080/api/update_plan.php' // ต้องให้เพื่อนทำไฟล์เพิ่ม
+      : 'http://localhost:8080/api/add_plan.php';
+
+    this.http.post<any>(apiUrl, payload, { headers })
       .subscribe({
         next: (res) => {
           this.loading = false;
           if (res.success) {
-            alert('✅ ' + res.message);
+            alert('✅ ' + (this.isEditMode() ? 'อัปเดตข้อมูลสำเร็จ' : 'บันทึกสำเร็จ'));
             this.router.navigate(['/plans']);
           } else { alert('❌ ' + res.message); }
         },

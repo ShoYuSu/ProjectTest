@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
@@ -14,11 +14,16 @@ import { FormsModule } from '@angular/forms';
 export class AddResearchComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private route = inject(ActivatedRoute); // 🌟 รับค่าพารามิเตอร์ URL
 
   staffMembers = signal<any[]>([]);
   loading = signal(false);
   isSubmitting = signal(false);
   userScope = signal<string>('none'); 
+
+  // 🌟 ตัวแปรจัดการโหมดแก้ไข
+  isEditMode = signal(false);
+  editId: string | null = null;
 
   formData = {
     title: '',
@@ -31,8 +36,42 @@ export class AddResearchComponent implements OnInit {
   };
 
   ngOnInit() {
-    this.addAuthorRow(); 
     this.loadActiveStaff();
+
+    // 🌟 ตรวจสอบว่าเปิดมาจากปุ่ม Edit หรือไม่
+    this.route.queryParams.subscribe(params => {
+      if (params['edit']) {
+        this.isEditMode.set(true);
+        this.editId = params['edit'];
+        
+        // รับค่าข้อมูลแถวจากหน้าตารางที่แนบมา
+        const state = history.state;
+        if (state && state.projectData) {
+          const data = state.projectData;
+          
+          // เติมข้อมูลลงฟอร์ม
+          this.formData.title = data.name || '';
+          this.formData.funding_source = data.fundSource || '';
+          this.formData.budget = data.budget ? Number(data.budget) : null;
+          this.formData.year_funded = data.year || (new Date().getFullYear() + 543);
+          this.formData.year_ended = data.yearEnded || (new Date().getFullYear() + 543);
+          
+          if (data.department_id) {
+            this.formData.dept_id = data.department_id.toString();
+          }
+
+          // หากเพื่อนส่งข้อมูลรายชื่อผู้ประพันธ์มาด้วย ก็เอามาใส่ ถ้าไม่มีสร้างแถวว่าง
+          if (data.authors_list && Array.isArray(data.authors_list) && data.authors_list.length > 0) {
+            this.formData.authors = data.authors_list;
+          }
+        }
+      }
+      
+      // ถ้าเปิดมาแล้ว authors ว่างเปล่า ให้สร้างแถวรอไว้ 1 แถวเสมอ
+      if (this.formData.authors.length === 0) {
+        this.addAuthorRow(); 
+      }
+    });
   }
 
   loadActiveStaff() {
@@ -51,15 +90,18 @@ export class AddResearchComponent implements OnInit {
               this.formData.dept_id = res.my_dept_id.toString();
             }
 
+            // บังคับล็อคชื่อกรณีเป็น User และไม่ได้อยู่ในโหมด Edit ที่มีชื่ออยู่แล้ว
             if (res.scope === 'self' && res.staff_list.length > 0) {
-              this.formData.authors[0].staff_id = res.staff_list[0].staff_id.toString();
+              if (this.formData.authors.length > 0 && !this.formData.authors[0].staff_id) {
+                this.formData.authors[0].staff_id = res.staff_list[0].staff_id.toString();
+              }
             }
           }
           this.loading.set(false);
         },
         error: (err) => {
           console.error(err);
-          alert('❌ ไม่สามารถดึงข้อมูลแบบฟอร์มได้: ' + (err.error?.message || 'Unauthorized'));
+          alert('❌ ไม่สามารถดึงข้อมูลบัญชีรายชื่อได้');
           this.loading.set(false);
         }
       });
@@ -98,11 +140,22 @@ export class AddResearchComponent implements OnInit {
     const currentUserId = localStorage.getItem('user_id') || '14';
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
 
-    this.http.post<any>('http://localhost:8080/api/add_research.php', this.formData, { headers })
+    // 🌟 แนบ ID ของแถวที่แก้ไปด้วย (ถ้าโหมดสร้างใหม่ editId จะเป็น null)
+    const payload = {
+      ...this.formData,
+      id: this.editId 
+    };
+
+    // 🌟 สลับ API ระหว่างเพิ่มข้อมูลใหม่ และอัปเดตข้อมูล
+    const apiUrl = this.isEditMode() 
+      ? 'http://localhost:8080/api/update_research.php' // ต้องให้เพื่อนทำไฟล์นี้เพิ่ม
+      : 'http://localhost:8080/api/add_research.php';
+
+    this.http.post<any>(apiUrl, payload, { headers })
       .subscribe({
         next: (res) => {
           if (res && res.success) {
-            alert('✅ บันทึกสำเร็จ: ' + res.message);
+            alert('✅ ' + (this.isEditMode() ? 'อัปเดตข้อมูลสำเร็จ' : 'บันทึกสำเร็จ'));
             this.router.navigate(['/research']); 
           } else {
             alert('❌ ปฏิเสธการบันทึก: ' + res.message);
@@ -111,9 +164,10 @@ export class AddResearchComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          alert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + (err.error?.message || 'Server Error'));
+          alert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์');
           this.isSubmitting.set(false);
         }
       });
   }
 }
+//หลังจากใส่โค้ดนี้ หน้าเว็บจะมีการยิง API ไปที่ http://localhost:8080/api/update_research.php

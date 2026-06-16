@@ -65,7 +65,7 @@
       </div>
       
       <div class="overflow-x-auto">
-        <table class="w-full text-left min-w-[900px]">
+        <table class="w-full text-left min-w-[1000px]">
             <thead class="bg-gray-50 text-xs text-gray-500 font-bold">
               <tr>
                   <th class="py-5 px-8 w-20">ID</th>
@@ -73,8 +73,9 @@
                   <th class="py-5 px-4 w-40">ผู้จัดทำ</th>
                   <th class="py-5 px-4 w-28 text-center">ปีที่ได้รับ</th>
                   <th class="py-5 px-4 w-28 text-center">ปีที่สิ้นสุด</th>
-                  <th class="py-5 px-4 w-48">แหล่งทุน</th>
-                  <th class="py-5 px-8 w-40 text-right">งบประมาณวิจัย</th>
+                  <th class="py-5 px-4 w-40">แหล่งทุน</th>
+                  <th class="py-5 px-4 w-32 text-right">งบประมาณ</th>
+                  <th class="py-5 px-8 w-24 text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -91,12 +92,25 @@
                         </td>
                         
                         <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed">{{ project.fundSource }}</td>
-                        <td class="py-6 px-8 text-sm font-black text-[#2A1D1A] text-right">{{ project.budget | number }} ฿</td>
+                        <td class="py-6 px-4 text-sm font-black text-[#2A1D1A] text-right">{{ project.budget | number }} ฿</td>
+                        
+                        <td class="py-6 px-8 text-center">
+                          @if (canAdd()) {
+                            <button [routerLink]="['/research/add-research']" 
+                                    [queryParams]="{ edit: project.id }" 
+                                    [state]="{ projectData: project }"
+                                    class="text-[#F9BD15] bg-[#F9BD15]/10 hover:bg-[#F9BD15] hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
+                                แก้ไข
+                            </button>
+                          } @else {
+                            <span class="text-xs text-gray-300 font-bold">-</span>
+                          }
+                        </td>
                     </tr>
                   }
               } @else if (!loading()) {
                   <tr>
-                    <td colspan="7" class="py-20 text-center text-gray-400 font-bold">ไม่พบข้อมูลโครงการวิจัยที่ตรงกับการค้นหา หรือคุณไม่มีสิทธิ์เข้าถึงข้อมูล</td>
+                    <td colspan="8" class="py-20 text-center text-gray-400 font-bold">ไม่พบข้อมูลโครงการวิจัยที่ตรงกับการค้นหา หรือคุณไม่มีสิทธิ์เข้าถึงข้อมูล</td>
                   </tr>
               }
             </tbody>

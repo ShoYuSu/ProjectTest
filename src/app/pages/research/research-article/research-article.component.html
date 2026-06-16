@@ -82,7 +82,7 @@
       </div>
       
       <div class="overflow-x-auto">
-        <table class="w-full text-left min-w-[1000px]">
+        <table class="w-full text-left min-w-[1100px]">
             <thead class="bg-gray-50 text-xs text-gray-500 font-bold">
               <tr>
                   <th class="py-5 px-8 w-20">ลำดับ</th>
@@ -99,6 +99,8 @@
                     <th class="py-5 px-4 w-24">ฐานข้อมูล (Quartile)</th>
                     <th class="py-5 px-8 w-32">ปีที่พิมพ์</th>
                   }
+                  
+                  <th class="py-5 px-8 w-24 text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -119,11 +121,24 @@
                           <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ article.journal_quartile || '-' }}</td>
                           <td class="py-6 px-8 text-sm font-bold text-[#2A1D1A] align-top">{{ article.year }}</td>
                         }
+
+                        <td class="py-6 px-8 text-center align-top">
+                          @if (canAdd()) {
+                            <button [routerLink]="['/research/article/edit']" 
+                                    [queryParams]="{ edit: article.id }" 
+                                    [state]="{ articleData: article }"
+                                    class="text-[#F9BD15] bg-[#F9BD15]/10 hover:bg-[#F9BD15] hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
+                                แก้ไข
+                            </button>
+                          } @else {
+                            <span class="text-xs text-gray-300 font-bold">-</span>
+                          }
+                        </td>
                     </tr>
                   }
               } @else if (!loading()) {
                   <tr>
-                    <td colspan="7" class="py-20 text-center text-gray-400 font-bold">ยังไม่มีข้อมูลบทความวิจัยที่ตรงกับการค้นหา</td>
+                    <td colspan="8" class="py-20 text-center text-gray-400 font-bold">ยังไม่มีข้อมูลบทความวิจัยที่ตรงกับการค้นหา</td>
                   </tr>
               }
             </tbody>

@@ -13,7 +13,7 @@
         </div>
         
         @if (canAdd()) {
-          <button (click)="goToAddTraining()" class="w-fit flex-none bg-[#2A1D1A] text-[#F9BD15] px-6 py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-md active:scale-95 whitespace-nowrap shrink-0">
+          <button routerLink="/training/add" class="w-fit flex-none bg-[#2A1D1A] text-[#F9BD15] px-6 py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-md active:scale-95 whitespace-nowrap shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
             เพิ่มการอบรม
           </button>
@@ -61,7 +61,7 @@
       </div>
       
       <div class="overflow-x-auto min-h-[300px] custom-scrollbar pb-4"> 
-        <table class="w-full text-left min-w-[1800px]">
+        <table class="w-full text-left min-w-[1900px]">
             <thead class="bg-gray-50 text-xs text-gray-500 font-bold border-b border-gray-100">
               <tr>
                   <th class="py-5 px-6 w-[80px] text-center sticky left-0 bg-gray-50 z-20">ลำดับ</th>
@@ -73,6 +73,7 @@
                   <th class="py-5 px-4 w-64">รายละเอียดการนำไปใช้</th>
                   <th class="py-5 px-4 w-48">หมายเหตุ</th>
                   <th class="py-5 px-8 w-32 text-right">ค่าใช้จ่าย (บาท)</th>
+                  <th class="py-5 px-8 w-24 text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -88,13 +89,47 @@
                         <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.implementation || '-' }}</td>
                         <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.remarks || '-' }}</td>
                         <td class="py-6 px-8 text-sm font-black text-[#2A1D1A] text-right align-top">{{ training.cost | number }}</td>
+                        
+                        <td class="py-6 px-8 text-center align-top">
+                          @if (canAdd()) {
+                            <button [routerLink]="['/training/edit']" 
+                                    [queryParams]="{ edit: training.id }" 
+                                    [state]="{ trainingData: training }"
+                                    class="text-[#F9BD15] bg-[#F9BD15]/10 hover:bg-[#F9BD15] hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
+                                แก้ไข
+                            </button>
+                          } @else {
+                            <span class="text-xs text-gray-300 font-bold">-</span>
+                          }
+                        </td>
                     </tr>
                   }
               } @else if (!loading()) {
-                  <tr><td colspan="9" class="py-20 text-center text-gray-400 font-bold">ยังไม่มีข้อมูลการอบรม</td></tr>
+                  <tr><td colspan="10" class="py-20 text-center text-gray-400 font-bold">ยังไม่มีข้อมูลการอบรม</td></tr>
               }
             </tbody>
         </table>
+      </div>
+
+      <div class="p-6 border-t border-gray-50 flex justify-center items-center gap-2">
+        <button (click)="prevPage()" [disabled]="currentPage() === 1" 
+            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        @for (page of pagesArray(); track page) {
+            <button (click)="goToPage(page)"
+              class="w-8 h-8 flex items-center justify-center rounded-lg font-black text-xs transition-all shadow-sm"
+              [class.bg-[#F9BD15]]="currentPage() === page" [class.text-[#2A1D1A]]="currentPage() === page"
+              [class.text-gray-500]="currentPage() !== page" [class.hover:bg-gray-50]="currentPage() !== page">
+              {{ page }}
+            </button>
+        }
+        <button (click)="nextPage()" [disabled]="currentPage() === totalPages() || totalPages() === 0"
+            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        </button>
       </div>
   </div>
 </div>

@@ -1,13 +1,13 @@
 import { Component, signal, computed, OnInit, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router'; 
+import { Router, RouterLink } from '@angular/router'; // 🌟 ดึง RouterLink มาใช้
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-training',
   standalone: true,
-  imports: [CommonModule, FormsModule], 
+  imports: [CommonModule, FormsModule, RouterLink], // 🌟 สั่ง import RouterLink
   templateUrl: './training.component.html',
   styleUrl: './training.component.css'
 })
@@ -33,13 +33,12 @@ export class TrainingComponent implements OnInit {
     this.fetchTrainings();
   }
 
-  // 🌟 ฟังก์ชันเช็คสิทธิ์ที่อัปเดตใหม่ รองรับทั้ง String และ JSON
+  // 🌟 ฟังก์ชันเช็คสิทธิ์
   checkPermissions() {
     const permsString = localStorage.getItem('permissions') || '';
     let hasAdd = false;
 
     if (permsString && !permsString.startsWith('[') && !permsString.startsWith('{')) {
-      // 1. ตรวจสอบกรณีเก็บแบบ String 
       const permsArray = permsString.split(','); 
       for (const p of permsArray) {
         const parts = p.split(':'); 
@@ -50,12 +49,11 @@ export class TrainingComponent implements OnInit {
 
           if (moduleName.includes('training') && action === 'add' && scope !== 'none') {
             hasAdd = true;
-            break; // เจอสิทธิ์ปุ๊บ หยุดหาทันที
+            break; 
           }
         }
       }
     } else {
-      // 2. ตรวจสอบกรณีเก็บแบบ JSON (เผื่อไว้)
       try {
         const permsObj = JSON.parse(permsString);
         if (Array.isArray(permsObj)) {
@@ -106,7 +104,6 @@ export class TrainingComponent implements OnInit {
 
   setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(); }
   onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
-  goToAddTraining() { this.router.navigate(['/training/add']); }
 
   paginatedTrainings = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.itemsPerPage;
