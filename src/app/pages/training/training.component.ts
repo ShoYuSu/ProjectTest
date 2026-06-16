@@ -33,22 +33,42 @@ export class TrainingComponent implements OnInit {
     this.fetchTrainings();
   }
 
-  // 🌟 เช็คสิทธิ์แบบเข้มงวดที่สุด
+  // 🌟 ฟังก์ชันเช็คสิทธิ์ที่อัปเดตใหม่ รองรับทั้ง String และ JSON
   checkPermissions() {
     const permsString = localStorage.getItem('permissions') || '';
     let hasAdd = false;
 
-    try {
-      const permsObj = JSON.parse(permsString);
-      if (Array.isArray(permsObj)) {
-        const perm = permsObj.find(p => p.module_name?.toLowerCase() === 'training_info');
-        if (perm && perm.action?.toLowerCase() === 'add' && perm.scope?.toLowerCase() !== 'none') {
-          hasAdd = true;
+    if (permsString && !permsString.startsWith('[') && !permsString.startsWith('{')) {
+      // 1. ตรวจสอบกรณีเก็บแบบ String 
+      const permsArray = permsString.split(','); 
+      for (const p of permsArray) {
+        const parts = p.split(':'); 
+        if (parts.length >= 3) {
+          const moduleName = parts[0].trim().toLowerCase();
+          const action = parts[1].trim().toLowerCase();
+          const scope = parts[2].trim().toLowerCase();
+
+          if (moduleName.includes('training') && action === 'add' && scope !== 'none') {
+            hasAdd = true;
+            break; // เจอสิทธิ์ปุ๊บ หยุดหาทันที
+          }
         }
       }
-    } catch (e) {
-      hasAdd = false;
+    } else {
+      // 2. ตรวจสอบกรณีเก็บแบบ JSON (เผื่อไว้)
+      try {
+        const permsObj = JSON.parse(permsString);
+        if (Array.isArray(permsObj)) {
+          const perm = permsObj.find(p => p.module_name?.toLowerCase().includes('training') && p.action?.toLowerCase() === 'add');
+          if (perm && perm.scope?.toLowerCase() !== 'none') {
+            hasAdd = true;
+          }
+        }
+      } catch (e) {
+        console.error('อ่านค่า Permissions ในหน้า Training ไม่สำเร็จ:', e);
+      }
     }
+    
     this.canAdd.set(hasAdd);
   }
 

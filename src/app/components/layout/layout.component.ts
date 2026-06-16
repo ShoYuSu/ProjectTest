@@ -40,7 +40,7 @@ export class LayoutComponent implements OnInit {
     const roleFromUrl = urlParams.get('role');
     const userFromUrl = urlParams.get('user');
     const permsFromUrl = urlParams.get('perms');
-    const deptFromUrl = urlParams.get('dept'); // รองรับกรณีแนบชื่อภาควิชามาโดยตรงจากลิงก์หลัก
+    const deptFromUrl = urlParams.get('dept'); 
 
     if (tokenFromUrl) {
       localStorage.setItem('token', tokenFromUrl);
@@ -49,9 +49,9 @@ export class LayoutComponent implements OnInit {
       
       // จัดเก็บค่า user_id ลงหน่วยความจำ Local เพื่อใช้ยืนยันกับ PHP API ตัวอื่น
       if (roleFromUrl === 'teacher') {
-        localStorage.setItem('user_id', '14'); // รหัสอูเกวตามโครงสร้างข้อมูลจำลอง
+        localStorage.setItem('user_id', '14'); 
       } else if (roleFromUrl === 'admin') {
-        localStorage.setItem('user_id', '15'); // รหัสไอแซก
+        localStorage.setItem('user_id', '15'); 
       } else {
         localStorage.setItem('user_id', '10');
       }
@@ -80,7 +80,6 @@ export class LayoutComponent implements OnInit {
       this.userRoleDisplay = 'SYSTEM ADMIN';
     } else if (role === 'teacher') {
       this.userRoleDisplay = 'TEACHER / LECTURER';
-      // 🌟 จำลองข้อมูลภาควิชาอัตโนมัติหากเข้าด้วยบทบาทครูอูเกว (dept_id = 4 คือ ฟิสิกส์)
       if (!localStorage.getItem('user_dept')) {
         localStorage.setItem('user_dept', 'physics');
       }
@@ -95,22 +94,24 @@ export class LayoutComponent implements OnInit {
     const permsArray = permsString.split(',').map(p => p.trim().toLowerCase());
     const isAdmin = role === 'admin';
 
-    // เช็คการเปิด-ปิดเมนูหลัก
+    // เช็คการเปิด-ปิดเมนูหลัก (แก้ชื่อจาก plan_project เป็น plan_info ให้ตรงกับฐานข้อมูล)
     this.canViewDashboard.set(isAdmin || permsArray.some(p => p.includes('dashboard') && p.includes('view') && !p.includes('none')));
     this.canViewStaff.set(isAdmin || permsArray.some(p => p.includes('staff_info') && p.includes('view') && !p.includes('none')));
     this.canViewResearch.set(isAdmin || permsArray.some(p => p.includes('research_info') && p.includes('view') && !p.includes('none')));
     this.canViewTraining.set(isAdmin || permsArray.some(p => p.includes('training') && p.includes('view') && !p.includes('none')));
-    this.canViewProjects.set(isAdmin || permsArray.some(p => p.includes('plan_project') && p.includes('view') && !p.includes('none')));
+    
+    // 🌟 จุดที่แก้ไข: เปลี่ยนเป็นเช็คหาคำว่า 'plan' เพื่อให้ครอบคลุมคำว่า 'plan_info' ตามฐานข้อมูล
+    this.canViewProjects.set(isAdmin || permsArray.some(p => (p.includes('plan') || p.includes('project')) && p.includes('view') && !p.includes('none')));
 
     // 🌟 เช็คสิทธิ์ควบคุม Dropdown เมนูย่อยของบุคลากรรายภาควิชา
     const hasDepartmentScopeOnly = permsArray.some(p => p.includes('staff_info') && p.includes('view') && p.includes('department'));
     
     if (isAdmin) {
-      this.canViewAllDepts.set(true); // แอดมินดูได้หมดทุกแท็บ dropdown
+      this.canViewAllDepts.set(true); 
     } else if (hasDepartmentScopeOnly) {
-      this.canViewAllDepts.set(false); // จำกัดสิทธิ์ให้เห็นเฉพาะภาควิชาตนเอง
+      this.canViewAllDepts.set(false); 
     } else {
-      this.canViewAllDepts.set(true); // กรณีได้สิทธิ์เป็น 'all' จะเห็นครบทุกภาควิชา
+      this.canViewAllDepts.set(true); 
     }
   }
 
@@ -125,16 +126,16 @@ export class LayoutComponent implements OnInit {
   }
 
   goToAdvisorSystem(event: Event) {
-  event.preventDefault();
-  const role = localStorage.getItem('role') || '';
-  const token = localStorage.getItem('token') || '';
-  const fullName = localStorage.getItem('full_name') || '';
+    event.preventDefault();
+    const role = localStorage.getItem('role') || '';
+    const token = localStorage.getItem('token') || '';
+    const fullName = localStorage.getItem('full_name') || '';
 
-  const path = role === 'teacher' ? 'home' : 'system-dashboard';
+    const path = role === 'teacher' ? 'home' : 'system-dashboard';
 
-  const advisorUrl = `http://localhost:4200/${path}?role=${role}&token=${token}&user=${encodeURIComponent(fullName)}`;
-  window.location.href = advisorUrl;
-}
+    const advisorUrl = `http://localhost:4200/${path}?role=${role}&token=${token}&user=${encodeURIComponent(fullName)}`;
+    window.location.href = advisorUrl;
+  }
 
   toggleMiniSidebar() {
     this.isMiniSidebar.set(!this.isMiniSidebar());
