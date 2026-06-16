@@ -24,20 +24,29 @@ export class LayoutComponent implements OnInit {
   canViewTraining = signal(false);
   canViewProjects = signal(false);
 
-  // 🌟 Signals เพิ่มเติมเพื่อควบคุม Dropdown รายภาควิชาของโมดูล Staff Information
-  canViewAllDepts = signal(true); // True = แสดงครบทุกภาควิชา, False = กรองเฉพาะภาควิชาตนเอง
-  userDept = signal<string>('');   // เก็บตัวย่อภาควิชาของผู้ใช้ปัจจุบัน เช่น 'physics', 'cs', 'math'
+  // Signals เพิ่มเติมเพื่อควบคุม Dropdown รายภาควิชา
+  canViewAllDepts = signal(true); 
+  userDept = signal<string>('');   
 
   isProfileMenuOpen = false;
   userName: string = 'ADMIN';
   userRole: string = 'ผู้ดูแลระบบ';
   userImage: string = 'https://upload.wikimedia.org/wikipedia/th/thumb/a/a2/Siam_University_logo.png/200px-Siam_University_logo.png';
 
+  // 🌟 เพิ่มตัวแปร Getter สำหรับดึงตัวอักษรย่อชื่อผู้ใช้ (แก้ Error: userInitial)
+  get userInitial(): string {
+    return this.userName ? this.userName.charAt(0).toUpperCase() : 'U';
+  }
+
+  // 🌟 เพิ่มตัวแปร Getter สำหรับดึงชื่อตำแหน่ง/สิทธิ์ (แก้ Error: userRoleDisplay)
+  get userRoleDisplay(): string {
+    return this.userRole;
+  }
+
   ngOnInit() {
     this.loadUserProfile();
     this.checkPermissions();
 
-    // จัดการเปิด/ปิดเมนูย่อยตาม Route ปัจจุบัน (สำหรับรีเฟรชหน้าแล้วให้เมนูที่เกี่ยวข้องกางค้างไว้)
     const currentUrl = this.router.url;
     if (currentUrl.includes('/staff')) {
       this.isStaffExpanded.set(true);
@@ -62,13 +71,11 @@ export class LayoutComponent implements OnInit {
     }
   }
 
-  // 🌟 ฟังก์ชันเช็คสิทธิ์ (รวมถึงการตั้งค่าการเข้าถึงภาควิชา) ที่รองรับทั้งรูปแบบ String และ JSON
   checkPermissions() {
     const permsString = localStorage.getItem('permissions') || '';
     const myDeptId = localStorage.getItem('dept_id') || '';
     console.log('📦 Permissions ใน Layout ตอนนี้คือ:', permsString);
 
-    // Map รหัสภาควิชากลับเป็นชื่อย่อภาษาอังกฤษ (เพื่อให้ตรงกับลิงก์ Dropdown)
     switch (myDeptId) {
       case '1': this.userDept.set('chemistry'); break;
       case '2': this.userDept.set('math'); break;
@@ -78,7 +85,6 @@ export class LayoutComponent implements OnInit {
       default: this.userDept.set('');
     }
 
-    // สร้างตัวแปรชั่วคราวเพื่อเก็บสถานะ
     let viewDash = false;
     let viewStaff = false;
     let viewResearch = false;
@@ -87,7 +93,6 @@ export class LayoutComponent implements OnInit {
     let viewAllDepts = false;
 
     if (permsString && !permsString.startsWith('[') && !permsString.startsWith('{')) {
-      // 1. กรณีที่ Permissions เก็บเป็น String (เช่น Dashboard:view:all,Staff_info:view:department)
       const permsArray = permsString.split(','); 
       for (const p of permsArray) {
         const parts = p.split(':'); 
@@ -96,7 +101,6 @@ export class LayoutComponent implements OnInit {
           const action = parts[1].trim().toLowerCase();
           const scope = parts[2].trim().toLowerCase();
 
-          // ถ้า action เป็น view และ scope ไม่ใช่ none ให้เปิดเมนูนั้นๆ
           if (action === 'view' && scope !== 'none') {
             if (moduleName.includes('dashboard')) viewDash = true;
             if (moduleName.includes('staff')) {
@@ -110,7 +114,6 @@ export class LayoutComponent implements OnInit {
         }
       }
     } else {
-      // 2. กรณีที่ Permissions เก็บเป็น JSON (รองรับเผื่อไว้ในอนาคต)
       try {
         const permsObj = JSON.parse(permsString);
         if (Array.isArray(permsObj)) {
@@ -133,7 +136,6 @@ export class LayoutComponent implements OnInit {
       }
     }
 
-    // อัปเดตค่าไปยัง Signal เพื่อให้หน้า HTML แสดงผลเมนู
     this.canViewDashboard.set(viewDash);
     this.canViewStaff.set(viewStaff);
     this.canViewResearch.set(viewResearch);
@@ -181,5 +183,12 @@ export class LayoutComponent implements OnInit {
 
   toggleSidebar() {
     this.isSidebarOpen.set(!this.isSidebarOpen());
+  }
+
+  // 🌟 เพิ่มฟังก์ชันสำหรับปิด Sidebar เมื่อหน้าจอเป็นมือถือ (แก้ Error: closeSidebarOnMobile)
+  closeSidebarOnMobile() {
+    if (window.innerWidth < 1024) { // 1024px คือจุดตัด (Breakpoint) สำหรับหน้าจอใหญ่ใน Tailwind
+      this.isSidebarOpen.set(false);
+    }
   }
 }
