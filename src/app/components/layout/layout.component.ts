@@ -125,13 +125,16 @@ export class LayoutComponent implements OnInit {
   }
 
   goToAdvisorSystem(event: Event) {
-    event.preventDefault();
-    const role = localStorage.getItem('role') || '';
-    const token = localStorage.getItem('token') || '';
-    const fullName = localStorage.getItem('full_name') || '';
-    const advisorUrl = `http://localhost:4200/system-dashboard?role=${role}&token=${token}&user=${fullName}`;
-    window.location.href = advisorUrl;
-  }
+  event.preventDefault();
+  const role = localStorage.getItem('role') || '';
+  const token = localStorage.getItem('token') || '';
+  const fullName = localStorage.getItem('full_name') || '';
+
+  const path = role === 'teacher' ? 'home' : 'system-dashboard';
+
+  const advisorUrl = `http://localhost:4200/${path}?role=${role}&token=${token}&user=${encodeURIComponent(fullName)}`;
+  window.location.href = advisorUrl;
+}
 
   toggleMiniSidebar() {
     this.isMiniSidebar.set(!this.isMiniSidebar());
