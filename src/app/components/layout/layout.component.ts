@@ -24,6 +24,9 @@ export class LayoutComponent implements OnInit {
   canViewTraining = signal(false);
   canViewProjects = signal(false);
 
+  // 🌟 เพิ่ม Signal ควบคุมการแสดงผลเมนู "ระบบที่ปรึกษา"
+  canViewAdvisorSystem = signal(false); 
+
   // 🌟 Signals เพิ่มเติมเพื่อควบคุม Dropdown รายภาควิชาของโมดูล Staff Information
   canViewAllDepts = signal(true); // True = แสดงครบทุกภาควิชา, False = กรองเฉพาะภาควิชาตนเอง
   userDept = signal<string>('');   // เก็บตัวย่อภาควิชาของผู้ใช้ปัจจุบัน เช่น 'physics', 'cs', 'math'
@@ -41,6 +44,7 @@ export class LayoutComponent implements OnInit {
     const userFromUrl = urlParams.get('user');
     const permsFromUrl = urlParams.get('perms');
     const deptFromUrl = urlParams.get('dept'); 
+    const isAdvisorFromUrl = urlParams.get('is_advisor'); // 🌟 รับค่าที่ปรึกษาจาก URL
 
     if (tokenFromUrl) {
       localStorage.setItem('token', tokenFromUrl);
@@ -62,6 +66,10 @@ export class LayoutComponent implements OnInit {
       
       if (permsFromUrl) {
         localStorage.setItem('permissions', decodeURIComponent(permsFromUrl));
+      }
+
+      if (isAdvisorFromUrl !== null) {
+        localStorage.setItem('is_advisor', isAdvisorFromUrl); // 🌟 บันทึกลงเครื่อง
       }
       
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -93,17 +101,21 @@ export class LayoutComponent implements OnInit {
     const permsString = localStorage.getItem('permissions') || '';
     const permsArray = permsString.split(',').map(p => p.trim().toLowerCase());
     const isAdmin = role === 'admin';
+    const isAdvisor = localStorage.getItem('is_advisor') === 'true'; // 🌟 ดึงค่าจาก localstorage
 
-    // เช็คการเปิด-ปิดเมนูหลัก (แก้ชื่อจาก plan_project เป็น plan_info ให้ตรงกับฐานข้อมูล)
+    // เช็คการเปิด-ปิดเมนูหลัก
     this.canViewDashboard.set(isAdmin || permsArray.some(p => p.includes('dashboard') && p.includes('view') && !p.includes('none')));
     this.canViewStaff.set(isAdmin || permsArray.some(p => p.includes('staff_info') && p.includes('view') && !p.includes('none')));
     this.canViewResearch.set(isAdmin || permsArray.some(p => p.includes('research_info') && p.includes('view') && !p.includes('none')));
     this.canViewTraining.set(isAdmin || permsArray.some(p => p.includes('training') && p.includes('view') && !p.includes('none')));
     
-    // 🌟 จุดที่แก้ไข: เปลี่ยนเป็นเช็คหาคำว่า 'plan' เพื่อให้ครอบคลุมคำว่า 'plan_info' ตามฐานข้อมูล
+    // เปลี่ยนเป็นเช็คหาคำว่า 'plan' เพื่อให้ครอบคลุมคำว่า 'plan_info' ตามฐานข้อมูล
     this.canViewProjects.set(isAdmin || permsArray.some(p => (p.includes('plan') || p.includes('project')) && p.includes('view') && !p.includes('none')));
 
-    // 🌟 เช็คสิทธิ์ควบคุม Dropdown เมนูย่อยของบุคลากรรายภาควิชา
+    // 🌟 ตรรกะโชว์เมนู: แอดมิน หรือ นศ หรือ (อาจารย์ที่เป็นที่ปรึกษา)
+    this.canViewAdvisorSystem.set(isAdmin || role === 'student' || (role === 'teacher' && isAdvisor));
+
+    // เช็คสิทธิ์ควบคุม Dropdown เมนูย่อยของบุคลากรรายภาควิชา
     const hasDepartmentScopeOnly = permsArray.some(p => p.includes('staff_info') && p.includes('view') && p.includes('department'));
     
     if (isAdmin) {
