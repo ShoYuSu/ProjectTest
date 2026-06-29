@@ -1,13 +1,13 @@
 import { Component, signal, computed, OnInit, inject } from '@angular/core'; 
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router'; // 🌟 ดึง RouterLink มาใช้
+import { Router, RouterLink } from '@angular/router'; 
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-training',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink], // 🌟 สั่ง import RouterLink
+  imports: [CommonModule, FormsModule, RouterLink], 
   templateUrl: './training.component.html',
   styleUrl: './training.component.css'
 })
@@ -19,6 +19,7 @@ export class TrainingComponent implements OnInit {
   filteredTrainings = signal<any[]>([]);
   
   canAdd = signal(false);
+  editScope = signal<string>('none'); // 🌟
   loading = signal(true);
   errorMessage = signal<string>('');
 
@@ -37,6 +38,7 @@ export class TrainingComponent implements OnInit {
   checkPermissions() {
     const permsString = localStorage.getItem('permissions') || '';
     let hasAdd = false;
+    let eScope = 'none'; // 🌟
 
     if (permsString && !permsString.startsWith('[') && !permsString.startsWith('{')) {
       const permsArray = permsString.split(','); 
@@ -47,9 +49,9 @@ export class TrainingComponent implements OnInit {
           const action = parts[1].trim().toLowerCase();
           const scope = parts[2].trim().toLowerCase();
 
-          if (moduleName.includes('training') && action === 'add' && scope !== 'none') {
-            hasAdd = true;
-            break; 
+          if (moduleName.includes('training')) {
+            if (action === 'add' && scope !== 'none') hasAdd = true;
+            if (action === 'edit') eScope = scope; // 🌟
           }
         }
       }
@@ -57,17 +59,38 @@ export class TrainingComponent implements OnInit {
       try {
         const permsObj = JSON.parse(permsString);
         if (Array.isArray(permsObj)) {
-          const perm = permsObj.find(p => p.module_name?.toLowerCase().includes('training') && p.action?.toLowerCase() === 'add');
-          if (perm && perm.scope?.toLowerCase() !== 'none') {
-            hasAdd = true;
-          }
+          const permAdd = permsObj.find(p => p.module_name?.toLowerCase().includes('training') && p.action?.toLowerCase() === 'add');
+          if (permAdd && permAdd.scope?.toLowerCase() !== 'none') hasAdd = true;
+          
+          const permEdit = permsObj.find(p => p.module_name?.toLowerCase().includes('training') && p.action?.toLowerCase() === 'edit');
+          if (permEdit) eScope = permEdit.scope?.toLowerCase() || 'none'; // 🌟
         }
-      } catch (e) {
-        console.error('อ่านค่า Permissions ในหน้า Training ไม่สำเร็จ:', e);
-      }
+      } catch (e) { }
     }
     
     this.canAdd.set(hasAdd);
+    this.editScope.set(eScope); // 🌟
+  }
+
+  canEditRow(training: any): boolean {
+    const scope = this.editScope();
+    if (scope === 'all') return true;
+    if (scope === 'none' || !scope) return false;
+    const currentUserId = localStorage.getItem('user_id');
+    const myFullName = localStorage.getItem('full_name') || '';
+
+    if (scope === 'self' || scope === 'own') {
+      if (training.user_id && String(training.user_id) === currentUserId) return true;
+      if (training.staffName && myFullName && training.staffName.includes(myFullName)) return true;
+      return false;
+    }
+    if (scope === 'department' || scope === 'dept') {
+      const userDeptStr = localStorage.getItem('user_dept') || '';
+      const deptIdMap: any = { 'chem': 1, 'math': 2, 'cs': 3, 'physics': 4, 'food': 5 };
+      if (deptIdMap[userDeptStr] && training.dept_id === deptIdMap[userDeptStr]) return true;
+      return false;
+    }
+    return false;
   }
 
   fetchTrainings() {
@@ -85,6 +108,25 @@ export class TrainingComponent implements OnInit {
           this.loading.set(false);
         }
       });
+  }
+
+  // 🌟 ฟังก์ชันลบข้อมูลการอบรม
+  deleteTraining(id: number) {
+    if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลการอบรมนี้?\n(การลบจะไม่สามารถกู้คืนได้)')) {
+      const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '14');
+      this.http.post<any>('http://localhost:8080/api/delete_training.php', { id: id }, { headers })
+        .subscribe({
+          next: (res) => {
+            if (res && res.success) { 
+              alert('✅ ลบข้อมูลสำเร็จ'); 
+              this.fetchTrainings(); 
+            } else { 
+              alert('❌ ' + res.message); 
+            }
+          },
+          error: () => alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์')
+        });
+    }
   }
 
   applyFilters() {

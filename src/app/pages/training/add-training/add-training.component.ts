@@ -14,9 +14,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 export class AddTrainingComponent implements OnInit {
   private router = inject(Router);
   private http = inject(HttpClient);
-  private route = inject(ActivatedRoute); // 🌟 ใช้รับข้อมูลการ Edit
+  private route = inject(ActivatedRoute); 
 
-  // 🌟 ตัวแปรโหมดแก้ไข
   isEditMode = signal(false);
   editId: string | null = null;
 
@@ -55,7 +54,6 @@ export class AddTrainingComponent implements OnInit {
   ngOnInit() {
     this.loadActiveStaff();
 
-    // 🌟 ดักจับข้อมูล State ว่ามีการกดแก้ไขมาหรือไม่
     this.route.queryParams.subscribe(params => {
       if (params['edit']) {
         this.isEditMode.set(true);
@@ -65,7 +63,6 @@ export class AddTrainingComponent implements OnInit {
         if (state && state.trainingData) {
           const data = state.trainingData;
           
-          // โหลดข้อมูลเก่าลงฟอร์ม
           this.trainingData.topic = data.topic || '';
           this.trainingData.startDate = data.startDate || '';
           this.trainingData.endDate = data.endDate || '';
@@ -75,12 +72,10 @@ export class AddTrainingComponent implements OnInit {
           this.trainingData.remarks = data.remarks || '';
           this.trainingData.cost = data.cost ? Number(data.cost) : null;
 
-          // เพิ่ม Benefit เข้า Option List หากเป็นหัวข้อใหม่
           if (data.benefits && !this.benefitOptions.includes(data.benefits)) {
             this.benefitOptions.push(data.benefits);
           }
 
-          // โหลดข้อมูลผู้เข้าร่วมอบรม
           if (data.participants_list && Array.isArray(data.participants_list) && data.participants_list.length > 0) {
             this.participants = data.participants_list;
           }
@@ -100,7 +95,6 @@ export class AddTrainingComponent implements OnInit {
             this.userScope.set(res.scope);
             this.staffMembers.set(res.staff_list || []);
             
-            // ล็อคชื่อถ้าเป็นสิทธิ์ self และไม่มีชื่ออยู่ในช่องเลย (กรณีเพิ่มใหม่)
             if (res.scope === 'self' && res.staff_list.length > 0) {
               if (this.participants.length > 0 && !this.participants[0].staff_id) {
                  this.participants[0].staff_id = res.staff_list[0].staff_id.toString();
@@ -173,14 +167,12 @@ export class AddTrainingComponent implements OnInit {
     const currentUserId = localStorage.getItem('user_id') || '14';
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
 
-    // 🌟 แนบ id ลงไปใน Payload เพื่ออัปเดต
     const payload = {
       id: this.editId,
       ...this.trainingData,
       participants: this.participants
     };
     
-    // 🌟 สลับ API สำหรับโหมดอัปเดต
     const apiUrl = this.isEditMode() 
       ? 'http://localhost:8080/api/update_training.php' 
       : 'http://localhost:8080/api/add_training.php';
@@ -208,4 +200,3 @@ export class AddTrainingComponent implements OnInit {
     this.router.navigate(['/training']); 
   }
 }
-//http://localhost:8080/api/update_training.php

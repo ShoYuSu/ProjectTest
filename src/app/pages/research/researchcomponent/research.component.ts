@@ -18,6 +18,7 @@ export class ResearchComponent implements OnInit {
   filteredProjects = signal<any[]>([]);
   
   canAdd = signal(false); 
+  editScope = signal<string>('none'); // 🌟
   errorMessage = signal<string>('');
   loading = signal(true);
   
@@ -36,6 +37,7 @@ export class ResearchComponent implements OnInit {
   checkPermissions() {
     const permsString = localStorage.getItem('permissions') || '';
     let hasAdd = false;
+    let eScope = 'none'; // 🌟
 
     try {
       const permsObj = JSON.parse(permsString);
@@ -47,13 +49,18 @@ export class ResearchComponent implements OnInit {
           if (addScope && addScope.toLowerCase() !== 'none') {
             hasAdd = true;
           }
+          if (permsObj[researchKey]['edit']) {
+            eScope = permsObj[researchKey]['edit'].toLowerCase(); // 🌟
+          }
         }
       } 
       else if (Array.isArray(permsObj)) {
-        const perm = permsObj.find(p => p.module_name?.toLowerCase() === 'research_info' && p.action?.toLowerCase() === 'add');
-        if (perm && perm.scope?.toLowerCase() !== 'none') {
+        const permAdd = permsObj.find(p => p.module_name?.toLowerCase() === 'research_info' && p.action?.toLowerCase() === 'add');
+        if (permAdd && permAdd.scope?.toLowerCase() !== 'none') {
           hasAdd = true;
         }
+        const permEdit = permsObj.find(p => p.module_name?.toLowerCase() === 'research_info' && p.action?.toLowerCase() === 'edit');
+        if (permEdit) eScope = permEdit.scope?.toLowerCase() || 'none'; // 🌟
       }
     } catch (e) {
       const cleanStr = permsString.toLowerCase().replace(/[\s"'{}\[\]]/g, '');
@@ -63,10 +70,38 @@ export class ResearchComponent implements OnInit {
         if (subStr.includes('add') && !subStr.includes('none')) {
           hasAdd = true;
         }
+        // ตรวจสอบแบบ string ไม่แม่นยำนัก แต่เซ็ต eScope ให้
+        if (subStr.includes('edit')) eScope = 'self'; 
       }
     }
 
     this.canAdd.set(hasAdd);
+    this.editScope.set(eScope); // 🌟
+  }
+
+  // 🌟 ฟังก์ชันตรวจสอบว่าควรโชว์ปุ่ม แก้ไข/ลบ ในแถวนี้ไหม
+  canEditRow(project: any): boolean {
+    const scope = this.editScope();
+    if (scope === 'all') return true;
+    if (scope === 'none' || !scope) return false;
+    
+    const myFullName = localStorage.getItem('full_name') || '';
+    if (scope === 'self' || scope === 'own') {
+      if (project.author && myFullName && project.author.includes(myFullName)) return true;
+      return false;
+    }
+    
+    if (scope === 'department' || scope === 'dept') {
+      const userDeptStr = localStorage.getItem('user_dept') || '';
+      const deptIdMap: any = { 'chem': 1, 'math': 2, 'cs': 3, 'physics': 4, 'food': 5 };
+      if (deptIdMap[userDeptStr] && project.dept_id === deptIdMap[userDeptStr]) return true;
+      
+      const deptStringMap: any = { 'chem': 'เคมี', 'math': 'คณิตศาสตร์', 'cs': 'วิทยาการคอมพิวเตอร์', 'physics': 'ฟิสิกส์', 'food': 'เทคโนโลยีการอาหาร' };
+      if (deptStringMap[userDeptStr] && project.department === deptStringMap[userDeptStr]) return true;
+
+      return false;
+    }
+    return false;
   }
 
   fetchResearchData() {
@@ -86,6 +121,25 @@ export class ResearchComponent implements OnInit {
           this.loading.set(false);
         }
       });
+  }
+
+  // 🌟 ฟังก์ชันลบข้อมูล
+  deleteProject(id: number) {
+    if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลโครงการวิจัยนี้?\n(การลบจะไม่สามารถกู้คืนได้)')) {
+      const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '14');
+      this.http.post<any>('http://localhost:8080/api/delete_research.php', { id: id }, { headers })
+        .subscribe({
+          next: (res) => {
+            if (res && res.success) { 
+              alert('✅ ลบข้อมูลสำเร็จ'); 
+              this.fetchResearchData(); 
+            } else { 
+              alert('❌ ' + res.message); 
+            }
+          },
+          error: () => alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์')
+        });
+    }
   }
 
   applyFilters() {

@@ -18,6 +18,7 @@ export class PlansComponent implements OnInit {
   filteredPlans = signal<any[]>([]);
   
   canAdd = signal(false);
+  editScope = signal<string>('none'); // 🌟 เก็บสิทธิ์การแก้ไข/ลบ
   loading = signal(true);
   
   // 🌟 ตัวแปรสำหรับระบบค้นหาและ Filter ทั้งหมด
@@ -39,6 +40,7 @@ export class PlansComponent implements OnInit {
   checkPermissions() {
     const permsString = localStorage.getItem('permissions') || '';
     let hasAdd = false;
+    let eScope = 'none'; // 🌟
 
     if (permsString && !permsString.startsWith('[') && !permsString.startsWith('{')) {
       const permsArray = permsString.split(','); 
@@ -48,9 +50,9 @@ export class PlansComponent implements OnInit {
           const moduleName = parts[0].trim().toLowerCase();
           const action = parts[1].trim().toLowerCase();
           const scope = parts[2].trim().toLowerCase();
-          if ((moduleName.includes('plan') || moduleName.includes('project')) && action === 'add' && scope !== 'none') {
-            hasAdd = true;
-            break;
+          if (moduleName.includes('plan') || moduleName.includes('project')) {
+             if (action === 'add' && scope !== 'none') hasAdd = true;
+             if (action === 'edit') eScope = scope; // 🌟
           }
         }
       }
@@ -58,17 +60,41 @@ export class PlansComponent implements OnInit {
       try {
         const permsObj = JSON.parse(permsString);
         if (Array.isArray(permsObj)) {
-          const perm = permsObj.find(p => p.module_name && (p.module_name.toLowerCase().includes('plan') || p.module_name.toLowerCase().includes('project')) && p.action?.toLowerCase() === 'add');
-          if (perm && perm.scope?.toLowerCase() !== 'none') hasAdd = true;
+          const permAdd = permsObj.find(p => p.module_name && (p.module_name.toLowerCase().includes('plan') || p.module_name.toLowerCase().includes('project')) && p.action?.toLowerCase() === 'add');
+          if (permAdd && permAdd.scope?.toLowerCase() !== 'none') hasAdd = true;
+          const permEdit = permsObj.find(p => p.module_name && (p.module_name.toLowerCase().includes('plan') || p.module_name.toLowerCase().includes('project')) && p.action?.toLowerCase() === 'edit');
+          if (permEdit) eScope = permEdit.scope?.toLowerCase() || 'none'; // 🌟
         } else if (permsObj && typeof permsObj === 'object') {
           const planKey = Object.keys(permsObj).find(k => k.toLowerCase().includes('plan') || k.toLowerCase().includes('project'));
-          if (planKey && permsObj[planKey] && permsObj[planKey]['add']) {
-            if (permsObj[planKey]['add'].toLowerCase() !== 'none') hasAdd = true;
+          if (planKey && permsObj[planKey]) {
+            if (permsObj[planKey]['add'] && permsObj[planKey]['add'].toLowerCase() !== 'none') hasAdd = true;
+            if (permsObj[planKey]['edit']) eScope = permsObj[planKey]['edit'].toLowerCase(); // 🌟
           }
         }
       } catch (e) { }
     }
     this.canAdd.set(hasAdd);
+    this.editScope.set(eScope); // 🌟
+  }
+
+  // 🌟 ฟังก์ชันตรวจสอบว่าควรโชว์ปุ่ม แก้ไข/ลบ ในแถวนี้ไหม
+  canEditRow(plan: any): boolean {
+    const scope = this.editScope();
+    if (scope === 'all') return true;
+    if (scope === 'none' || !scope) return false;
+    const myFullName = localStorage.getItem('full_name') || '';
+    if (scope === 'self' || scope === 'own') {
+      if (plan.responsible && myFullName && plan.responsible.includes(myFullName)) return true;
+      return false;
+    }
+    if (scope === 'department' || scope === 'dept') {
+       const userDeptStr = localStorage.getItem('user_dept') || '';
+       const deptIdMap: any = { 'chem': 1, 'math': 2, 'cs': 3, 'physics': 4, 'food': 5 };
+       if (deptIdMap[userDeptStr] && plan.dept_id === deptIdMap[userDeptStr]) return true;
+       if (plan.responsible && myFullName && plan.responsible.includes(myFullName)) return true;
+       return false;
+    }
+    return false;
   }
 
   fetchPlans() {
@@ -86,6 +112,25 @@ export class PlansComponent implements OnInit {
           this.loading.set(false); 
         }
       });
+  }
+
+  // 🌟 ฟังก์ชันส่งคำสั่งลบไปยัง API
+  deletePlan(id: number) {
+    if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลแผนงาน/โครงการนี้?\n(การลบจะไม่สามารถกู้คืนได้)')) {
+      const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '14');
+      this.http.post<any>('http://localhost:8080/api/delete_plan.php', { id: id }, { headers })
+        .subscribe({
+          next: (res) => {
+            if (res && res.success) { 
+              alert('✅ ลบข้อมูลสำเร็จ'); 
+              this.fetchPlans(); 
+            } else { 
+              alert('❌ ' + res.message); 
+            }
+          },
+          error: () => alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์')
+        });
+    }
   }
 
   // 🌟 ดึงรายชื่อยุทธศาสตร์ที่ไม่ซ้ำกันจากข้อมูลเพื่อมาสร้าง Dropdown

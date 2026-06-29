@@ -14,14 +14,13 @@ import { FormsModule } from '@angular/forms';
 export class AddResearchComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
-  private route = inject(ActivatedRoute); // 🌟 รับค่าพารามิเตอร์ URL
+  private route = inject(ActivatedRoute);
 
   staffMembers = signal<any[]>([]);
   loading = signal(false);
   isSubmitting = signal(false);
   userScope = signal<string>('none'); 
 
-  // 🌟 ตัวแปรจัดการโหมดแก้ไข
   isEditMode = signal(false);
   editId: string | null = null;
 
@@ -38,18 +37,15 @@ export class AddResearchComponent implements OnInit {
   ngOnInit() {
     this.loadActiveStaff();
 
-    // 🌟 ตรวจสอบว่าเปิดมาจากปุ่ม Edit หรือไม่
     this.route.queryParams.subscribe(params => {
       if (params['edit']) {
         this.isEditMode.set(true);
         this.editId = params['edit'];
         
-        // รับค่าข้อมูลแถวจากหน้าตารางที่แนบมา
         const state = history.state;
         if (state && state.projectData) {
           const data = state.projectData;
           
-          // เติมข้อมูลลงฟอร์ม
           this.formData.title = data.name || '';
           this.formData.funding_source = data.fundSource || '';
           this.formData.budget = data.budget ? Number(data.budget) : null;
@@ -60,14 +56,12 @@ export class AddResearchComponent implements OnInit {
             this.formData.dept_id = data.department_id.toString();
           }
 
-          // หากเพื่อนส่งข้อมูลรายชื่อผู้ประพันธ์มาด้วย ก็เอามาใส่ ถ้าไม่มีสร้างแถวว่าง
           if (data.authors_list && Array.isArray(data.authors_list) && data.authors_list.length > 0) {
             this.formData.authors = data.authors_list;
           }
         }
       }
       
-      // ถ้าเปิดมาแล้ว authors ว่างเปล่า ให้สร้างแถวรอไว้ 1 แถวเสมอ
       if (this.formData.authors.length === 0) {
         this.addAuthorRow(); 
       }
@@ -90,7 +84,6 @@ export class AddResearchComponent implements OnInit {
               this.formData.dept_id = res.my_dept_id.toString();
             }
 
-            // บังคับล็อคชื่อกรณีเป็น User และไม่ได้อยู่ในโหมด Edit ที่มีชื่ออยู่แล้ว
             if (res.scope === 'self' && res.staff_list.length > 0) {
               if (this.formData.authors.length > 0 && !this.formData.authors[0].staff_id) {
                 this.formData.authors[0].staff_id = res.staff_list[0].staff_id.toString();
@@ -140,15 +133,13 @@ export class AddResearchComponent implements OnInit {
     const currentUserId = localStorage.getItem('user_id') || '14';
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
 
-    // 🌟 แนบ ID ของแถวที่แก้ไปด้วย (ถ้าโหมดสร้างใหม่ editId จะเป็น null)
     const payload = {
       ...this.formData,
       id: this.editId 
     };
 
-    // 🌟 สลับ API ระหว่างเพิ่มข้อมูลใหม่ และอัปเดตข้อมูล
     const apiUrl = this.isEditMode() 
-      ? 'http://localhost:8080/api/update_research.php' // ต้องให้เพื่อนทำไฟล์นี้เพิ่ม
+      ? 'http://localhost:8080/api/update_research.php' 
       : 'http://localhost:8080/api/add_research.php';
 
     this.http.post<any>(apiUrl, payload, { headers })
@@ -170,4 +161,3 @@ export class AddResearchComponent implements OnInit {
       });
   }
 }
-//หลังจากใส่โค้ดนี้ หน้าเว็บจะมีการยิง API ไปที่ http://localhost:8080/api/update_research.php

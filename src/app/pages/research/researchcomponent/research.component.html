@@ -75,7 +75,7 @@
                   <th class="py-5 px-4 w-28 text-center">ปีที่สิ้นสุด</th>
                   <th class="py-5 px-4 w-40">แหล่งทุน</th>
                   <th class="py-5 px-4 w-32 text-right">งบประมาณ</th>
-                  <th class="py-5 px-8 w-24 text-center">จัดการ</th>
+                  <th class="py-5 px-8 w-32 text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -95,13 +95,19 @@
                         <td class="py-6 px-4 text-sm font-black text-[#2A1D1A] text-right">{{ project.budget | number }} ฿</td>
                         
                         <td class="py-6 px-8 text-center">
-                          @if (canAdd()) {
-                            <button [routerLink]="['/research/add-research']" 
-                                    [queryParams]="{ edit: project.id }" 
-                                    [state]="{ projectData: project }"
-                                    class="text-[#F9BD15] bg-[#F9BD15]/10 hover:bg-[#F9BD15] hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
-                                แก้ไข
-                            </button>
+                          @if (canEditRow(project)) {
+                            <div class="flex items-center justify-center gap-2">
+                              <button [routerLink]="['/research/add-research']" 
+                                      [queryParams]="{ edit: project.id }" 
+                                      [state]="{ projectData: project }"
+                                      class="text-[#F9BD15] bg-[#F9BD15]/10 hover:bg-[#F9BD15] hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
+                                  แก้ไข
+                              </button>
+                              <button (click)="deleteProject(project.id)" 
+                                      class="text-red-500 bg-red-50 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
+                                  ลบ
+                              </button>
+                            </div>
                           } @else {
                             <span class="text-xs text-gray-300 font-bold">-</span>
                           }
