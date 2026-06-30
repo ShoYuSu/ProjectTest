@@ -1,24 +1,23 @@
 <div class="max-w-[1200px] mx-auto animate-in fade-in duration-500 pb-10 space-y-6">
       
-  <div class="pt-4">
-    <div class="mb-4 flex items-center gap-3">
-      <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
-      <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">TRAINING & SEMINAR</h2>
-    </div>
+  <div class="mb-8 mt-4 flex items-center gap-3">
+    <div class="w-1.5 h-6 bg-[#F9BD15] rounded-full"></div>
+    <h2 class="font-black text-[#2A1D1A] text-xl uppercase tracking-widest">Training & Seminars</h2>
+  </div>
 
-    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 class="text-2xl font-black text-[#2A1D1A] mb-2">คลังข้อมูลการอบรมและสัมมนา</h2>
-          <p class="text-sm text-gray-400 font-bold">ศูนย์รวมการอบรมและสัมมนาในคณะ สำหรับจัดเก็บ ค้นหา และแสดงผลการอบรมวิชาการอย่างเป็นระบบ</p>
-        </div>
-        
-        @if (canAdd()) {
-          <button routerLink="/training/add" class="w-fit flex-none bg-[#2A1D1A] text-[#F9BD15] px-6 py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-md active:scale-95 whitespace-nowrap shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
-            เพิ่มการอบรม
-          </button>
-        }
+  <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-black text-[#2A1D1A] mb-2">ข้อมูลการอบรมและสัมมนา</h2>
+      <p class="text-sm text-gray-400 font-bold">บันทึกประวัติการเข้าร่วมอบรมและพัฒนาบุคลากร</p>
     </div>
+    
+    @if (canAdd()) {
+      <button routerLink="/training/add" 
+              class="w-fit flex-none bg-[#2A1D1A] text-[#F9BD15] px-6 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-sm active:scale-95 whitespace-nowrap">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+        เพิ่มข้อมูลการอบรม
+      </button>
+    }
   </div>
 
   @if (errorMessage()) {
@@ -28,12 +27,14 @@
   }
 
   <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
-      <div class="relative w-full">
-        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-        </div>
-        <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" placeholder="ค้นหาชื่อการอบรม สัมมนา หรือผู้เข้าร่วม..." class="w-full pl-12 pr-4 py-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all text-[#2A1D1A]">
+    <div class="relative">
+      <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       </div>
+      <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)"
+             placeholder="ค้นหาหัวข้อการอบรม, ผู้เข้าร่วม, สถานที่..." 
+             class="w-full pl-12 pr-4 py-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
+    </div>
   </div>
 
   <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 md:items-start">
@@ -42,7 +43,7 @@
         @for (dept of ['ทั้งหมด', 'คณิตศาสตร์', 'เคมี', 'เทคโนโลยีการอาหาร', 'ฟิสิกส์', 'วิทยาการคอมพิวเตอร์']; track dept) {
           <button (click)="setDepartment(dept)"
                   [ngClass]="currentDept() === dept ? 'bg-[#F9BD15] text-[#2A1D1A] shadow-sm' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
-                  class="px-6 py-2.5 rounded-full font-bold text-sm transition-transform active:scale-95 border border-transparent">
+                  class="px-6 py-2.5 rounded-full font-bold text-sm transition-all active:scale-95">
             {{ dept === 'ทั้งหมด' ? 'ทั้งหมด' : 'ภาควิชา' + dept }}
           </button>
         }
@@ -56,42 +57,32 @@
         </div>
       }
 
-      <div class="p-8 border-b border-gray-50 flex items-center gap-3">
-        <h3 class="font-black text-[#2A1D1A] text-lg">สรุปการอบรมสัมมนา <span class="text-gray-400 text-sm ml-2">({{ filteredTrainings().length }} รายการ)</span></h3>
-      </div>
-      
-      <div class="overflow-x-auto min-h-[300px] custom-scrollbar pb-4"> 
-        <table class="w-full text-left min-w-[1900px]">
-            <thead class="bg-gray-50 text-xs text-gray-500 font-bold border-b border-gray-100">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left min-w-[1000px]">
+            <thead class="bg-gray-50 text-xs text-gray-500 font-bold">
               <tr>
-                  <th class="py-5 px-6 w-[80px] text-center sticky left-0 bg-gray-50 z-20">ลำดับ</th>
-                  <th class="py-5 px-4 w-48 sticky left-[80px] bg-gray-50 z-20 border-r border-gray-100 shadow-[inset_-4px_0_10px_-6px_rgba(0,0,0,0.05)]">รายชื่อ</th>
-                  <th class="py-5 px-4 w-64">หัวข้ออบรม สัมมนา</th>
-                  <th class="py-5 px-4 w-56">วันที่เริ่ม ถึง วันที่สิ้นสุด</th>
-                  <th class="py-5 px-4 w-56">หน่วยงานที่จัด/สถานที่</th>
-                  <th class="py-5 px-4 w-64">ประโยชน์ที่ได้รับ</th>
-                  <th class="py-5 px-4 w-64">รายละเอียดการนำไปใช้</th>
-                  <th class="py-5 px-4 w-48">หมายเหตุ</th>
-                  <th class="py-5 px-8 w-32 text-right">ค่าใช้จ่าย (บาท)</th>
+                  <th class="py-5 px-8 w-20">ID</th>
+                  <th class="py-5 px-4 w-64">หัวข้อการอบรม/สัมมนา</th>
+                  <th class="py-5 px-4 w-48">ผู้เข้าร่วม</th>
+                  <th class="py-5 px-4 w-32">วันที่เริ่ม</th>
+                  <th class="py-5 px-4 w-32">วันที่สิ้นสุด</th>
+                  <th class="py-5 px-4 w-48">สถานที่</th>
                   <th class="py-5 px-8 w-32 text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
               @if (paginatedTrainings().length > 0 && !loading()) {
                   @for (training of paginatedTrainings(); track training.id) {
-                    <tr class="group hover:bg-gray-50/50 transition-colors">
-                        <td class="py-6 px-6 w-[80px] text-center text-sm font-bold text-gray-500 align-top sticky left-0 bg-white group-hover:bg-gray-50/50 z-10">#{{ training.id }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] align-top sticky left-[80px] bg-white group-hover:bg-gray-50/50 z-10 border-r border-gray-50 transition-colors shadow-[inset_-4px_0_10px_-6px_rgba(0,0,0,0.05)]">{{ training.staffName }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.topic }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 align-top">{{ training.startDate }} - {{ training.endDate }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.location || '-' }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.benefits || '-' }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.implementation || '-' }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ training.remarks || '-' }}</td>
-                        <td class="py-6 px-8 text-sm font-black text-[#2A1D1A] text-right align-top">{{ training.cost | number }}</td>
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                        <td class="py-6 px-8 text-sm font-bold text-gray-400">#{{ training.id }}</td>
+                        <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] pr-10 leading-relaxed">{{ training.title }}</td>
+                        <td class="py-6 px-4 text-sm font-bold text-gray-500">{{ training.participants }}</td>
+                        <td class="py-6 px-4 text-sm font-bold text-gray-500">{{ training.start_date }}</td>
+                        <td class="py-6 px-4 text-sm font-bold text-gray-500">{{ training.end_date }}</td>
+                        <td class="py-6 px-4 text-sm font-bold text-gray-500">{{ training.location }}</td>
                         
-                        <td class="py-6 px-8 text-center align-top">
-                          @if (canEditRow(training)) {
+                        <td class="py-6 px-8 text-center">
+                          @if (training.can_edit) {
                             <div class="flex items-center justify-center gap-2">
                               <button [routerLink]="['/training/edit']" 
                                       [queryParams]="{ edit: training.id }" 
@@ -111,7 +102,9 @@
                     </tr>
                   }
               } @else if (!loading()) {
-                  <tr><td colspan="10" class="py-20 text-center text-gray-400 font-bold">ยังไม่มีข้อมูลการอบรม</td></tr>
+                  <tr>
+                    <td colspan="7" class="py-20 text-center text-gray-400 font-bold">ไม่พบข้อมูลการอบรม หรือคุณไม่มีสิทธิ์เข้าถึง</td>
+                  </tr>
               }
             </tbody>
         </table>
@@ -122,20 +115,25 @@
             class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
+
         @for (page of pagesArray(); track page) {
             <button (click)="goToPage(page)"
               class="w-8 h-8 flex items-center justify-center rounded-lg font-black text-xs transition-all shadow-sm"
-              [class.bg-[#F9BD15]]="currentPage() === page" [class.text-[#2A1D1A]]="currentPage() === page"
-              [class.text-gray-500]="currentPage() !== page" [class.hover:bg-gray-50]="currentPage() !== page">
+              [class.bg-[#F9BD15]]="currentPage() === page"
+              [class.text-[#2A1D1A]]="currentPage() === page"
+              [class.text-gray-500]="currentPage() !== page"
+              [class.hover:bg-gray-50]="currentPage() !== page">
               {{ page }}
             </button>
         }
+
         <button (click)="nextPage()" [disabled]="currentPage() === totalPages() || totalPages() === 0"
-            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
+          </svg>
         </button>
       </div>
   </div>
+
 </div>

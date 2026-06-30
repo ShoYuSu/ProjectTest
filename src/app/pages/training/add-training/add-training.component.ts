@@ -49,7 +49,7 @@ export class AddTrainingComponent implements OnInit {
   };
 
   loading = false;
-  showSuccessModal = false;
+  // showSuccessModal = false; // 🌟 ปิดการใช้งาน Modal ไว้ เพราะเราใช้ Alert แทนแล้ว
 
   ngOnInit() {
     this.loadActiveStaff();
@@ -63,14 +63,15 @@ export class AddTrainingComponent implements OnInit {
         if (state && state.trainingData) {
           const data = state.trainingData;
           
-          this.trainingData.topic = data.topic || '';
-          this.trainingData.startDate = data.startDate || '';
-          this.trainingData.endDate = data.endDate || '';
+          // Data Mapping ขาเข้า (โหลดมาแสดงบนฟอร์ม)
+          this.trainingData.topic = data.title || data.topic || ''; 
+          this.trainingData.startDate = data.start_date || data.startDate || ''; 
+          this.trainingData.endDate = data.end_date || data.endDate || ''; 
           this.trainingData.location = data.location || '';
           this.trainingData.benefits = data.benefits || '';
           this.trainingData.implementation = data.implementation || '';
           this.trainingData.remarks = data.remarks || '';
-          this.trainingData.cost = data.cost ? Number(data.cost) : null;
+          this.trainingData.cost = data.budget ? Number(data.budget) : (data.cost ? Number(data.cost) : null); 
 
           if (data.benefits && !this.benefitOptions.includes(data.benefits)) {
             this.benefitOptions.push(data.benefits);
@@ -85,7 +86,7 @@ export class AddTrainingComponent implements OnInit {
   }
 
   loadActiveStaff() {
-    const currentUserId = localStorage.getItem('user_id') || '14';
+    const currentUserId = localStorage.getItem('user_id') || '0';
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
     
     this.http.get<any>('http://localhost:8080/api/add_training.php', { headers })
@@ -107,7 +108,6 @@ export class AddTrainingComponent implements OnInit {
 
   addParticipant() { this.participants.push({ staff_id: '' }); }
   removeParticipant(index: number) { if (this.participants.length > 1) this.participants.splice(index, 1); }
-
   toggleDropdown() { this.isDropdownOpen = !this.isDropdownOpen; this.editingIndex = null; }
   selectBenefit(opt: string) { this.trainingData.benefits = opt; this.isDropdownOpen = false; }
 
@@ -164,12 +164,20 @@ export class AddTrainingComponent implements OnInit {
     }
 
     this.loading = true;
-    const currentUserId = localStorage.getItem('user_id') || '14';
+    const currentUserId = localStorage.getItem('user_id') || '0';
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
 
+    // Data Mapping ขาออก
     const payload = {
       id: this.editId,
-      ...this.trainingData,
+      title: this.trainingData.topic,             
+      start_date: this.trainingData.startDate,    
+      end_date: this.trainingData.endDate,        
+      location: this.trainingData.location,
+      budget: this.trainingData.cost,             
+      benefits: this.trainingData.benefits,
+      implementation: this.trainingData.implementation,
+      remarks: this.trainingData.remarks,
       participants: this.participants
     };
     
@@ -181,7 +189,9 @@ export class AddTrainingComponent implements OnInit {
       .subscribe({
         next: (res) => {
           if (res && res.success) {
-            this.showSuccessModal = true;
+            // 🌟 แจ้งเตือนและกลับหน้าหลัก
+            alert('✅ บันทึกข้อมูลการอบรมสำเร็จ!');
+            this.router.navigate(['/training']); 
           } else {
             alert('❌ ' + res.message);
           }
@@ -195,8 +205,8 @@ export class AddTrainingComponent implements OnInit {
       });
   }
 
-  closeModal() {
-    this.showSuccessModal = false;
-    this.router.navigate(['/training']); 
-  }
+  // closeModal() {
+  //   this.showSuccessModal = false;
+  //   this.router.navigate(['/training']); 
+  // }
 }
