@@ -17,8 +17,9 @@ export class ResearchComponent implements OnInit {
   allProjects = signal<any[]>([]);
   filteredProjects = signal<any[]>([]);
   
+  // 🌟 ตัวแปรเก็บสิทธิ์ใน Memory (F12 เข้ามาแก้ไม่ได้)
   canAdd = signal(false); 
-  editScope = signal<string>('none'); // 🌟
+  
   errorMessage = signal<string>('');
   loading = signal(true);
   
@@ -29,104 +30,60 @@ export class ResearchComponent implements OnInit {
   itemsPerPage = 10;
 
   ngOnInit() {
-    this.checkPermissions();
-    this.fetchResearchData();
+    this.fetchPermissionsFromDB(); // 🌟 ยิง API เช็คสิทธิ์ Add สดๆ จาก DB
+    this.fetchResearchData();      // 🌟 ยิง API โหลดข้อมูล (ที่แนบสิทธิ์ Edit/Delete มาแล้ว)
   }
 
-  // 🌟 ฟังก์ชันตรวจสอบสิทธิ์ที่บังคับเช็คจากระบบ Permission เท่านั้น ไม่มีข้อยกเว้น
-  checkPermissions() {
-    const permsString = localStorage.getItem('permissions') || '';
-    let hasAdd = false;
-    let eScope = 'none'; // 🌟
-
-    try {
-      const permsObj = JSON.parse(permsString);
-      
-      if (permsObj && typeof permsObj === 'object' && !Array.isArray(permsObj)) {
-        const researchKey = Object.keys(permsObj).find(k => k.toLowerCase() === 'research_info');
-        if (researchKey && permsObj[researchKey]) {
-          const addScope = permsObj[researchKey]['add'];
-          if (addScope && addScope.toLowerCase() !== 'none') {
-            hasAdd = true;
-          }
-          if (permsObj[researchKey]['edit']) {
-            eScope = permsObj[researchKey]['edit'].toLowerCase(); // 🌟
-          }
-        }
-      } 
-      else if (Array.isArray(permsObj)) {
-        const permAdd = permsObj.find(p => p.module_name?.toLowerCase() === 'research_info' && p.action?.toLowerCase() === 'add');
-        if (permAdd && permAdd.scope?.toLowerCase() !== 'none') {
-          hasAdd = true;
-        }
-        const permEdit = permsObj.find(p => p.module_name?.toLowerCase() === 'research_info' && p.action?.toLowerCase() === 'edit');
-        if (permEdit) eScope = permEdit.scope?.toLowerCase() || 'none'; // 🌟
-      }
-    } catch (e) {
-      const cleanStr = permsString.toLowerCase().replace(/[\s"'{}\[\]]/g, '');
-      if (cleanStr.includes('research_info')) {
-        const idx = cleanStr.indexOf('research_info');
-        const subStr = cleanStr.substring(idx, idx + 50);
-        if (subStr.includes('add') && !subStr.includes('none')) {
-          hasAdd = true;
-        }
-        // ตรวจสอบแบบ string ไม่แม่นยำนัก แต่เซ็ต eScope ให้
-        if (subStr.includes('edit')) eScope = 'self'; 
-      }
-    }
-
-    this.canAdd.set(hasAdd);
-    this.editScope.set(eScope); // 🌟
-  }
-
-  // 🌟 ฟังก์ชันตรวจสอบว่าควรโชว์ปุ่ม แก้ไข/ลบ ในแถวนี้ไหม
-  canEditRow(project: any): boolean {
-    const scope = this.editScope();
-    if (scope === 'all') return true;
-    if (scope === 'none' || !scope) return false;
+  // 🛡️ ฟังก์ชันเช็คสิทธิ์แบบปลอดภัย (ไม่สน LocalStorage)
+  fetchPermissionsFromDB() {
+    // X-User-Id เป็นตัวเดียวที่ต้องใช้ เพื่อระบุตัวตน (Backend มี Guard เช็คอีกชั้นตอนบันทึก)
+    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
     
-    const myFullName = localStorage.getItem('full_name') || '';
-    if (scope === 'self' || scope === 'own') {
-      if (project.author && myFullName && project.author.includes(myFullName)) return true;
-      return false;
-    }
-    
-    if (scope === 'department' || scope === 'dept') {
-      const userDeptStr = localStorage.getItem('user_dept') || '';
-      const deptIdMap: any = { 'chem': 1, 'math': 2, 'cs': 3, 'physics': 4, 'food': 5 };
-      if (deptIdMap[userDeptStr] && project.dept_id === deptIdMap[userDeptStr]) return true;
-      
-      const deptStringMap: any = { 'chem': 'เคมี', 'math': 'คณิตศาสตร์', 'cs': 'วิทยาการคอมพิวเตอร์', 'physics': 'ฟิสิกส์', 'food': 'เทคโนโลยีการอาหาร' };
-      if (deptStringMap[userDeptStr] && project.department === deptStringMap[userDeptStr]) return true;
-
-      return false;
-    }
-    return false;
+    this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers })
+      .subscribe({
+        next: (perms) => {
+          let hasAdd = false;
+          // perms จะได้มาจาก API ของคุณโดยตรงเช่น { "Research_info": { "add": "department" } }
+          
+          // ค้นหา key 'research_info' แบบไม่สนตัวพิมพ์เล็ก/ใหญ่
+          const researchKey = Object.keys(perms).find(k => k.toLowerCase() === 'research_info');
+          
+          if (researchKey && perms[researchKey]) {
+            const addScope = perms[researchKey]['add'];
+            if (addScope && addScope.toLowerCase() !== 'none') {
+              hasAdd = true; // ถ้า DB บอกว่ามีสิทธิ์ ก็เปิดปุ่ม Add!
+            }
+          }
+          
+          this.canAdd.set(hasAdd);
+        },
+        error: (err) => console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err)
+      });
   }
 
   fetchResearchData() {
     this.loading.set(true);
-    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '14');
+    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
 
     this.http.get<any[]>('http://localhost:8080/api/get_research.php', { headers })
       .subscribe({
         next: (data) => {
+          // data ที่ได้มา จะมีคำว่า can_edit: true/false ติดมาด้วยทุก Row จากหลังบ้าน
           this.allProjects.set(data || []);
           this.applyFilters();
           this.loading.set(false);
         },
         error: (err) => {
           console.error(err);
-          this.errorMessage.set('ไม่สามารถโหลดข้อมูลโครงการวิจัยได้ (กรุณาตรวจสอบสิทธิ์การเข้าถึง)');
+          this.errorMessage.set('ไม่สามารถโหลดข้อมูลโครงการวิจัยได้ (กรุณาตรวจสอบการเชื่อมต่อฐานข้อมูล)');
           this.loading.set(false);
         }
       });
   }
 
-  // 🌟 ฟังก์ชันลบข้อมูล
   deleteProject(id: number) {
     if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลโครงการวิจัยนี้?\n(การลบจะไม่สามารถกู้คืนได้)')) {
-      const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '14');
+      const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
       this.http.post<any>('http://localhost:8080/api/delete_research.php', { id: id }, { headers })
         .subscribe({
           next: (res) => {

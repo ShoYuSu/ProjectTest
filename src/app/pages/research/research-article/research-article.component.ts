@@ -17,8 +17,9 @@ export class ResearchArticleComponent implements OnInit {
   allArticles = signal<any[]>([]);
   filteredArticles = signal<any[]>([]);
   
+  // 🌟 ตัวแปรเก็บสิทธิ์ใน Memory
   canAdd = signal(false);
-  editScope = signal<string>('none'); // 🌟
+  
   errorMessage = signal<string>('');
   loading = signal(true);
   
@@ -30,95 +31,52 @@ export class ResearchArticleComponent implements OnInit {
   itemsPerPage = 10;
 
   ngOnInit() {
-    this.checkPermissions();
+    this.fetchPermissionsFromDB();
     this.fetchArticleData();
   }
 
-  // 🌟 ฟังก์ชันตรวจสอบสิทธิ์ (ตัดการยกเว้น Admin ออก บังคับใช้สิทธิ์ตามตาราง 100%)
-  checkPermissions() {
-    const permsString = localStorage.getItem('permissions') || '';
-    let hasAdd = false;
-    let eScope = 'none'; // 🌟
-
-    try {
-      const permsObj = JSON.parse(permsString);
-      
-      if (permsObj && typeof permsObj === 'object' && !Array.isArray(permsObj)) {
-        const researchKey = Object.keys(permsObj).find(k => k.toLowerCase() === 'research_info');
-        if (researchKey && permsObj[researchKey]) {
-          const addScope = permsObj[researchKey]['add'];
-          if (addScope && addScope.toLowerCase() !== 'none') hasAdd = true;
-          if (permsObj[researchKey]['edit']) eScope = permsObj[researchKey]['edit'].toLowerCase(); // 🌟
-        }
-      } 
-      else if (Array.isArray(permsObj)) {
-        const permAdd = permsObj.find(p => p.module_name?.toLowerCase() === 'research_info' && p.action?.toLowerCase() === 'add');
-        if (permAdd && permAdd.scope?.toLowerCase() !== 'none') hasAdd = true;
-        
-        const permEdit = permsObj.find(p => p.module_name?.toLowerCase() === 'research_info' && p.action?.toLowerCase() === 'edit');
-        if (permEdit) eScope = permEdit.scope?.toLowerCase() || 'none'; // 🌟
-      }
-    } catch (e) {
-      const cleanStr = permsString.toLowerCase().replace(/[\s"'{}\[\]]/g, '');
-      if (cleanStr.includes('research_info')) {
-        const idx = cleanStr.indexOf('research_info');
-        const subStr = cleanStr.substring(idx, idx + 50);
-        if (subStr.includes('add') && !subStr.includes('none')) hasAdd = true;
-        if (subStr.includes('edit')) eScope = 'self'; 
-      }
-    }
-
-    this.canAdd.set(hasAdd);
-    this.editScope.set(eScope); // 🌟
-  }
-
-  canEditRow(article: any): boolean {
-    const scope = this.editScope();
-    if (scope === 'all') return true;
-    if (scope === 'none' || !scope) return false;
-    const myFullName = localStorage.getItem('full_name') || '';
-    
-    if (scope === 'self' || scope === 'own') {
-      if (article.author && myFullName && article.author.includes(myFullName)) return true;
-      return false;
-    }
-    
-    if (scope === 'department' || scope === 'dept') {
-      const userDeptStr = localStorage.getItem('user_dept') || '';
-      const deptIdMap: any = { 'chem': 1, 'math': 2, 'cs': 3, 'physics': 4, 'food': 5 };
-      if (deptIdMap[userDeptStr] && article.dept_id === deptIdMap[userDeptStr]) return true;
-      
-      const deptStringMap: any = { 'chem': 'เคมี', 'math': 'คณิตศาสตร์', 'cs': 'วิทยาการคอมพิวเตอร์', 'physics': 'ฟิสิกส์', 'food': 'เทคโนโลยีการอาหาร' };
-      if (deptStringMap[userDeptStr] && article.department === deptStringMap[userDeptStr]) return true;
-
-      return false;
-    }
-    return false;
+  // 🛡️ ดึงสิทธิ์ "เพิ่มข้อมูล" จากฐานข้อมูลโดยตรง
+  fetchPermissionsFromDB() {
+    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers })
+      .subscribe({
+        next: (perms) => {
+          let hasAdd = false;
+          const researchKey = Object.keys(perms).find(k => k.toLowerCase() === 'research_info');
+          if (researchKey && perms[researchKey]) {
+            const addScope = perms[researchKey]['add'];
+            if (addScope && addScope.toLowerCase() !== 'none') {
+              hasAdd = true;
+            }
+          }
+          this.canAdd.set(hasAdd);
+        },
+        error: (err) => console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err)
+      });
   }
 
   fetchArticleData() {
     this.loading.set(true);
-    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '14');
+    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
 
     this.http.get<any[]>('http://localhost:8080/api/get_research_articles.php', { headers })
       .subscribe({
         next: (data) => {
-          this.allArticles.set(data || []);
+          this.allArticles.set(data || []); // ข้อมูลจะมี .can_edit แนบมาแล้ว
           this.applyFilters();
           this.loading.set(false);
         },
         error: (err) => {
           console.error(err);
-          this.errorMessage.set('ไม่สามารถโหลดข้อมูลบทความวิจัยได้ (กรุณาตรวจสอบการเชื่อมต่อหรือสิทธิ์)');
+          this.errorMessage.set('ไม่สามารถโหลดข้อมูลบทความวิจัยได้ (กรุณาตรวจสอบการเชื่อมต่อ)');
           this.loading.set(false);
         }
       });
   }
 
-  // 🌟 ฟังก์ชันลบข้อมูลบทความ
   deleteArticle(id: number) {
     if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลบทความวิจัยนี้?\n(การลบจะไม่สามารถกู้คืนได้)')) {
-      const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '14');
+      const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
       this.http.post<any>('http://localhost:8080/api/delete_research_article.php', { id: id }, { headers })
         .subscribe({
           next: (res) => {
@@ -141,10 +99,7 @@ export class ResearchArticleComponent implements OnInit {
     const tab = this.activeTab();
 
     result = result.filter(a => a.type === tab);
-
-    if (dept !== 'ทั้งหมด') {
-      result = result.filter(a => a.department === dept);
-    }
+    if (dept !== 'ทั้งหมด') result = result.filter(a => a.department === dept);
 
     if (query) {
       result = result.filter(a => 
@@ -159,20 +114,9 @@ export class ResearchArticleComponent implements OnInit {
     this.currentPage.set(1);
   }
 
-  setTab(tabName: string) {
-    this.activeTab.set(tabName);
-    this.applyFilters();
-  }
-
-  setDepartment(deptName: string) {
-    this.currentDept.set(deptName);
-    this.applyFilters();
-  }
-
-  onSearchChange(val: string) {
-    this.searchQuery.set(val);
-    this.applyFilters();
-  }
+  setTab(tabName: string) { this.activeTab.set(tabName); this.applyFilters(); }
+  setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(); }
+  onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
 
   paginatedArticles = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.itemsPerPage;
@@ -181,7 +125,6 @@ export class ResearchArticleComponent implements OnInit {
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredArticles().length / this.itemsPerPage)));
   pagesArray = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
-
   goToPage(page: number) { this.currentPage.set(page); }
   nextPage() { if(this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1); }
   prevPage() { if(this.currentPage() > 1) this.currentPage.update(p => p - 1); }
