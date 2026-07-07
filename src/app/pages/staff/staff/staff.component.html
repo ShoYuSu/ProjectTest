@@ -11,7 +11,7 @@
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         </div>
-        <input type="text" placeholder="ค้นหาชื่อ, ตำแหน่ง..." class="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15] w-64 shadow-sm transition-all" />
+        <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" placeholder="ค้นหาชื่อ, ตำแหน่ง..." class="pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15] w-64 shadow-sm transition-all" />
       </div>
       
       @if (canAdd()) {
