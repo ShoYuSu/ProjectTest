@@ -50,24 +50,31 @@ export class AddArticleComponent implements OnInit {
         if (state && state.articleData) {
           const data = state.articleData;
           
-          this.formData.article_type = data.type || 'journal';
+          // 🌟 Data Mapping ให้ตรงกับ get_research_articles.php
+          this.formData.article_type = data.type || data.article_type || 'journal';
           this.formData.title = data.title || '';
-          this.formData.publish_year = data.year || (new Date().getFullYear() + 543);
+          this.formData.publish_year = data.year || data.publish_year || (new Date().getFullYear() + 543);
           
-          if (data.department_id) {
-            this.formData.dept_id = data.department_id.toString();
+          if (data.dept_id || data.department_id) {
+            this.formData.dept_id = (data.dept_id || data.department_id).toString();
           }
 
           this.formData.journal_name = data.journal_name || '';
           this.formData.journal_vol_issue = data.journal_vol_issue || '';
           this.formData.journal_quartile = data.journal_quartile || '';
-
           this.formData.conference_name = data.conference_name || '';
           this.formData.conference_date = data.conference_date || '';
           this.formData.conference_location = data.conference_location || '';
 
+          // 🌟 แยกรหัส staff_ids ออกมาสร้างเป็น Dropdown อัตโนมัติ
           if (data.authors_list && Array.isArray(data.authors_list) && data.authors_list.length > 0) {
             this.formData.authors = data.authors_list;
+          } else if (data.staff_ids) {
+             const ids = data.staff_ids.toString().split(',');
+             this.formData.authors = ids.map((id: string, index: number) => ({ 
+                 staff_id: id.trim(), 
+                 role: index === 0 ? 'ผู้นิพนธ์ชื่อแรก (First Author)' : 'ผู้นิพนธ์ร่วม (Co-Author)' 
+             }));
           }
         }
       }
@@ -80,7 +87,7 @@ export class AddArticleComponent implements OnInit {
 
   loadActiveStaff() {
     this.loading.set(true);
-    const currentUserId = localStorage.getItem('user_id') || '14';
+    const currentUserId = localStorage.getItem('user_id') || '0';
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
     
     this.http.get<any>('http://localhost:8080/api/add_research_article.php', { headers })
@@ -104,55 +111,43 @@ export class AddArticleComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          alert('❌ ไม่สามารถดึงข้อมูลแบบฟอร์มได้: ' + (err.error?.message || 'Unauthorized'));
+          alert('❌ ไม่สามารถดึงข้อมูลบัญชีรายชื่อได้');
           this.loading.set(false);
         }
       });
   }
 
-  addAuthorRow() {
-    this.formData.authors.push({ staff_id: '', role: 'ผู้นิพนธ์ชื่อแรก (First Author)' });
-  }
+  addAuthorRow() { this.formData.authors.push({ staff_id: '', role: 'ผู้นิพนธ์ชื่อแรก (First Author)' }); }
 
   removeAuthorRow(index: number) {
-    if (this.formData.authors.length > 1) {
-      this.formData.authors.splice(index, 1);
-    } else {
-      alert('บทความวิจัยจำเป็นต้องมีผู้นิพนธ์อย่างน้อย 1 คนครับ');
-    }
+    if (this.formData.authors.length > 1) this.formData.authors.splice(index, 1);
+    else alert('บทความวิจัยจำเป็นต้องมีผู้นิพนธ์อย่างน้อย 1 คนครับ');
   }
 
   submitForm() {
     if (!this.formData.title.trim() || !this.formData.publish_year) {
-      alert('กรุณากรอกชื่อบทความและปี พ.ศ. ให้ครบถ้วนครับ');
-      return;
+      alert('กรุณากรอกชื่อบทความและปี พ.ศ. ให้ครบถ้วนครับ'); return;
     }
 
     if (this.formData.article_type === 'journal' && !this.formData.journal_name.trim()) {
-      alert('กรุณากรอกชื่อวารสารวิชาการที่ตีพิมพ์ครับ');
-      return;
+      alert('กรุณากรอกชื่อวารสารวิชาการที่ตีพิมพ์ครับ'); return;
     }
 
     if (this.formData.article_type === 'conference' && !this.formData.conference_name.trim()) {
-      alert('กรุณากรอกชื่องานประชุมวิชาการครับ');
-      return;
+      alert('กรุณากรอกชื่องานประชุมวิชาการครับ'); return;
     }
 
-    const hasEmptyAuthor = this.formData.authors.some(a => !a.staff_id);
-    if (hasEmptyAuthor) {
-      alert('กรุณาเลือกชื่ออาจารย์ในช่องที่มีอยู่ให้ครบถ้วนครับ');
-      return;
+    if (this.formData.authors.some(a => !a.staff_id)) {
+      alert('กรุณาเลือกชื่ออาจารย์ในช่องที่มีอยู่ให้ครบถ้วนครับ'); return;
     }
 
     this.isSubmitting.set(true);
-    const currentUserId = localStorage.getItem('user_id') || '14';
+    const currentUserId = localStorage.getItem('user_id') || '0';
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
 
-    const payload = { 
-      ...this.formData,
-      id: this.editId 
-    };
+    const payload = { ...this.formData, id: this.editId };
 
+    // เคลียร์ค่าว่างในฝั่งที่ไม่ได้เลือก
     if (payload.article_type === 'journal') {
       payload.conference_name = ''; payload.conference_date = ''; payload.conference_location = '';
     } else {
@@ -176,7 +171,8 @@ export class AddArticleComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          alert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + (err.error?.message || 'Server Error'));
+          const errMsg = err.error?.message || err.error?.error || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์';
+          alert('❌ ' + errMsg);
           this.isSubmitting.set(false);
         }
       });

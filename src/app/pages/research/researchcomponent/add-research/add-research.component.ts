@@ -46,18 +46,26 @@ export class AddResearchComponent implements OnInit {
         if (state && state.projectData) {
           const data = state.projectData;
           
-          this.formData.title = data.name || '';
-          this.formData.funding_source = data.fundSource || '';
+          // 🌟 Data Mapping: รับค่าจาก Database ตรงๆ
+          this.formData.title = data.title || data.name || '';
+          this.formData.funding_source = data.funding_source || data.fundSource || '';
           this.formData.budget = data.budget ? Number(data.budget) : null;
-          this.formData.year_funded = data.year || (new Date().getFullYear() + 543);
-          this.formData.year_ended = data.yearEnded || (new Date().getFullYear() + 543);
+          this.formData.year_funded = data.year_funded || data.year || (new Date().getFullYear() + 543);
+          this.formData.year_ended = data.year_ended || data.yearEnded || (new Date().getFullYear() + 543);
           
-          if (data.department_id) {
-            this.formData.dept_id = data.department_id.toString();
+          if (data.dept_id || data.department_id) {
+            this.formData.dept_id = (data.dept_id || data.department_id).toString();
           }
 
+          // 🌟 แยกรหัส staff_ids ออกมาสร้างเป็น Dropdown อัตโนมัติ
           if (data.authors_list && Array.isArray(data.authors_list) && data.authors_list.length > 0) {
             this.formData.authors = data.authors_list;
+          } else if (data.staff_ids) {
+             const ids = data.staff_ids.toString().split(',');
+             this.formData.authors = ids.map((id: string, index: number) => ({ 
+                 staff_id: id.trim(), 
+                 role: index === 0 ? 'หัวหน้าโครงการ' : 'ผู้ร่วมวิจัย' 
+             }));
           }
         }
       }
@@ -70,7 +78,7 @@ export class AddResearchComponent implements OnInit {
 
   loadActiveStaff() {
     this.loading.set(true);
-    const currentUserId = localStorage.getItem('user_id') || '14';
+    const currentUserId = localStorage.getItem('user_id') || '0';
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
     
     this.http.get<any>('http://localhost:8080/api/add_research.php', { headers })
@@ -100,44 +108,31 @@ export class AddResearchComponent implements OnInit {
       });
   }
 
-  addAuthorRow() {
-    this.formData.authors.push({ staff_id: '', role: 'หัวหน้าโครงการ' });
-  }
+  addAuthorRow() { this.formData.authors.push({ staff_id: '', role: 'หัวหน้าโครงการ' }); }
 
   removeAuthorRow(index: number) {
-    if (this.formData.authors.length > 1) {
-      this.formData.authors.splice(index, 1);
-    } else {
-      alert('โครงการวิจัยจำเป็นต้องมีผู้รับผิดชอบอย่างน้อย 1 คนครับ');
-    }
+    if (this.formData.authors.length > 1) this.formData.authors.splice(index, 1);
+    else alert('โครงการวิจัยจำเป็นต้องมีผู้รับผิดชอบอย่างน้อย 1 คนครับ');
   }
 
   submitForm() {
     if (!this.formData.title.trim() || !this.formData.funding_source.trim() || !this.formData.year_funded || !this.formData.year_ended) {
-      alert('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วนก่อนทำการบันทึกครับ');
-      return;
+      alert('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วนก่อนทำการบันทึกครับ'); return;
     }
 
     if (Number(this.formData.year_funded) > Number(this.formData.year_ended)) {
-      alert('❌ ข้อผิดพลาดข้อมูล: ปี พ.ศ. ที่สิ้นสุดทุน จะต้องไม่น้อยกว่าปี พ.ศ. ที่เริ่มได้รับทุนสนับสนุนครับ');
-      return;
+      alert('❌ ปี พ.ศ. ที่สิ้นสุดโครงการ จะต้องไม่น้อยกว่าปี พ.ศ. ที่เริ่มได้รับทุนครับ'); return;
     }
 
-    const hasEmptyAuthor = this.formData.authors.some(a => !a.staff_id);
-    if (hasEmptyAuthor) {
-      alert('กรุณาเลือกชื่ออาจารย์ในช่องที่มีอยู่ให้ครบถ้วนครับ');
-      return;
+    if (this.formData.authors.some(a => !a.staff_id)) {
+      alert('กรุณาเลือกชื่ออาจารย์ในช่องที่มีอยู่ให้ครบถ้วนครับ'); return;
     }
 
     this.isSubmitting.set(true);
-    const currentUserId = localStorage.getItem('user_id') || '14';
+    const currentUserId = localStorage.getItem('user_id') || '0';
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
 
-    const payload = {
-      ...this.formData,
-      id: this.editId 
-    };
-
+    const payload = { ...this.formData, id: this.editId };
     const apiUrl = this.isEditMode() 
       ? 'http://localhost:8080/api/update_research.php' 
       : 'http://localhost:8080/api/add_research.php';
@@ -155,7 +150,8 @@ export class AddResearchComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          alert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์');
+          const errMsg = err.error?.message || err.error?.error || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์';
+          alert('❌ ' + errMsg);
           this.isSubmitting.set(false);
         }
       });

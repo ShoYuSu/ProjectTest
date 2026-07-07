@@ -16,6 +16,7 @@ export class ProfileComponent implements OnInit {
   loading = true;
   errorMessage = '';
 
+  // 🌟 ตัวแปรเก็บสิทธิ์ที่ส่งมาจาก Backend โดยตรง ปลอดภัย 100%
   canEditProfile = false;     
   canViewPermissions = false; 
   canEditPermissions = false; 
@@ -68,24 +69,12 @@ export class ProfileComponent implements OnInit {
             if (response && response.status === 'success') {
               this.profileData = response.data;
               
-              const perms = localStorage.getItem('permissions') || '';
-              const myDeptId = localStorage.getItem('dept_id') || '';
-              const role = localStorage.getItem('role') || '';
+              // 🌟 รับค่าสิทธิ์ที่เซิร์ฟเวอร์คำนวณมาให้ (ไม่ต้องแฮ็ก LocalStorage แล้ว)
+              this.canEditProfile = response.can_edit_profile;
+              this.canEditPermissions = response.can_edit_permissions;
               
-              this.canEditProfile = response.is_owner;
-              
-              const hasEditAll = perms.toLowerCase().includes('staff_info,edit,all') || role === 'admin';
-              const hasEditDept = perms.toLowerCase().includes('staff_info,edit,department') || perms.toLowerCase().includes('staff_info,edit,dept');
-              
-              let isSameDept = false;
-              if (myDeptId && this.profileData.basic_info.dept_id) {
-                isSameDept = (myDeptId == this.profileData.basic_info.dept_id);
-              }
-
-              const hasEditPermission = hasEditAll || (hasEditDept && isSameDept);
-
-              this.canViewPermissions = hasEditPermission;
-              this.canEditPermissions = !response.is_owner && hasEditPermission;
+              // ถ้าแก้สิทธิ์ได้ ก็ต้องเห็นสิทธิ์ได้
+              this.canViewPermissions = this.canEditPermissions || response.is_owner;
 
               this.mapPermissionsToModules(response.data.permissions);
             } else {
@@ -118,7 +107,6 @@ export class ProfileComponent implements OnInit {
       expertise: ''
     };
 
-    // 🌟 ดึงข้อมูลการศึกษา (Education) เข้าเป็น Array เพื่อให้เพิ่ม/ลบได้หลายใบ
     this.editData.education = this.profileData.education ? JSON.parse(JSON.stringify(this.profileData.education)) : [];
 
     if (this.profileData.expertise && this.profileData.expertise.length > 0) {
@@ -149,9 +137,6 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  // ==========================================
-  // 🌟 ฟังก์ชันจัดการประวัติการศึกษาหลายใบ
-  // ==========================================
   addEducation() {
     if (!this.editData.education) this.editData.education = [];
     this.editData.education.push({ degree_level: '', field_of_study: '', university: '', graduation_year: '' });
@@ -161,9 +146,6 @@ export class ProfileComponent implements OnInit {
     this.editData.education.splice(index, 1);
   }
 
-  // ==========================================
-  // ฟังก์ชันจัดการใบประกาศนียบัตร
-  // ==========================================
   onCertificateSelected(event: any) {
     const files = event.target.files;
     if (files && files.length > 0) {
@@ -188,9 +170,6 @@ export class ProfileComponent implements OnInit {
     this.editData.newCertificatesPreview.splice(index, 1);
   }
 
-  // ==========================================
-  // ฟังก์ชันจัดการรางวัลและความสำเร็จ
-  // ==========================================
   addAchievement() {
     if (!this.editData.achievements) this.editData.achievements = [];
     this.editData.achievements.push({ achievement_name: '', achievement_year: new Date().getFullYear().toString() });
@@ -265,14 +244,14 @@ export class ProfileComponent implements OnInit {
           if (res.status === 'success') {
             this.isEditProfileMode = false;
             this.isEditPermissionMode = false;
-            alert('บันทึกข้อมูลเรียบร้อยแล้ว!');
+            alert('✅ บันทึกข้อมูลเรียบร้อยแล้ว!');
             this.fetchProfileData(this.profileData.person_id);
           } else {
-            alert('บันทึกไม่สำเร็จ: ' + res.message);
+            alert('❌ บันทึกไม่สำเร็จ: ' + res.message);
           }
         },
         error: (err) => {
-          alert('เชื่อมต่อเซิร์ฟเวอร์เพื่อบันทึกข้อมูลล้มเหลว (พอร์ต 8080)');
+          alert('❌ เชื่อมต่อเซิร์ฟเวอร์เพื่อบันทึกข้อมูลล้มเหลว');
         }
       });
   }

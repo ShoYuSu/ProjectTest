@@ -14,57 +14,45 @@ export class StaffComponent implements OnInit {
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
 
-  // Signals สำหรับเก็บสถานะสิทธิ์ปุ่มต่างๆ ของโมดูล Staff_info
+  // 🌟 เก็บสิทธิ์การเพิ่มข้อมูล (ดึงจาก DB)
   canAdd = signal(false);
-  canEdit = signal(false);
-  canDelete = signal(false);
 
-  // รายการบุคลากรทั้งหมดเต็มจำนวนที่ดึงมาจากฐานข้อมูล (สอดคล้องกับสิทธิ์หลัก)
   allStaffList = signal<any[]>([]);
-  // รายการบุคลากรที่ผ่านการกรอง (Filter) เรียบร้อยแล้วเพื่อใช้แสดงผลบนเทมเพลตหน้าจอ
   filteredStaffList = signal<any[]>([]);
   errorMessage = signal<string>('');
   
-  // ตัวเก็บสถานะประเภทการกรอง
   currentDeptFilter = signal<string>('');
-  currentTypeFilter = signal<string>('all'); // 'all' | 'academic' | 'support'
+  currentTypeFilter = signal<string>('all'); 
 
   ngOnInit() {
-    this.checkPermissions();
+    this.fetchPermissionsFromDB();
     this.fetchStaffData();
     this.listenToRouteParams();
   }
 
-  // 🌟 ฟังก์ชันตรวจสอบสิทธิ์ที่แก้ไขแล้ว: ตรวจสอบ String สิทธิ์อย่างแม่นยำ และปิดสิทธิ์ลบหากไม่มีสิทธิ์ edit
-  checkPermissions() {
-    const role = localStorage.getItem('role');
-    if (role === 'admin') {
-      this.canAdd.set(true);
-      this.canEdit.set(true);
-      this.canDelete.set(true);
-      return;
-    }
-
-    const permsString = (localStorage.getItem('permissions') || '').toLowerCase();
+  // 🛡️ ดึงสิทธิ์ Add จากฐานข้อมูลสดๆ ป้องกัน F12
+  fetchPermissionsFromDB() {
+    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
     
-    // ตรวจสอบสิทธิ์ Add พนักงาน
-    const hasAdd = permsString.includes('staff_info,add,all') || 
-                   permsString.includes('staff_info,add,department') || 
-                   permsString.includes('staff_info,add,dept');
-                   
-    // ตรวจสอบสิทธิ์ Edit พนักงาน               
-    const hasEdit = permsString.includes('staff_info,edit,all') || 
-                    permsString.includes('staff_info,edit,department') || 
-                    permsString.includes('staff_info,edit,dept');
-
-    this.canAdd.set(hasAdd);
-    this.canEdit.set(hasEdit);
-    
-    // 🌟 บังคับเงื่อนไขตามกฎของท่าน: หากไม่มีสิทธิ์แก้ไข (Edit) จะไม่มีสิทธิ์มองเห็นและกดปุ่มลบอย่างเด็ดขาด
-    this.canDelete.set(hasEdit);
+    this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers })
+      .subscribe({
+        next: (perms) => {
+          let hasAdd = false;
+          if (perms && typeof perms === 'object' && !Array.isArray(perms)) {
+              const staffKey = Object.keys(perms).find(k => k.toLowerCase().includes('staff'));
+              if (staffKey && perms[staffKey]) {
+                const addScope = perms[staffKey]['add'];
+                if (addScope && addScope.toLowerCase() !== 'none') {
+                  hasAdd = true;
+                }
+              }
+          }
+          this.canAdd.set(hasAdd);
+        },
+        error: (err) => console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err)
+      });
   }
 
-  // ดักฟังการเปลี่ยนค่า Query Params เมื่อผู้ใช้กดคลิกเมนูภาควิชาต่างๆ บน Sidebar
   listenToRouteParams() {
     this.route.queryParams.subscribe(params => {
       const dept = params['dept'] || '';
@@ -73,27 +61,25 @@ export class StaffComponent implements OnInit {
     });
   }
 
-  // ฟังก์ชันเปลี่ยนแท็บประเภทพนักงาน (วิชาการ / สนับสนุน)
   changeTypeFilter(type: string) {
     this.currentTypeFilter.set(type);
     this.applyFilter();
   }
 
-  // ฟังก์ชันรวมศูนย์การกรองข้อมูลแบบ Multi-Filter (กรองพร้อมกันทั้งภาควิชาและสายงาน)
   applyFilter() {
     const deptFilter = this.currentDeptFilter();
     const typeFilter = this.currentTypeFilter();
     let result = this.allStaffList();
 
-    // ขั้นตอนที่ 1: กรองตามประเภทของภาควิขาก่อน
+    // 🌟 แก้ไขชื่อภาควิชาให้ตรงกับ Database เพื่อให้ค้นหาเจอ
     if (deptFilter) {
       let targetDeptName = '';
       switch (deptFilter) {
-        case 'math': targetDeptName = 'คณิตศาสตร์'; break;
-        case 'chem': targetDeptName = 'เคมี'; break;
-        case 'food': targetDeptName = 'เทคโนโลยีการอาหาร'; break;
-        case 'physics': targetDeptName = 'ฟิสิกส์'; break;
-        case 'cs': targetDeptName = 'วิทยาการคอมพิวเตอร์'; break;
+        case 'math': targetDeptName = 'ภาควิชาคณิตศาสตร์'; break;
+        case 'chem': targetDeptName = 'ภาควิชาเคมี'; break;
+        case 'food': targetDeptName = 'ภาควิชาเทคโนโลยีการอาหาร'; break;
+        case 'physics': targetDeptName = 'ภาควิชาฟิสิกส์'; break;
+        case 'cs': targetDeptName = 'ภาควิชาวิทยาการคอมพิวเตอร์'; break;
       }
 
       if (targetDeptName) {
@@ -101,7 +87,6 @@ export class StaffComponent implements OnInit {
       }
     }
 
-    // ขั้นตอนที่ 2: นำข้อมูลที่ได้มากรองประเภทสายงานต่อแบบต่อเนื่อง
     if (typeFilter !== 'all') {
       result = result.filter(staff => staff.type === typeFilter);
     }
@@ -109,7 +94,6 @@ export class StaffComponent implements OnInit {
     this.filteredStaffList.set(result);
   }
 
-  // ฟังก์ชันนับจำนวนพนักงานแยกตามแต่ละแท็บแบบไดนามิก สอดคล้องกับเมนูที่เลือกอยู่
   getStaffCount(type: string): number {
     const deptFilter = this.currentDeptFilter();
     let list = this.allStaffList();
@@ -117,11 +101,11 @@ export class StaffComponent implements OnInit {
     if (deptFilter) {
       let targetDeptName = '';
       switch (deptFilter) {
-        case 'math': targetDeptName = 'คณิตศาสตร์'; break;
-        case 'chem': targetDeptName = 'เคมี'; break;
-        case 'food': targetDeptName = 'เทคโนโลยีการอาหาร'; break;
-        case 'physics': targetDeptName = 'ฟิสิกส์'; break;
-        case 'cs': targetDeptName = 'วิทยาการคอมพิวเตอร์'; break;
+        case 'math': targetDeptName = 'ภาควิชาคณิตศาสตร์'; break;
+        case 'chem': targetDeptName = 'ภาควิชาเคมี'; break;
+        case 'food': targetDeptName = 'ภาควิชาเทคโนโลยีการอาหาร'; break;
+        case 'physics': targetDeptName = 'ภาควิชาฟิสิกส์'; break;
+        case 'cs': targetDeptName = 'ภาควิชาวิทยาการคอมพิวเตอร์'; break;
       }
       list = list.filter(staff => staff.department === targetDeptName);
     }
@@ -130,37 +114,54 @@ export class StaffComponent implements OnInit {
     return list.filter(staff => staff.type === type).length;
   }
 
-  // เรียกข้อมูลพนักงานจริงจาก get_staff.php โดยส่ง X-User-Id แนบไปด้วยทุกครั้ง
   fetchStaffData() {
-    const currentUserId = localStorage.getItem('user_id') || '14'; 
+    const currentUserId = localStorage.getItem('user_id') || '0'; 
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
 
     this.http.get<any[]>('http://localhost:8080/api/get_staff.php', { headers })
       .subscribe({
         next: (data) => {
-          this.allStaffList.set(data);
+          // 🌟 Data Mapping: แปลงข้อมูลจาก DB ให้เข้ากับ UI
+          const mappedData = data.map(item => {
+            // เช็คและจัดการ Path รูปภาพ (ถ้าเป็น UI Avatars ให้ใช้เลย ถ้าเป็นไฟล์ Upload ให้ต่อ URL)
+            let imgUrl = item.img_profile;
+            if (imgUrl && !imgUrl.startsWith('http')) {
+               imgUrl = `http://localhost:8080/${imgUrl}`;
+            }
+
+            return {
+              id: item.person_id, // ใช้ person_id สำหรับส่งไปหน้า profile
+              staff_id: item.staff_id, // เก็บไว้ใช้ตอนกดลบ
+              person_id: item.person_id, // เก็บไว้ใช้ตอนกดลบ
+              name: item.full_name,
+              position: item.position || 'บุคลากร',
+              department: item.department || 'ไม่ระบุสังกัด',
+              image: imgUrl,
+              type: item.position && item.position.includes('อาจารย์') ? 'academic' : 'support',
+              researchCount: 0, // ค่าเบื้องต้น
+              can_edit: item.can_edit // 🌟 สิทธิ์จากระบบ Guard
+            };
+          });
+
+          this.allStaffList.set(mappedData);
           this.applyFilter(); 
           this.errorMessage.set('');
         },
         error: (err) => {
           console.error(err);
-          this.errorMessage.set('ไม่สามารถเข้าถึงข้อมูลบุคลากรได้เนื่องจากข้อจำกัดด้านสิทธิ์ระบบ');
+          this.errorMessage.set('ระบบขัดข้อง หรือคุณไม่มีสิทธิ์เข้าถึงข้อมูล');
         }
       });
   }
 
-  // ฟังก์ชันปรับสถานะเป็น Inactive ผ่านการส่ง Payload เข้าสู่หลังบ้านอย่างปลอดภัย
-  deleteStaff(id: number, name: string) {
-    if (!this.canDelete()) {
-      alert('คุณไม่มีสิทธิ์ในการลบข้อมูลบุคลากร');
-      return;
-    }
-
-    if (confirm(`คำเตือน: คุณต้องการลบบัญชีของ "${name}" ใช่หรือไม่?\n(การกระทำนี้จะเปลี่ยนสถานะเป็น Inactive)`)) {
-      const currentUserId = localStorage.getItem('user_id') || '14';
+  // 🌟 ฟังก์ชันลบที่ปรับปรุงแล้ว: รับค่า 3 ตัว ส่งไป Backend เพื่อลบทั้ง 2 ตาราง
+  deleteStaff(staff_id: number, person_id: number, name: string) {
+    if (confirm(`⚠️ คำเตือน: คุณต้องการลบบัญชีและข้อมูลทั้งหมดของ "${name}" ใช่หรือไม่?\n(การกระทำนี้จะไม่สามารถกู้คืนได้)`)) {
+      const currentUserId = localStorage.getItem('user_id') || '0';
       const headers = new HttpHeaders().set('X-User-Id', currentUserId);
 
-      this.http.post<any>('http://localhost:8080/api/delete_staff.php', { target_person_id: id }, { headers })
+      // ส่งไปทั้ง staff_id และ person_id
+      this.http.post<any>('http://localhost:8080/api/delete_staff.php', { staff_id: staff_id, person_id: person_id }, { headers })
         .subscribe({
           next: (res: any) => {
             if (res && res.success) {
@@ -172,7 +173,8 @@ export class StaffComponent implements OnInit {
           },
           error: (err) => {
             console.error(err);
-            alert('เกิดข้อผิดพลาดไม่สามารถเชื่อมต่อ API ลบข้อมูลได้ (ตรวจสอบพอร์ต 8080)');
+            const errorDetail = err.error?.error || err.error?.message || err.message;
+            alert('❌ เกิดข้อผิดพลาดจากเซิร์ฟเวอร์: ' + errorDetail);
           }
         });
     }
