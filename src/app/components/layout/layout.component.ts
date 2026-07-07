@@ -1,6 +1,7 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Component({
   selector: 'app-layout',
@@ -11,71 +12,64 @@ import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/rou
 })
 export class LayoutComponent implements OnInit {
   private router = inject(Router);
+  private http = inject(HttpClient);
 
   isStaffExpanded = signal(false);
   isResearchExpanded = signal(false);
   isSidebarOpen = signal(false);
   isMiniSidebar = signal(false);
 
-  // Signals ควบคุมเมนูหลักตามสิทธิ์การเข้าถึงโมดูล
+  // Signals ควบคุมเมนูหลักตามสิทธิ์จากฐานข้อมูลจริงเท่านั้น
   canViewDashboard = signal(false);
   canViewStaff = signal(false);
   canViewResearch = signal(false);
   canViewTraining = signal(false);
   canViewProjects = signal(false);
 
-  // 🌟 เพิ่ม Signal ควบคุมการแสดงผลเมนู "ระบบที่ปรึกษา"
+  // 🌟 คงไว้สำหรับระบบที่ปรึกษาของเพื่อน (เช็คสิทธิ์ผ่าน Role)
   canViewAdvisorSystem = signal(false); 
 
-  // 🌟 Signals เพิ่มเติมเพื่อควบคุม Dropdown รายภาควิชาของโมดูล Staff Information
-  canViewAllDepts = signal(true); // True = แสดงครบทุกภาควิชา, False = กรองเฉพาะภาควิชาตนเอง
-  userDept = signal<string>('');   // เก็บตัวย่อภาควิชาของผู้ใช้ปัจจุบัน เช่น 'physics', 'cs', 'math'
+  // Signals ควบคุม Dropdown รายภาควิชาของโมดูล Staff
+  canViewAllDepts = signal(true); 
+  userDept = signal<string>('');   
 
   isProfileMenuOpen = false;
-  userName: string = 'ADMIN';
-  userRoleDisplay: string = 'SYSTEM ADMIN';
-  userInitial: string = 'A';
+  userName: string = 'USER';
+  userRoleDisplay: string = 'MEMBER';
+  userInitial: string = 'U';
 
   ngOnInit() {
-    // ⭐️ 1. ดักจับข้อมูลที่ส่งมาจาก URL ของระบบล็อกอินหลัก
+    this.handleUrlParams();
+    this.loadUserProfile();
+    this.fetchPermissionsFromDB();
+  }
+
+  // 🛡️ จัดการ Parameter ที่ส่งมาจากระบบ Login กลาง
+  handleUrlParams() {
     const urlParams = new URLSearchParams(window.location.search);
     const tokenFromUrl = urlParams.get('token');
     const roleFromUrl = urlParams.get('role');
     const userFromUrl = urlParams.get('user');
-    const permsFromUrl = urlParams.get('perms');
     const deptFromUrl = urlParams.get('dept'); 
-    const isAdvisorFromUrl = urlParams.get('is_advisor'); // 🌟 รับค่าที่ปรึกษาจาก URL
+    const isAdvisorFromUrl = urlParams.get('is_advisor'); 
+    
+    // 🌟 รับค่า user_id จริงๆ จากระบบล็อกอินหลัก ไม่มีการฮาร์ดโค้ดเลข 14, 15 อีกต่อไป
+    const userIdFromUrl = urlParams.get('user_id') || urlParams.get('userId') || urlParams.get('uid');
 
     if (tokenFromUrl) {
       localStorage.setItem('token', tokenFromUrl);
       if (roleFromUrl) localStorage.setItem('role', roleFromUrl);
       if (userFromUrl) localStorage.setItem('full_name', userFromUrl);
-      
-      // จัดเก็บค่า user_id ลงหน่วยความจำ Local เพื่อใช้ยืนยันกับ PHP API ตัวอื่น
-      if (roleFromUrl === 'teacher') {
-        localStorage.setItem('user_id', '14'); 
-      } else if (roleFromUrl === 'admin') {
-        localStorage.setItem('user_id', '15'); 
-      } else {
-        localStorage.setItem('user_id', '10');
-      }
-      
-      if (deptFromUrl) {
-        localStorage.setItem('user_dept', deptFromUrl.toLowerCase());
-      }
-      
-      if (permsFromUrl) {
-        localStorage.setItem('permissions', decodeURIComponent(permsFromUrl));
-      }
-
-      if (isAdvisorFromUrl !== null) {
-        localStorage.setItem('is_advisor', isAdvisorFromUrl); // 🌟 บันทึกลงเครื่อง
-      }
+      if (userIdFromUrl) localStorage.setItem('user_id', userIdFromUrl); // บันทึก ID จริงลงเครื่อง
+      if (deptFromUrl) localStorage.setItem('user_dept', deptFromUrl.toLowerCase());
+      if (isAdvisorFromUrl !== null) localStorage.setItem('is_advisor', isAdvisorFromUrl);
       
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+  }
 
-    // ⭐️ 2. ดึงสถานะประวัติผู้ใช้งานปัจจุบันขึ้นมาทำป้ายชื่อโปรไฟล์
+  // ใช้ Role เพื่อแสดงผลข้อความในป้ายโปรไฟล์ และตั้งค่าพื้นฐานเท่านั้น
+  loadUserProfile() {
     const role = localStorage.getItem('role');
     const fullName = localStorage.getItem('full_name');
 
@@ -96,35 +90,50 @@ export class LayoutComponent implements OnInit {
     }
 
     this.userDept.set(localStorage.getItem('user_dept') || '');
+  }
 
-    // ⭐️ 3. ตรวจสอบเงื่อนไข Permission Based Access Control
-    const permsString = localStorage.getItem('permissions') || '';
-    const permsArray = permsString.split(',').map(p => p.trim().toLowerCase());
-    const isAdmin = role === 'admin';
-    const isAdvisor = localStorage.getItem('is_advisor') === 'true'; // 🌟 ดึงค่าจาก localstorage
+  // 🛡️ ดึงสิทธิ์การเปิด/ปิดเมนูจากฐานข้อมูลสดๆ (ไม่มีการเช็คข้ามผ่านสิทธิ์แอดมิน)
+  fetchPermissionsFromDB() {
+    const role = localStorage.getItem('role') || '';
+    const currentUserId = localStorage.getItem('user_id') || '0';
+    const isAdvisor = localStorage.getItem('is_advisor') === 'true';
 
-    // เช็คการเปิด-ปิดเมนูหลัก
-    this.canViewDashboard.set(isAdmin || permsArray.some(p => p.includes('dashboard') && p.includes('view') && !p.includes('none')));
-    this.canViewStaff.set(isAdmin || permsArray.some(p => p.includes('staff_info') && p.includes('view') && !p.includes('none')));
-    this.canViewResearch.set(isAdmin || permsArray.some(p => p.includes('research_info') && p.includes('view') && !p.includes('none')));
-    this.canViewTraining.set(isAdmin || permsArray.some(p => p.includes('training') && p.includes('view') && !p.includes('none')));
-    
-    // เปลี่ยนเป็นเช็คหาคำว่า 'plan' เพื่อให้ครอบคลุมคำว่า 'plan_info' ตามฐานข้อมูล
-    this.canViewProjects.set(isAdmin || permsArray.some(p => (p.includes('plan') || p.includes('project')) && p.includes('view') && !p.includes('none')));
+    // 🌟 ส่วนนี้ตรวจสอบ Role เพื่อระบบที่ปรึกษาของเพื่อนตามที่คุณต้องการ
+    this.canViewAdvisorSystem.set(role === 'admin' || role === 'student' || (role === 'teacher' && isAdvisor));
 
-    // 🌟 ตรรกะโชว์เมนู: แอดมิน หรือ นศ หรือ (อาจารย์ที่เป็นที่ปรึกษา)
-    this.canViewAdvisorSystem.set(isAdmin || role === 'student' || (role === 'teacher' && isAdvisor));
+    // ⚠️ ทุกคน (รวมถึง Admin) ต้องยิงเช็คสิทธิ์การเข้าถึงโมดูลจากฐานข้อมูลจริงทั้งหมด ห้ามลัดสิทธิ์
+    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+    this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers })
+      .subscribe({
+        next: (perms) => {
+          if (perms && typeof perms === 'object' && !Array.isArray(perms)) {
+            
+            const checkViewScope = (keyword: string) => {
+              const key = Object.keys(perms).find(k => k.toLowerCase().includes(keyword.toLowerCase()));
+              if (key && perms[key] && perms[key]['view']) {
+                return perms[key]['view'].toLowerCase() !== 'none';
+              }
+              return false;
+            };
 
-    // เช็คสิทธิ์ควบคุม Dropdown เมนูย่อยของบุคลากรรายภาควิชา
-    const hasDepartmentScopeOnly = permsArray.some(p => p.includes('staff_info') && p.includes('view') && p.includes('department'));
-    
-    if (isAdmin) {
-      this.canViewAllDepts.set(true); 
-    } else if (hasDepartmentScopeOnly) {
-      this.canViewAllDepts.set(false); 
-    } else {
-      this.canViewAllDepts.set(true); 
-    }
+            const getStaffScope = () => {
+              const key = Object.keys(perms).find(k => k.toLowerCase().includes('staff'));
+              return (key && perms[key] && perms[key]['view']) ? perms[key]['view'].toLowerCase() : 'none';
+            };
+
+            // กำหนดการแสดงผลเมนูจากสิทธิ์จริงในฐานข้อมูล
+            this.canViewDashboard.set(checkViewScope('dashboard'));
+            this.canViewStaff.set(checkViewScope('staff'));
+            this.canViewResearch.set(checkViewScope('research'));
+            this.canViewTraining.set(checkViewScope('training'));
+            this.canViewProjects.set(checkViewScope('plan') || checkViewScope('project'));
+
+            // เช็คว่าต้องบังคับกรองเฉพาะภาควิชาตนเองหรือไม่ (ถ้าสิทธิ์เป็น department จะได้ค่า false)
+            this.canViewAllDepts.set(getStaffScope() !== 'department');
+          }
+        },
+        error: (err) => console.error('ไม่สามารถดึงสิทธิ์การเข้าถึงเมนูจากฐานข้อมูลได้', err)
+      });
   }
 
   toggleProfileMenu() {
@@ -137,6 +146,7 @@ export class LayoutComponent implements OnInit {
     window.location.href = 'http://localhost:4200/login?action=logout';
   }
 
+  // 🌟 ส่งค่าไประบบที่ปรึกษาของเพื่อน โดยใช้ข้อมูล Token และ Role ตามเดิม
   goToAdvisorSystem(event: Event) {
     event.preventDefault();
     const role = localStorage.getItem('role') || '';
@@ -144,7 +154,6 @@ export class LayoutComponent implements OnInit {
     const fullName = localStorage.getItem('full_name') || '';
 
     const path = role === 'teacher' ? 'home' : 'system-dashboard';
-
     const advisorUrl = `http://localhost:4200/${path}?role=${role}&token=${token}&user=${encodeURIComponent(fullName)}`;
     window.location.href = advisorUrl;
   }
