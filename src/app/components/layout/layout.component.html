@@ -24,7 +24,7 @@
 
     <div class="px-4 pb-5 pt-2 flex flex-col items-center border-b border-white/5 mb-3 transition-all duration-300">
       <div class="bg-white rounded-full flex items-center justify-center p-1 shadow-lg transition-all duration-300" [ngClass]="isMiniSidebar() ? 'w-10 h-10 mb-0' : 'w-16 h-16 mb-2'">
-          <img src="assets/img/siam-logo.png" class="object-contain transition-all duration-300" [ngClass]="isMiniSidebar() ? 'h-6' : 'h-10'" />
+          <img src="https://upload.wikimedia.org/wikipedia/th/thumb/a/a2/Siam_University_Logo.svg/150px-Siam_University_Logo.svg.png" class="object-contain transition-all duration-300" [ngClass]="isMiniSidebar() ? 'h-6' : 'h-10'" />
       </div>
       @if (!isMiniSidebar()) {
         <h1 class="font-black tracking-widest text-sm uppercase text-center whitespace-nowrap">SU SCIENCE MIS</h1>
@@ -42,12 +42,7 @@
 
       @if (canViewStaff()) {
         <div class="space-y-1">
-          <!-- 🌟 เช็ค URL ทำสี Highlight เมนูหลัก -->
-          <button (click)="toggleStaff()" 
-                  [class.bg-[#F9BD15]]="router.url.includes('/staff') && !router.url.includes('/profile')" 
-                  [class.text-[#2A1D1A]]="router.url.includes('/staff') && !router.url.includes('/profile')" 
-                  class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" 
-                  [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-between px-6 py-4'">
+          <button (click)="toggleStaff()" [class.bg-[#F9BD15]]="isStaffExpanded()" [class.text-[#2A1D1A]]="isStaffExpanded()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-between px-6 py-4'">
             <div class="flex items-center" [ngClass]="!isMiniSidebar() ? 'gap-3' : ''">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Staff Information</span> }
@@ -58,44 +53,43 @@
           @if (isStaffExpanded() && !isMiniSidebar()) {
             <div class="pl-11 space-y-1 py-2 animate-in fade-in slide-in-from-top-2 duration-300">
               
-              <!-- 🌟 เมนูย่อยพร้อมระบบ Highlight -->
-              <a routerLink="/staff" [routerLinkActiveOptions]="{exact: true}" routerLinkActive="active" #rlaAll="routerLinkActive" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
-                <span class="block text-sm font-bold transition-colors group-hover:text-[#F9BD15]" [ngClass]="rlaAll.isActive ? 'text-[#F9BD15]' : 'text-gray-300'">List All</span>
-                <span class="block text-xs font-bold transition-colors mt-1 group-hover:text-[#F9BD15]/80" [ngClass]="rlaAll.isActive ? 'text-[#F9BD15]/80' : 'text-gray-400'">บุคลากรทั้งหมด</span>
+              <a routerLink="/staff" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">List All</span>
+                <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">บุคลากรทั้งหมด</span>
               </a>
 
               @if (canViewAllDepts() || userDept() === 'math') {
-                <a routerLink="/staff" [queryParams]="{ dept: 'math' }" [routerLinkActiveOptions]="{exact: true}" routerLinkActive="active" #rlaMath="routerLinkActive" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
-                  <span class="block text-sm font-bold transition-colors group-hover:text-[#F9BD15]" [ngClass]="rlaMath.isActive ? 'text-[#F9BD15]' : 'text-gray-300'">Mathematics</span>
-                  <span class="block text-xs font-bold transition-colors mt-1 group-hover:text-[#F9BD15]/80" [ngClass]="rlaMath.isActive ? 'text-[#F9BD15]/80' : 'text-gray-400'">ภาควิชาคณิตศาสตร์</span>
+                <a routerLink="/staff" [queryParams]="{ dept: 'math' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                  <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Mathematics</span>
+                  <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาคณิตศาสตร์</span>
                 </a>
               }
 
               @if (canViewAllDepts() || userDept() === 'chem') {
-                <a routerLink="/staff" [queryParams]="{ dept: 'chem' }" [routerLinkActiveOptions]="{exact: true}" routerLinkActive="active" #rlaChem="routerLinkActive" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
-                  <span class="block text-sm font-bold transition-colors group-hover:text-[#F9BD15]" [ngClass]="rlaChem.isActive ? 'text-[#F9BD15]' : 'text-gray-300'">Chemistry</span>
-                  <span class="block text-xs font-bold transition-colors mt-1 group-hover:text-[#F9BD15]/80" [ngClass]="rlaChem.isActive ? 'text-[#F9BD15]/80' : 'text-gray-400'">ภาควิชาเคมี</span>
+                <a routerLink="/staff" [queryParams]="{ dept: 'chem' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                  <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Chemistry</span>
+                  <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาเคมี</span>
                 </a>
               }
 
               @if (canViewAllDepts() || userDept() === 'food') {
-                <a routerLink="/staff" [queryParams]="{ dept: 'food' }" [routerLinkActiveOptions]="{exact: true}" routerLinkActive="active" #rlaFood="routerLinkActive" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
-                  <span class="block text-sm font-bold transition-colors group-hover:text-[#F9BD15]" [ngClass]="rlaFood.isActive ? 'text-[#F9BD15]' : 'text-gray-300'">Food Technology</span>
-                  <span class="block text-xs font-bold transition-colors mt-1 group-hover:text-[#F9BD15]/80" [ngClass]="rlaFood.isActive ? 'text-[#F9BD15]/80' : 'text-gray-400'">ภาควิชาเทคโนโลยีการอาหาร</span>
+                <a routerLink="/staff" [queryParams]="{ dept: 'food' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                  <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Food Technology</span>
+                  <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาเทคโนโลยีการอาหาร</span>
                 </a>
               }
 
               @if (canViewAllDepts() || userDept() === 'physics') {
-                <a routerLink="/staff" [queryParams]="{ dept: 'physics' }" [routerLinkActiveOptions]="{exact: true}" routerLinkActive="active" #rlaPhysics="routerLinkActive" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
-                  <span class="block text-sm font-bold transition-colors group-hover:text-[#F9BD15]" [ngClass]="rlaPhysics.isActive ? 'text-[#F9BD15]' : 'text-gray-300'">Physics</span>
-                  <span class="block text-xs font-bold transition-colors mt-1 group-hover:text-[#F9BD15]/80" [ngClass]="rlaPhysics.isActive ? 'text-[#F9BD15]/80' : 'text-gray-400'">ภาควิชาฟิสิกส์</span>
+                <a routerLink="/staff" [queryParams]="{ dept: 'physics' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                  <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Physics</span>
+                  <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาฟิสิกส์</span>
                 </a>
               }
 
               @if (canViewAllDepts() || userDept() === 'cs') {
-                <a routerLink="/staff" [queryParams]="{ dept: 'cs' }" [routerLinkActiveOptions]="{exact: true}" routerLinkActive="active" #rlaCs="routerLinkActive" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
-                  <span class="block text-sm font-bold transition-colors group-hover:text-[#F9BD15]" [ngClass]="rlaCs.isActive ? 'text-[#F9BD15]' : 'text-gray-300'">Computer Science</span>
-                  <span class="block text-xs font-bold transition-colors mt-1 group-hover:text-[#F9BD15]/80" [ngClass]="rlaCs.isActive ? 'text-[#F9BD15]/80' : 'text-gray-400'">ภาควิชาวิทยาการคอมพิวเตอร์</span>
+                <a routerLink="/staff" [queryParams]="{ dept: 'cs' }" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
+                  <span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Computer Science</span>
+                  <span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">ภาควิชาวิทยาการคอมพิวเตอร์</span>
                 </a>
               }
 
@@ -106,34 +100,17 @@
 
       @if (canViewResearch()) {
         <div class="space-y-1">
-          <!-- 🌟 เช็ค URL ทำสี Highlight เมนูหลัก -->
-          <button (click)="toggleResearch()" 
-                  [class.bg-[#F9BD15]]="router.url.includes('/research')" 
-                  [class.text-[#2A1D1A]]="router.url.includes('/research')" 
-                  class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" 
-                  [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-between px-6 py-4'">
+          <button (click)="toggleResearch()" [class.bg-[#F9BD15]]="isResearchExpanded()" [class.text-[#2A1D1A]]="isResearchExpanded()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-between px-6 py-4'">
             <div class="flex items-center" [ngClass]="!isMiniSidebar() ? 'gap-3' : ''">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg>
                 @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Research Information</span> }
             </div>
             @if (!isMiniSidebar()) { <svg [class.rotate-180]="isResearchExpanded()" class="w-4 h-4 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg> }
           </button>
-          
           @if (isResearchExpanded() && !isMiniSidebar()) {
             <div class="pl-11 space-y-1 py-2 animate-in fade-in slide-in-from-top-2 duration-300">
-              
-              <!-- 🌟 เมนูย่อย Research Project -->
-              <a routerLink="/research" [routerLinkActiveOptions]="{exact: true}" routerLinkActive="active" #rlaResProj="routerLinkActive" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
-                <span class="block text-sm font-bold transition-colors group-hover:text-[#F9BD15]" [ngClass]="rlaResProj.isActive ? 'text-[#F9BD15]' : 'text-gray-300'">Research Project</span>
-                <span class="block text-xs font-bold transition-colors mt-1 group-hover:text-[#F9BD15]/80" [ngClass]="rlaResProj.isActive ? 'text-[#F9BD15]/80' : 'text-gray-400'">โครงการวิจัย</span>
-              </a>
-              
-              <!-- 🌟 เมนูย่อย Research Article -->
-              <a routerLink="/research/article" [routerLinkActiveOptions]="{exact: true}" routerLinkActive="active" #rlaResArt="routerLinkActive" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5">
-                <span class="block text-sm font-bold transition-colors group-hover:text-[#F9BD15]" [ngClass]="rlaResArt.isActive ? 'text-[#F9BD15]' : 'text-gray-300'">Research Article</span>
-                <span class="block text-xs font-bold transition-colors mt-1 group-hover:text-[#F9BD15]/80" [ngClass]="rlaResArt.isActive ? 'text-[#F9BD15]/80' : 'text-gray-400'">บทความวิจัย</span>
-              </a>
-
+              <a routerLink="/research" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Research Project</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">โครงการวิจัย</span></a>
+              <a routerLink="/research/article" (click)="closeSidebarOnMobile()" class="block group cursor-pointer py-2.5"><span class="block text-sm font-bold text-gray-300 group-hover:text-[#F9BD15] transition-colors">Research Article</span><span class="block text-xs font-bold text-gray-400 group-hover:text-[#F9BD15]/80 transition-colors mt-1">บทความวิจัย</span></a>
             </div>
           }
         </div>
@@ -221,14 +198,13 @@
   </aside>
 
   <div class="flex-1 flex flex-col h-screen overflow-hidden">
-      <!-- 🌟 เปลี่ยนโลโก้ใน Header มือถือมาใช้ไฟล์ใน assets/img แทนลิงก์วิกิพีเดีย -->
       <header class="lg:hidden bg-white shadow-sm border-b border-gray-100 p-4 flex items-center gap-4 z-30 relative">
         <button (click)="toggleSidebar()" class="p-2 bg-gray-50 text-[#2A1D1A] rounded-xl hover:bg-[#F9BD15] hover:text-white transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
         </button>
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center p-1">
-              <img src="assets/img/siam-logo.png" class="object-contain h-5" />
+              <img src="https://upload.wikimedia.org/wikipedia/th/thumb/a/a2/Siam_University_Logo.svg/150px-Siam_University_Logo.svg.png" class="object-contain h-5" />
             </div>
             <h1 class="font-black tracking-widest text-xs uppercase text-[#2A1D1A]">SU SCIENCE MIS</h1>
         </div>
