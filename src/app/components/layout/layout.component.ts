@@ -11,7 +11,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
   styleUrl: './layout.component.css'
 })
 export class LayoutComponent implements OnInit {
-  private router = inject(Router);
+  public router = inject(Router); // 🌟 เปลี่ยนเป็น public เพื่อให้ HTML เช็ค URL ทำสี Highlight ได้
   private http = inject(HttpClient);
 
   isStaffExpanded = signal(false);
@@ -26,7 +26,7 @@ export class LayoutComponent implements OnInit {
   canViewTraining = signal(false);
   canViewProjects = signal(false);
 
-  // 🌟 คงไว้สำหรับระบบที่ปรึกษาของเพื่อน (เช็คสิทธิ์ผ่าน Role)
+  // คงไว้สำหรับระบบที่ปรึกษาของเพื่อน (เช็คสิทธิ์ผ่าน Role)
   canViewAdvisorSystem = signal(false); 
 
   // Signals ควบคุม Dropdown รายภาควิชาของโมดูล Staff
@@ -39,6 +39,14 @@ export class LayoutComponent implements OnInit {
   userInitial: string = 'U';
 
   ngOnInit() {
+    // 🌟 กางเมนู Dropdown ค้างไว้อัตโนมัติเวลา Refresh หน้าเว็บ
+    if (this.router.url.includes('/staff') && !this.router.url.includes('profile')) {
+      this.isStaffExpanded.set(true);
+    }
+    if (this.router.url.includes('/research')) {
+      this.isResearchExpanded.set(true);
+    }
+
     this.handleUrlParams();
     this.loadUserProfile();
     this.fetchPermissionsFromDB();
@@ -53,7 +61,7 @@ export class LayoutComponent implements OnInit {
     const deptFromUrl = urlParams.get('dept'); 
     const isAdvisorFromUrl = urlParams.get('is_advisor'); 
     
-    // 🌟 รับค่า user_id จริงๆ จากระบบล็อกอินหลัก ไม่มีการฮาร์ดโค้ดเลข 14, 15 อีกต่อไป
+    // รับค่า user_id จริงๆ จากระบบล็อกอินหลัก
     const userIdFromUrl = urlParams.get('user_id') || urlParams.get('userId') || urlParams.get('uid');
 
     if (tokenFromUrl) {
@@ -92,16 +100,16 @@ export class LayoutComponent implements OnInit {
     this.userDept.set(localStorage.getItem('user_dept') || '');
   }
 
-  // 🛡️ ดึงสิทธิ์การเปิด/ปิดเมนูจากฐานข้อมูลสดๆ (ไม่มีการเช็คข้ามผ่านสิทธิ์แอดมิน)
+  // 🛡️ ดึงสิทธิ์การเปิด/ปิดเมนูจากฐานข้อมูลสดๆ
   fetchPermissionsFromDB() {
     const role = localStorage.getItem('role') || '';
     const currentUserId = localStorage.getItem('user_id') || '0';
     const isAdvisor = localStorage.getItem('is_advisor') === 'true';
 
-    // 🌟 ส่วนนี้ตรวจสอบ Role เพื่อระบบที่ปรึกษาของเพื่อนตามที่คุณต้องการ
+    // ส่วนนี้ตรวจสอบ Role เพื่อระบบที่ปรึกษาของเพื่อนตามที่คุณต้องการ
     this.canViewAdvisorSystem.set(role === 'admin' || role === 'student' || (role === 'teacher' && isAdvisor));
 
-    // ⚠️ ทุกคน (รวมถึง Admin) ต้องยิงเช็คสิทธิ์การเข้าถึงโมดูลจากฐานข้อมูลจริงทั้งหมด ห้ามลัดสิทธิ์
+    // ทุกคน (รวมถึง Admin) ต้องยิงเช็คสิทธิ์การเข้าถึงโมดูลจากฐานข้อมูลจริงทั้งหมด
     const headers = new HttpHeaders().set('X-User-Id', currentUserId);
     this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers })
       .subscribe({
@@ -128,7 +136,7 @@ export class LayoutComponent implements OnInit {
             this.canViewTraining.set(checkViewScope('training'));
             this.canViewProjects.set(checkViewScope('plan') || checkViewScope('project'));
 
-            // เช็คว่าต้องบังคับกรองเฉพาะภาควิชาตนเองหรือไม่ (ถ้าสิทธิ์เป็น department จะได้ค่า false)
+            // เช็คว่าต้องบังคับกรองเฉพาะภาควิชาตนเองหรือไม่
             this.canViewAllDepts.set(getStaffScope() !== 'department');
           }
         },
@@ -146,7 +154,7 @@ export class LayoutComponent implements OnInit {
     window.location.href = 'http://localhost:4200/login?action=logout';
   }
 
-  // 🌟 ส่งค่าไประบบที่ปรึกษาของเพื่อน โดยใช้ข้อมูล Token และ Role ตามเดิม
+  // ส่งค่าไประบบที่ปรึกษาของเพื่อน โดยใช้ข้อมูล Token และ Role ตามเดิม
   goToAdvisorSystem(event: Event) {
     event.preventDefault();
     const role = localStorage.getItem('role') || '';
