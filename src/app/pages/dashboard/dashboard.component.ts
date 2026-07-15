@@ -1,6 +1,6 @@
 import { Component, signal, computed, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 @Component({
   selector: 'app-dashboard',
@@ -12,7 +12,7 @@ import { HttpClient } from '@angular/common/http';
 export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
 
-  // 🌟 โครงสร้างข้อมูลที่รับจาก Database
+  // โครงสร้างข้อมูลพื้นฐาน กัน Error ตอนรอโหลด
   stats = signal<any>({
     staff: { total: 0, academic: 0, support: 0 },
     research_articles: { total: 0, conference: 0, journal: 0 },
@@ -42,46 +42,66 @@ export class DashboardComponent implements OnInit {
   }
 
   fetchDashboardData() {
-    this.http.get<any>('http://localhost:8080/api/get_dashboard.php').subscribe({
+    const token = localStorage.getItem('token') || '';
+    
+    // ส่ง Token แนบไปแบบชัวร์ๆ (X-Auth-Token และ Authorization)
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'X-Auth-Token': `Bearer ${token}`
+    });
+
+    this.http.get<any>('http://localhost:8080/api/get_dashboard.php', { headers }).subscribe({
       next: (res) => {
+        // นำข้อมูลของจริงยัดใส่ตัวแปร
         this.stats.set(res);
+        // วาดกราฟใหม่
         this.updateChart1();
         this.updateChart2();
         this.loading.set(false);
       },
       error: (err) => {
         console.error('Failed to fetch dashboard stats', err);
+        if (err.status === 401) {
+           alert("เซสชันหมดอายุ กรุณาล็อกอินใหม่");
+           localStorage.clear();
+           window.location.href = '/login';
+        }
         this.loading.set(false);
       }
     });
   }
 
-  // คำนวณความสูงกราฟ 1 (โครงการวิจัย)
+  // ================= ฟังก์ชันคำนวณกราฟแท่ง =================
   updateChart1() {
+    if (!this.stats().charts) return;
     const dataObj = this.stats().charts;
     const sourceData = this.selectedOption1() === 'จำนวน' ? dataObj.research_projects_count : dataObj.research_projects_budget;
+    if(!sourceData || sourceData.length === 0) return;
     const maxVal = Math.max(...sourceData.map((d: any) => d.value), 1);
     this.chartData1.set(sourceData.map((d: any) => ({ ...d, percentage: (d.value / maxVal) * 100 })));
   }
 
-  // คำนวณความสูงกราฟ 2 (บทความวิจัย)
   updateChart2() {
+    if (!this.stats().charts) return;
     const dataObj = this.stats().charts;
     const sourceData = this.selectedOption2() === 'ประชุมวิจัย' ? dataObj.research_articles_conference : dataObj.research_articles_journal;
+    if(!sourceData || sourceData.length === 0) return;
     const maxVal = Math.max(...sourceData.map((d: any) => d.value), 1);
     this.chartData2.set(sourceData.map((d: any) => ({ ...d, percentage: (d.value / maxVal) * 100 })));
   }
 
-  // Event เลือกตัวเลือกกราฟ
+  // ================= ฟังก์ชันคลิก Dropdown =================
   toggleDropdown1() { this.isDropdown1Open.set(!this.isDropdown1Open()); this.isDropdown2Open.set(false); }
   selectOption1(option: string) { this.selectedOption1.set(option); this.isDropdown1Open.set(false); this.updateChart1(); }
 
   toggleDropdown2() { this.isDropdown2Open.set(!this.isDropdown2Open()); this.isDropdown1Open.set(false); }
   selectOption2(option: string) { this.selectedOption2.set(option); this.isDropdown2Open.set(false); this.updateChart2(); }
 
-  // 🌟 คำนวณสีและสัดส่วนของกราฟโดนัทอัตโนมัติ
+  // ================= ฟังก์ชันคำนวณกราฟโดนัท (แก้ Error หน้า HTML) =================
   donutStyle = computed(() => {
     const s = this.stats().plan_status;
+    if (!s) return '';
     const total = s.total || 1;
     const p1 = (s.not_started / total) * 100;
     const p2 = p1 + ((s.in_progress / total) * 100);
@@ -89,7 +109,9 @@ export class DashboardComponent implements OnInit {
   });
 
   statusPercent(value: number) {
-    const total = this.stats().plan_status.total || 1;
+    const s = this.stats().plan_status;
+    if (!s) return 0;
+    const total = s.total || 1;
     return Math.round((value / total) * 100);
   }
 }
