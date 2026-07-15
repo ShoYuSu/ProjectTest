@@ -1,211 +1,176 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { FormsModule } from '@angular/forms'; // 🌟 1. นำเข้า FormsModule สำหรับระบบค้นหา
+import { RouterLink, ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-staff',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule], // 🌟 2. ใส่ FormsModule ในนี้
+  imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './staff.component.html',
-  styleUrl: './staff.component.css'
+  styleUrls: ['./staff.component.css']
 })
 export class StaffComponent implements OnInit {
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
 
-  canAdd = signal(false);
-  canDelete = signal(false);
-
-  allStaffList = signal<any[]>([]);
-  filteredStaffList = signal<any[]>([]);
-  errorMessage = signal<string>('');
+  // ข้อมูลดิบจาก API
+  rawStaffList = signal<any[]>([]);
   
-  currentDeptFilter = signal<string>('');
-  currentTypeFilter = signal<string>('all'); 
-  searchQuery = signal<string>(''); // 🌟 3. เพิ่มตัวแปรเก็บคำค้นหา
+  // State สำหรับ UI ตาม HTML ต้นฉบับ
+  searchQuery = signal<string>('');
+  currentTypeFilter = signal<'all' | 'academic' | 'support'>('all');
+  currentDept = signal<string>('');
+  
+  canAdd = signal<boolean>(false);
+  errorMessage = signal<string>('');
 
-  ngOnInit() {
-    this.fetchPermissionsFromDB();
-    this.fetchStaffData();
-    this.listenToRouteParams();
-  }
+  // 🌟 ใช้ Computed ประมวลผลข้อมูลตาม Search และ Tab ที่เลือกอัตโนมัติ
+  filteredStaffList = computed(() => {
+    let list = this.rawStaffList();
+    const search = this.searchQuery().toLowerCase().trim();
+    const type = this.currentTypeFilter();
 
-  // 🛡️ ดึงสิทธิ์ Add จากฐานข้อมูลสดๆ ป้องกัน F12
-  fetchPermissionsFromDB() {
-    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
-    
-    this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers })
-      .subscribe({
-        next: (perms) => {
-          let hasAdd = false;
-          let hasDelete = false;
-          if (perms && typeof perms === 'object' && !Array.isArray(perms)) {
-              const staffKey = Object.keys(perms).find(k => k.toLowerCase().includes('staff'));
-              if (staffKey && perms[staffKey]) {
-                const addScope = perms[staffKey]['add'];
-                const editScope = perms[staffKey]['edit'];
-                if (addScope && addScope.toLowerCase() !== 'none') hasAdd = true;
-                if (editScope && editScope.toLowerCase() !== 'none') hasDelete = true;
-              }
-          }
-          this.canAdd.set(hasAdd);
-          this.canDelete.set(hasDelete);
-        },
-        error: (err) => console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err)
-      });
-  }
-
-  listenToRouteParams() {
-    this.route.queryParams.subscribe(params => {
-      const dept = params['dept'] || '';
-      this.currentDeptFilter.set(dept);
-      this.applyFilter(); 
-    });
-  }
-
-  changeTypeFilter(type: string) {
-    this.currentTypeFilter.set(type);
-    this.applyFilter();
-  }
-
-  // 🌟 4. ฟังก์ชันรับค่าเมื่อพิมพ์ค้นหา
-  onSearchChange(val: string) {
-    this.searchQuery.set(val);
-    this.applyFilter();
-  }
-
-  applyFilter() {
-    const deptFilter = this.currentDeptFilter();
-    const typeFilter = this.currentTypeFilter();
-    const query = this.searchQuery().toLowerCase().trim(); // 🌟 ดึงคำค้นหา
-    let result = this.allStaffList();
-
-    // กรองภาควิชา (แก้ชื่อให้ตรง Database)
-    if (deptFilter) {
-      let targetDeptName = '';
-      switch (deptFilter) {
-        case 'math': targetDeptName = 'ภาควิชาคณิตศาสตร์'; break;
-        case 'chem': targetDeptName = 'ภาควิชาเคมี'; break;
-        case 'food': targetDeptName = 'ภาควิชาเทคโนโลยีการอาหาร'; break;
-        case 'physics': targetDeptName = 'ภาควิชาฟิสิกส์'; break;
-        case 'cs': targetDeptName = 'ภาควิชาวิทยาการคอมพิวเตอร์'; break;
-      }
-      if (targetDeptName) {
-        result = result.filter(staff => staff.department === targetDeptName);
-      }
+    // 1. กรองตามประเภท (สายวิชาการ / สายสนับสนุน)
+    if (type === 'academic') {
+      list = list.filter(s => s.position.includes('อาจารย์') || s.position.includes('วิชาการ'));
+    } else if (type === 'support') {
+      list = list.filter(s => !s.position.includes('อาจารย์') && !s.position.includes('วิชาการ'));
     }
 
-    // กรองสายงาน
-    if (typeFilter !== 'all') {
-      result = result.filter(staff => staff.type === typeFilter);
-    }
-
-    // 🌟 5. กรองด้วยคำค้นหา (ค้นหาจากชื่อ หรือ ตำแหน่ง หรือ ภาควิชา)
-    if (query) {
-      result = result.filter(staff => 
-        (staff.name && staff.name.toLowerCase().includes(query)) ||
-        (staff.position && staff.position.toLowerCase().includes(query)) ||
-        (staff.department && staff.department.toLowerCase().includes(query))
+    // 2. กรองตามคำค้นหา (Search)
+    if (search) {
+      list = list.filter(s => 
+        s.name.toLowerCase().includes(search) || 
+        s.position.toLowerCase().includes(search) ||
+        s.department.toLowerCase().includes(search)
       );
     }
 
-    this.filteredStaffList.set(result);
+    return list;
+  });
+
+  ngOnInit() {
+    this.checkPermissions();
+    
+    // คอยดักจับ URL Parameter เพื่อรีโหลดข้อมูลหากเลือกภาควิชาจาก Sidebar
+    this.route.queryParams.subscribe(params => {
+      const dept = params['dept'] || '';
+      this.currentDept.set(dept);
+      this.loadStaff(dept);
+    });
   }
 
-  getStaffCount(type: string): number {
-    const deptFilter = this.currentDeptFilter();
-    let list = this.allStaffList();
+  // 🌟 1. ดึงสิทธิ์ว่า User นี้มีสิทธิ์ "เพิ่ม" บุคลากรหรือไม่
+  checkPermissions() {
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    if (deptFilter) {
-      let targetDeptName = '';
-      switch (deptFilter) {
-        case 'math': targetDeptName = 'ภาควิชาคณิตศาสตร์'; break;
-        case 'chem': targetDeptName = 'ภาควิชาเคมี'; break;
-        case 'food': targetDeptName = 'ภาควิชาเทคโนโลยีการอาหาร'; break;
-        case 'physics': targetDeptName = 'ภาควิชาฟิสิกส์'; break;
-        case 'cs': targetDeptName = 'ภาควิชาวิทยาการคอมพิวเตอร์'; break;
-      }
-      list = list.filter(staff => staff.department === targetDeptName);
-    }
-
-    if (type === 'all') return list.length;
-    return list.filter(staff => staff.type === type).length;
+    this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers })
+      .subscribe({
+        next: (res) => {
+          const perms = res.permissions || {};
+          if (perms['Staff_info']) {
+            this.canAdd.set(perms['Staff_info']['add'] !== 'none');
+          }
+        },
+        error: (err) => console.error('Permission fetch error:', err)
+      });
   }
 
-  fetchStaffData() {
-    const currentUserId = localStorage.getItem('user_id') || '0'; 
-    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+  // 🌟 2. ดึงข้อมูลบุคลากร และ Map ข้อมูลให้ตรงกับที่ HTML ต้นฉบับต้องการ
+  loadStaff(deptFilter: string) {
+    this.errorMessage.set('');
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
     this.http.get<any[]>('http://localhost:8080/api/get_staff.php', { headers })
       .subscribe({
         next: (data) => {
-          const mappedData = data.map(item => {
-            let imgUrl = item.img_profile;
-            if (imgUrl && !imgUrl.startsWith('http')) {
-               imgUrl = `http://localhost:8080/${imgUrl}`;
+          // กรองข้อมูลตามภาควิชา (Frontend Filter) 
+          let filteredData = data;
+          if (deptFilter) {
+            const deptMap: Record<string, number> = { 'math': 2, 'chem': 1, 'food': 5, 'physics': 4, 'cs': 3 };
+            const deptId = deptMap[deptFilter];
+            if (deptId) {
+              filteredData = data.filter(s => parseInt(s.dept_id) === deptId);
             }
+          }
 
-            return {
-              id: item.person_id, 
-              staff_id: item.staff_id, 
-              person_id: item.person_id, 
-              name: item.full_name,
-              position: item.position || 'บุคลากร',
-              department: item.department || 'ไม่ระบุสังกัด',
-              image: imgUrl,
-              type: item.position && item.position.includes('อาจารย์') ? 'academic' : 'support',
-              researchCount: 0, 
-              can_edit: item.can_edit 
-            };
-          });
+          // Map ข้อมูลให้ตรงกับตัวแปรใน HTML ของคุณ
+          const mappedData = filteredData.map(item => ({
+            id: item.person_id,
+            staff_id: item.staff_id,
+            person_id: item.person_id,
+            name: item.full_name,
+            image: item.img_profile ? 'http://localhost:8080/api/' + item.img_profile.replace(/^\/+/, '') : null,
+            position: item.position,
+            department: item.department || 'ส่วนกลาง',
+            researchCount: 0, // Placeholder สามารถอัปเดต Query ในอนาคตเพื่อดึงยอดงานวิจัยจริงได้
+            can_edit: item.can_delete || item.can_edit // ใช้สิทธิ์ลบ/แก้ไข เปิดปุ่มลบใน HTML ของคุณ
+          }));
 
-          this.allStaffList.set(mappedData);
-          this.applyFilter(); 
-          this.errorMessage.set('');
+          this.rawStaffList.set(mappedData);
         },
         error: (err) => {
-          console.error(err);
-          this.errorMessage.set('ระบบขัดข้อง หรือคุณไม่มีสิทธิ์เข้าถึงข้อมูล');
+          console.error('Staff fetch error:', err);
+          this.errorMessage.set('ไม่สามารถดึงข้อมูลได้ (เซสชั่นอาจหมดอายุ หรือไม่มีสิทธิ์เข้าถึง)');
         }
       });
   }
 
-  // ส่งไปทั้ง 3 ค่าให้ API ทำ Transaction การลบอย่างสมบูรณ์
-  deleteStaff(staff_id: number, person_id: number, name: string) {
-    if (confirm(`⚠️ คำเตือน: คุณต้องการลบบัญชีและข้อมูลทั้งหมดของ "${name}" ใช่หรือไม่?\n(การกระทำนี้จะไม่สามารถกู้คืนได้)`)) {
-      const currentUserId = localStorage.getItem('user_id') || '0';
-      const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+  // 🌟 3. ฟังก์ชันจัดการ Filter และ Search สำหรับ UI
+  onSearchChange(text: string) {
+    this.searchQuery.set(text);
+  }
 
-      this.http.post<any>('http://localhost:8080/api/delete_staff.php', { staff_id: staff_id, person_id: person_id }, { headers })
-        .subscribe({
-          next: (res: any) => {
-            if (res && res.success) {
-              alert('✅ ' + res.message);
-              this.fetchStaffData(); 
-            } else {
-              alert('❌ ปฏิเสธการดำเนินการ: ' + (res.message || 'เกิดข้อผิดพลาด'));
-            }
-          },
-          error: (err) => {
-            console.error(err);
-            const errorDetail = err.error?.error || err.error?.message || err.message;
-            alert('❌ เกิดข้อผิดพลาดจากเซิร์ฟเวอร์: ' + errorDetail);
-          }
-        });
+  changeTypeFilter(type: 'all' | 'academic' | 'support') {
+    this.currentTypeFilter.set(type);
+  }
+
+  getStaffCount(type: 'all' | 'academic' | 'support'): number {
+    const list = this.rawStaffList();
+    if (type === 'academic') {
+      return list.filter(s => s.position.includes('อาจารย์') || s.position.includes('วิชาการ')).length;
+    } else if (type === 'support') {
+      return list.filter(s => !s.position.includes('อาจารย์') && !s.position.includes('วิชาการ')).length;
     }
+    return list.length;
   }
 
   getFilterTitle(): string {
-    const dept = this.currentDeptFilter();
-    switch (dept) {
-      case 'math': return 'ภาควิชาคณิตศาสตร์';
-      case 'chem': return 'ภาควิชาเคมี';
-      case 'food': return 'ภาควิชาเทคโนโลยีการอาหาร';
-      case 'physics': return 'ภาควิชาฟิสิกส์';
-      case 'cs': return 'ภาควิชาวิทยาการคอมพิวเตอร์';
-      default: return 'บุคลากรทั้งหมด';
+    const dept = this.currentDept();
+    if (dept === 'math') return 'ภาควิชาคณิตศาสตร์';
+    if (dept === 'chem') return 'ภาควิชาเคมี';
+    if (dept === 'food') return 'ภาควิชาเทคโนโลยีการอาหาร';
+    if (dept === 'physics') return 'ภาควิชาฟิสิกส์';
+    if (dept === 'cs') return 'ภาควิชาวิทยาการคอมพิวเตอร์';
+    return 'บุคลากร';
+  }
+
+  // 🌟 4. ฟังก์ชันลบบุคลากร
+  deleteStaff(staffId: number, personId: number, name: string) {
+    if (confirm(`คุณต้องการลบข้อมูลของ ${name} ใช่หรือไม่?`)) {
+      const token = localStorage.getItem('token') || '';
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      
+      this.http.post<any>('http://localhost:8080/api/delete_staff.php', {
+        staff_id: staffId,
+        person_id: personId
+      }, { headers }).subscribe({
+        next: (res) => {
+          if (res.success) {
+            alert('ลบข้อมูลสำเร็จ');
+            this.loadStaff(this.currentDept());
+          } else {
+            this.errorMessage.set('เกิดข้อผิดพลาด: ' + res.message);
+          }
+        },
+        error: (err) => {
+          this.errorMessage.set('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้');
+        }
+      });
     }
   }
 }

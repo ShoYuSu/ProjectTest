@@ -16,7 +16,6 @@ export class ProfileComponent implements OnInit {
   loading = true;
   errorMessage = '';
 
-  // 🌟 ตัวแปรเก็บสิทธิ์ที่ส่งมาจาก Backend โดยตรง ปลอดภัย 100%
   canEditProfile = false;     
   canViewPermissions = false; 
   canEditPermissions = false; 
@@ -59,8 +58,9 @@ export class ProfileComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    const currentUserId = localStorage.getItem('user_id') || '';
-    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+    // 🌟 เปลี่ยนการส่ง Header ให้ใช้ JWT Token
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
     this.http.get<any>(`http://localhost:8080/api/get_staff_profile.php?id=${id}`, { headers })
       .subscribe({
@@ -69,11 +69,9 @@ export class ProfileComponent implements OnInit {
             if (response && response.status === 'success') {
               this.profileData = response.data;
               
-              // 🌟 รับค่าสิทธิ์ที่เซิร์ฟเวอร์คำนวณมาให้ (ไม่ต้องแฮ็ก LocalStorage แล้ว)
               this.canEditProfile = response.can_edit_profile;
               this.canEditPermissions = response.can_edit_permissions;
               
-              // ถ้าแก้สิทธิ์ได้ ก็ต้องเห็นสิทธิ์ได้
               this.canViewPermissions = this.canEditPermissions || response.is_owner;
 
               this.mapPermissionsToModules(response.data.permissions);
@@ -215,8 +213,9 @@ export class ProfileComponent implements OnInit {
   }
 
   saveData() {
-    const currentUserId = localStorage.getItem('user_id') || '';
-    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+    // 🌟 เปลี่ยนการส่ง Header ให้ใช้ JWT Token
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     
     let payload: any = {};
 
