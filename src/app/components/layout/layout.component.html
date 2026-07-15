@@ -198,10 +198,19 @@
                (click)="toggleProfileMenu()" 
                [ngClass]="isMiniSidebar() ? 'justify-center p-3' : 'gap-4 p-4'">
               
-              <div class="shrink-0 rounded-full border-2 border-[#F9BD15] flex items-center justify-center text-[#F9BD15] font-black shadow-sm bg-[#3A1E1D]" 
-                   [ngClass]="isMiniSidebar() ? 'w-10 h-10 text-base' : 'w-10 h-10 text-lg'">
-                   {{ userInitial }}
-              </div>
+              <!-- 🌟 แสดงรูปภาพโปรไฟล์ -->
+              @if (userProfileImage) {
+                <img [src]="userProfileImage" 
+                     alt="Profile" 
+                     class="shrink-0 rounded-full border-2 border-[#F9BD15] object-cover shadow-sm bg-[#3A1E1D]"
+                     [ngClass]="isMiniSidebar() ? 'w-10 h-10' : 'w-10 h-10'"
+                     (error)="handleImageError()">
+              } @else {
+                <div class="shrink-0 rounded-full border-2 border-[#F9BD15] flex items-center justify-center text-[#F9BD15] font-black shadow-sm bg-[#3A1E1D]" 
+                     [ngClass]="isMiniSidebar() ? 'w-10 h-10 text-base' : 'w-10 h-10 text-lg'">
+                     {{ userInitial }}
+                </div>
+              }
               
               @if (!isMiniSidebar()) {
                 <div class="text-left whitespace-nowrap flex-1 overflow-hidden">

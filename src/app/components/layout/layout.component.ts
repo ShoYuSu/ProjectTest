@@ -36,6 +36,9 @@ export class LayoutComponent implements OnInit {
   userName: string = 'USER';
   userRoleDisplay: string = 'MEMBER';
   userInitial: string = 'U';
+  
+  // 🌟 เพิ่มตัวแปรสำหรับเก็บ URL รูปภาพ
+  userProfileImage: string = '';
 
   ngOnInit() {
     this.handleUrlParams();
@@ -75,6 +78,20 @@ export class LayoutComponent implements OnInit {
             this.userInitial = this.userName.charAt(0).toUpperCase();
         }
 
+        // 🌟 ดึงข้อมูลรูปภาพจาก Token มาประกอบเป็น URL
+        const imgProfile = decoded.img_profile || '';
+        if (imgProfile && imgProfile !== 'null') {
+          if (imgProfile.startsWith('http')) {
+            this.userProfileImage = imgProfile; // ถ้าเป็นลิงก์ http อยู่แล้ว
+          } else {
+            // ถ้าเป็น path ธรรมดา ให้ประกอบกับ localhost:8080/api/
+            const cleanPath = imgProfile.replace(/^\//, ''); 
+            this.userProfileImage = `http://localhost:8080/api/${cleanPath}`; 
+          }
+        } else {
+          this.userProfileImage = '';
+        }
+
         // 🌟 ดึง Role จาก Token มาแสดงผลบน Layout
         const role = decoded.role || '';
         if (role === 'admin') {
@@ -90,6 +107,11 @@ export class LayoutComponent implements OnInit {
         console.error("Token decoding failed");
       }
     }
+  }
+
+  // 🌟 ฟังก์ชันจัดการกรณีโหลดรูปไม่ขึ้น ให้กลับไปใช้ตัวอักษรย่อแทน
+  handleImageError() {
+    this.userProfileImage = '';
   }
 
   fetchPermissionsFromDB() {
