@@ -43,26 +43,37 @@ export class ProfileComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // 🌟 ดึง id จาก URL (เผื่อกรณีคลิกเข้ามาดูโปรไฟล์คนอื่นจากหน้ารายชื่อพนักงาน)
     this.route.queryParams.subscribe(params => {
       const id = params['id'];
-      if (id) {
-        this.fetchProfileData(id);
-      } else {
-        this.errorMessage = 'ไม่พบรหัสบุคลากร';
-        this.loading = false;
-      }
+      // 🌟 ไม่ว่าจะมี id หรือไม่ ให้เรียก fetchProfileData() 
+      // (ถ้าไม่มี id ระบบหลังบ้านจะดึงโปรไฟล์ของตัวเราเองจาก Token อัตโนมัติ)
+      this.fetchProfileData(id);
     });
   }
 
-  fetchProfileData(id: string): void {
+  fetchProfileData(id?: string): void {
     this.loading = true;
     this.errorMessage = '';
 
-    // 🌟 เปลี่ยนการส่ง Header ให้ใช้ JWT Token
+    // 🌟 ดึง JWT Token
     const token = localStorage.getItem('token') || '';
+    if (!token) {
+        this.errorMessage = 'ไม่พบ Token การเข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่';
+        this.loading = false;
+        return;
+    }
+
+    // 🌟 แนบ Token ไปใน Header
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.get<any>(`http://localhost:8080/api/get_staff_profile.php?id=${id}`, { headers })
+    // 🌟 สร้าง URL ถ้ามี id ให้ส่งไปด้วย (ดูของคนอื่น) ถ้าไม่มีส่งแค่ api (ดูของตัวเอง)
+    let apiUrl = 'http://localhost:8080/api/get_staff_profile.php';
+    if (id) {
+        apiUrl += `?id=${id}`;
+    }
+
+    this.http.get<any>(apiUrl, { headers })
       .subscribe({
         next: (response) => {
           this.ngZone.run(() => {
@@ -84,7 +95,8 @@ export class ProfileComponent implements OnInit {
         },
         error: (err) => {
           this.ngZone.run(() => {
-            this.errorMessage = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ PHP ได้ (ตรวจสอบพอร์ต 8080)';
+            console.error(err);
+            this.errorMessage = 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ PHP ได้ หรือคุณไม่มีสิทธิ์เข้าถึง';
             this.loading = false;
             this.cdr.detectChanges();
           });
@@ -213,7 +225,6 @@ export class ProfileComponent implements OnInit {
   }
 
   saveData() {
-    // 🌟 เปลี่ยนการส่ง Header ให้ใช้ JWT Token
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     
