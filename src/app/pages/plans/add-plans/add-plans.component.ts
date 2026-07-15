@@ -22,11 +22,11 @@ export class AddPlansComponent implements OnInit {
   loading = false;
 
   projectName = '';
+  planYear: number = new Date().getFullYear() + 543; // 🌟 รับค่าปี
   approvedBudget: number | null = null;
   usedBudget: number | null = null;
   details = '';
   
-  // 🌟 เพิ่มตัวแปรสำหรับจัดการไฟล์แนบ
   attachedFile = ''; 
   selectedFileName = signal<string>('');
 
@@ -38,18 +38,24 @@ export class AddPlansComponent implements OnInit {
   subActivities = signal<{id: number, value: string}[]>([{ id: Date.now(), value: '' }]);
 
   selectedStrategy = signal<string>('เลือกแผนยุทธศาสตร์');
-  strategies = ['แผนยุทธศาสตร์ที่ 1: ผลิตบัณฑิตที่มีคุณภาพ', 'แผนยุทธศาสตร์ที่ 2: งานวิจัยและนวัตกรรม', 'แผนยุทธศาสตร์ที่ 3: บริการวิชาการ', 'แผนยุทธศาสตร์ที่ 4: บริหารจัดการองค์กร'];
+  strategiesList = signal<string[]>([]);
   isStrategyOpen = signal(false);
+  editingStrategyIndex = signal<number | null>(null);
+  isAddingStrategy = signal(false);
 
   selectedPlan = signal<string>('เลือกแผนงาน');
-  planTypes = ['แผนงานระดับคณะ', 'แผนงานระดับภาควิชา', 'โครงการพิเศษ', 'แผนงานบูรณาการ'];
+  plansList = signal<string[]>([]);
   isPlanOpen = signal(false);
+  editingPlanIndex = signal<number | null>(null);
+  isAddingPlan = signal(false);
 
   selectedStatus = signal<string>('ระบุสถานะ');
   statusList = ['ยังไม่ได้ดำเนินการ', 'อยู่ระหว่างดำเนินการ', 'ดำเนินการแล้วเสร็จ'];
   isStatusOpen = signal(false);
 
   ngOnInit() {
+    this.initDropdownData(); 
+
     this.route.queryParams.subscribe(params => {
       if (params['edit']) {
         this.isEditMode.set(true);
@@ -57,6 +63,35 @@ export class AddPlansComponent implements OnInit {
       }
       this.loadActiveStaff();
     });
+  }
+
+  initDropdownData() {
+    const defaultStrategies = [
+      'ยุทธศาสตร์ที่ 1 Future Research and Innovation',
+      '2. Future Education',
+      '3. Future Lecturer /Researcher',
+      '4. Future System for Management',
+      '5. Sustainable Future',
+      '6. บริการวิชาการ และบริการชุมชน',
+      '7. การทำนุบำรุงศิลปะและวัฒนธรรมและสร้างจิตสำนึกฯ'
+    ];
+    const savedStrategies = localStorage.getItem('custom_strategies');
+    this.strategiesList.set(savedStrategies ? JSON.parse(savedStrategies) : defaultStrategies);
+
+    const defaultPlans = [
+      'แผนงานที่ 1.1 แผนพัฒนาศักยภาพการวิจัย/นวัตกรรม',
+      'แผนงานที่ 1.2 ส่งเสริมการตีพิมพ์ผลงานวิจัยและผลงานวิชาการของอาจารย์',
+      'แผนงาน 2.1 พัฒนาหลักสูตรเน้นผลลัพธ์การเรียนรู้',
+      'แผนงาน 2.2 พัฒนานักศึกษาด้านวิชาการ/วิชาชีพและทักษะด้านดิจิทัลเพื่อสร้างโอกาสการได้งานทำก่อนจบการศึกษา',
+      'แผนงานที่ 2.3 แผนพัฒนาและสรรหาสิ่งสนับสนุนการเรียนรู้',
+      'แผนงานที่ 3.1 แผนพัฒนาอาจารย์ให้ทันสมัยและเชี่ยวชาญ',
+      'แผนงานที่ 4.1 ระบบบริหารจัดการที่คล่องตัวและมีประสิทธิผล',
+      'แผนงาน 5.1 พัฒนาคณะวิชาเข้าสู่ชุมชนคาร์บอนต่ำ',
+      'แผนงานที่ 6.1 บริการวิชาการเพื่อสร้างสังคมแห่งการเรียนรู้',
+      'แผนงานที่ 7.1 ทำนุบำรุงศิลปะและวัฒนธรรมไทย'
+    ];
+    const savedPlans = localStorage.getItem('custom_plans');
+    this.plansList.set(savedPlans ? JSON.parse(savedPlans) : defaultPlans);
   }
 
   loadActiveStaff() {
@@ -91,7 +126,6 @@ export class AddPlansComponent implements OnInit {
         let scope = 'none';
         const p = res.perms.permissions || res.perms || {};
         const targetModules = ['plan_project', 'plan_info', 'plan']; 
-        
         for (const mod of targetModules) {
           if (p[mod]) {
              const targetAction = this.isEditMode() ? 'edit' : 'add';
@@ -106,6 +140,15 @@ export class AddPlansComponent implements OnInit {
         if (this.isEditMode() && res.setupData.plan_data) {
           const pd = res.setupData.plan_data;
           this.projectName = pd.plan_name || '';
+          this.planYear = pd.plan_year ? Number(pd.plan_year) : new Date().getFullYear() + 543; // 🌟 ดึงค่าปีลงฟอร์ม
+          
+          if (pd.strategy && !this.strategiesList().includes(pd.strategy)) {
+             this.addNewStrategy(pd.strategy);
+          }
+          if (pd.plan_type && !this.plansList().includes(pd.plan_type)) {
+             this.addNewPlan(pd.plan_type);
+          }
+
           this.selectedStrategy.set(pd.strategy || 'เลือกแผนยุทธศาสตร์');
           this.selectedPlan.set(pd.plan_type || 'เลือกแผนงาน');
           this.approvedBudget = pd.approved_budget ? Number(pd.approved_budget) : null;
@@ -113,7 +156,6 @@ export class AddPlansComponent implements OnInit {
           this.selectedStatus.set(pd.status || 'ระบุสถานะ');
           this.details = pd.details || '';
 
-          // 🌟 ตั้งค่าลิงก์ไฟล์แนบเดิม
           if (pd.attached_file) {
             this.attachedFile = "http://localhost:8080/api/" + pd.attached_file;
           }
@@ -133,7 +175,6 @@ export class AddPlansComponent implements OnInit {
              this.participants[0].staff_id = myStaffId; 
           }
         }
-
         this.loading = false;
       },
       error: (err) => {
@@ -144,7 +185,88 @@ export class AddPlansComponent implements OnInit {
     });
   }
 
-  // 🌟 จัดการอัปโหลดไฟล์เป็น Base64
+  toggleStrategy() { this.isStrategyOpen.set(!this.isStrategyOpen()); this.isPlanOpen.set(false); this.isStatusOpen.set(false); }
+  selectStrategy(item: string) { this.selectedStrategy.set(item); this.isStrategyOpen.set(false); }
+  
+  startEditStrategy(index: number, event: Event) { event.stopPropagation(); this.editingStrategyIndex.set(index); }
+  cancelEditStrategy(event: Event) { event.stopPropagation(); this.editingStrategyIndex.set(null); }
+  saveEditStrategy(index: number, val: string, event: Event) {
+    event.stopPropagation();
+    if (val.trim()) {
+      const list = this.strategiesList();
+      if (this.selectedStrategy() === list[index]) this.selectedStrategy.set(val.trim());
+      list[index] = val.trim();
+      this.strategiesList.set([...list]);
+      localStorage.setItem('custom_strategies', JSON.stringify(list)); 
+    }
+    this.editingStrategyIndex.set(null);
+  }
+  deleteStrategy(index: number, event: Event) {
+    event.stopPropagation();
+    if (confirm('ยืนยันการลบยุทธศาสตร์นี้?')) {
+      const list = this.strategiesList();
+      if (this.selectedStrategy() === list[index]) this.selectedStrategy.set('เลือกแผนยุทธศาสตร์');
+      list.splice(index, 1);
+      this.strategiesList.set([...list]);
+      localStorage.setItem('custom_strategies', JSON.stringify(list)); 
+    }
+  }
+  addNewStrategy(val: string) {
+    if (val.trim()) {
+      const newList = [...this.strategiesList(), val.trim()];
+      this.strategiesList.set(newList);
+      this.selectedStrategy.set(val.trim());
+      this.isAddingStrategy.set(false);
+      localStorage.setItem('custom_strategies', JSON.stringify(newList)); 
+    }
+  }
+
+  togglePlan() { this.isPlanOpen.set(!this.isPlanOpen()); this.isStrategyOpen.set(false); this.isStatusOpen.set(false); }
+  selectPlan(item: string) { this.selectedPlan.set(item); this.isPlanOpen.set(false); }
+  
+  startEditPlan(index: number, event: Event) { event.stopPropagation(); this.editingPlanIndex.set(index); }
+  cancelEditPlan(event: Event) { event.stopPropagation(); this.editingPlanIndex.set(null); }
+  saveEditPlan(index: number, val: string, event: Event) {
+    event.stopPropagation();
+    if (val.trim()) {
+      const list = this.plansList();
+      if (this.selectedPlan() === list[index]) this.selectedPlan.set(val.trim());
+      list[index] = val.trim();
+      this.plansList.set([...list]);
+      localStorage.setItem('custom_plans', JSON.stringify(list)); 
+    }
+    this.editingPlanIndex.set(null);
+  }
+  deletePlan(index: number, event: Event) {
+    event.stopPropagation();
+    if (confirm('ยืนยันการลบแผนงานนี้?')) {
+      const list = this.plansList();
+      if (this.selectedPlan() === list[index]) this.selectedPlan.set('เลือกแผนงาน');
+      list.splice(index, 1);
+      this.plansList.set([...list]);
+      localStorage.setItem('custom_plans', JSON.stringify(list)); 
+    }
+  }
+  addNewPlan(val: string) {
+    if (val.trim()) {
+      const newList = [...this.plansList(), val.trim()];
+      this.plansList.set(newList);
+      this.selectedPlan.set(val.trim());
+      this.isAddingPlan.set(false);
+      localStorage.setItem('custom_plans', JSON.stringify(newList)); 
+    }
+  }
+
+  toggleStatus() { this.isStatusOpen.set(!this.isStatusOpen()); this.isStrategyOpen.set(false); this.isPlanOpen.set(false); }
+  selectStatus(item: string) { this.selectedStatus.set(item); this.isStatusOpen.set(false); }
+
+  addParticipant() { this.participants.push({ staff_id: '' }); }
+  removeParticipant(index: number) { if (this.participants.length > 1) { this.participants.splice(index, 1); } }
+
+  addSubActivity() { this.subActivities.update(items => [...items, { id: Date.now(), value: '' }]); }
+  removeSubActivity(id: number) { this.subActivities.update(items => items.filter(item => item.id !== id)); }
+  updateSubActivity(id: number, newValue: string) { this.subActivities.update(items => items.map(item => item.id === id ? { ...item, value: newValue } : item)); }
+
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -162,22 +284,9 @@ export class AddPlansComponent implements OnInit {
     }
   }
 
-  toggleStrategy() { this.isStrategyOpen.set(!this.isStrategyOpen()); this.isPlanOpen.set(false); this.isStatusOpen.set(false); }
-  selectStrategy(item: string) { this.selectedStrategy.set(item); this.isStrategyOpen.set(false); }
-  togglePlan() { this.isPlanOpen.set(!this.isPlanOpen()); this.isStrategyOpen.set(false); this.isStatusOpen.set(false); }
-  selectPlan(item: string) { this.selectedPlan.set(item); this.isPlanOpen.set(false); }
-  toggleStatus() { this.isStatusOpen.set(!this.isStatusOpen()); this.isStrategyOpen.set(false); this.isPlanOpen.set(false); }
-  selectStatus(item: string) { this.selectedStatus.set(item); this.isStatusOpen.set(false); }
-
-  addParticipant() { this.participants.push({ staff_id: '' }); }
-  removeParticipant(index: number) { if (this.participants.length > 1) { this.participants.splice(index, 1); } }
-
-  addSubActivity() { this.subActivities.update(items => [...items, { id: Date.now(), value: '' }]); }
-  removeSubActivity(id: number) { this.subActivities.update(items => items.filter(item => item.id !== id)); }
-  updateSubActivity(id: number, newValue: string) { this.subActivities.update(items => items.map(item => item.id === id ? { ...item, value: newValue } : item)); }
-
   submitForm() {
     if (!this.projectName.trim()) { alert('กรุณาระบุชื่อโครงการ'); return; }
+    if (!this.planYear) { alert('กรุณาระบุปี พ.ศ. ที่ดำเนินการ'); return; }
     if (this.participants.some(p => !p.staff_id)) { alert('กรุณาเลือกชื่อผู้รับผิดชอบให้ครบถ้วน'); return; }
 
     if (this.userScope() === 'self' && this.currentStaffId()) {
@@ -195,13 +304,14 @@ export class AddPlansComponent implements OnInit {
     const payload = {
       id: this.editId,
       plan_name: this.projectName,
+      plan_year: this.planYear, // 🌟 ส่งค่าปีไปให้ API
       strategy: this.selectedStrategy() === 'เลือกแผนยุทธศาสตร์' ? '' : this.selectedStrategy(),
       plan_type: this.selectedPlan() === 'เลือกแผนงาน' ? '' : this.selectedPlan(),
       approved_budget: this.approvedBudget,
       used_budget: this.usedBudget,
       status: this.selectedStatus() === 'ระบุสถานะ' ? 'ยังไม่ได้ดำเนินการ' : this.selectedStatus(),
       details: this.details,
-      attached_file: this.attachedFile, // 🌟 แนบไฟล์ส่งไปให้ API
+      attached_file: this.attachedFile, 
       participants: this.participants,
       sub_activities: this.subActivities().filter(a => a.value.trim() !== '').map(a => ({ activity_name: a.value }))
     };

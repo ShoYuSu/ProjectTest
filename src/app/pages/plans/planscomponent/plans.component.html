@@ -8,7 +8,7 @@
   <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
     <div>
       <h2 class="text-2xl font-black text-[#2A1D1A] mb-2">ข้อมูลแผนงานและโครงการ</h2>
-      <p class="text-sm text-gray-400 font-bold">ศูนย์รวมการจัดการแผนงานและงบประมาณระดับคณะและภาควิชา</p>
+      <p class="text-sm text-gray-400 font-bold">ศูนย์รวมการจัดการแผนงานและงบประมาณระดับคณะ</p>
     </div>
     
     @if (canAdd()) {
@@ -37,16 +37,18 @@
     </div>
   </div>
 
-  <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 md:items-start">
-      <span class="text-sm font-bold text-gray-500 whitespace-nowrap mt-2">ภาควิชา</span>
-      <div class="flex flex-wrap gap-3">
-        @for (dept of ['ทั้งหมด', 'คณิตศาสตร์', 'เคมี', 'เทคโนโลยีการอาหาร', 'ฟิสิกส์', 'วิทยาการคอมพิวเตอร์']; track dept) {
-          <button (click)="setDepartment(dept)"
-                  [ngClass]="currentDept() === dept ? 'bg-[#F9BD15] text-[#2A1D1A] shadow-sm' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
-                  class="px-6 py-2.5 rounded-full font-bold text-sm transition-all active:scale-95">
-            {{ dept === 'ทั้งหมด' ? 'ทั้งหมด' : 'ภาควิชา' + dept }}
-          </button>
-        }
+  <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-6">
+      <div class="flex flex-col md:flex-row gap-4 md:items-start pb-2">
+        <span class="text-sm font-bold text-gray-500 whitespace-nowrap mt-2 w-20">ปี พ.ศ.</span>
+        <div class="flex flex-wrap gap-3">
+          @for (year of availableYears(); track year) {
+            <button (click)="setYear(year)"
+                    [ngClass]="currentYear() === year ? 'bg-[#2A1D1A] text-[#F9BD15] shadow-sm' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
+                    class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
+              {{ year === 'ทั้งหมด' ? 'ทุกปี' : 'ประจำปี ' + year }}
+            </button>
+          }
+        </div>
       </div>
   </div>
 
@@ -65,37 +67,79 @@
       </div>
       
       <div class="overflow-x-auto">
-        <table class="w-full text-left min-w-[1200px]">
+        <table class="w-full text-left min-w-[2000px]">
             <thead class="bg-gray-50 text-xs text-gray-500 font-bold">
               <tr>
-                  <th class="py-5 px-8 w-16">ID</th>
-                  <th class="py-5 px-4 w-48">ชื่อแผนงาน</th>
-                  <th class="py-5 px-4 w-40">ผู้รับผิดชอบ</th> <th class="py-5 px-4 w-32">ประเภท</th>
-                  <th class="py-5 px-4 w-28 text-right">งบประมาณ</th>
-                  <th class="py-5 px-4 w-32 text-center">สถานะ</th>
-                  <th class="py-5 px-4 w-24 text-center">เอกสารแนบ</th> <th class="py-5 px-8 w-28 text-center">จัดการ</th>
+                  <th class="py-5 px-6 w-[90px] min-w-[90px] max-w-[90px] sticky left-0 bg-gray-50 z-20 border-r border-gray-100">ID</th>
+                  <th class="py-5 px-4 w-[340px] min-w-[340px] max-w-[340px] sticky left-[90px] bg-gray-50 z-20 border-r border-gray-200 shadow-[4px_0_12px_-4px_rgba(0,0,0,0.1)]">ชื่อแผนงาน</th>
+                  
+                  <th class="py-5 px-6 w-60">ยุทธศาสตร์</th> 
+                  <th class="py-5 px-4 w-64">กิจกรรมย่อย</th> 
+                  <th class="py-5 px-4 w-40">ผู้รับผิดชอบ</th>
+                  <th class="py-5 px-4 w-32">ประเภท</th>
+                  <th class="py-5 px-4 w-28 text-right">งบที่ได้รับ</th>
+                  <th class="py-5 px-4 w-28 text-right">งบที่ใช้ไป</th>
+                  <th class="py-5 px-4 w-40 text-center">สถานะ</th>
+                  <th class="py-5 px-4 w-48">รายละเอียด</th>
+                  <th class="py-5 px-4 w-24 text-center">เอกสารแนบ</th> 
+                  <th class="py-5 px-8 w-28 text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
               @if (paginatedPlans().length > 0 && !loading()) {
                   @for (project of paginatedPlans(); track project.id) {
-                    <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="py-6 px-8 text-sm font-bold text-gray-400">#{{ project.id }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] pr-4 leading-relaxed">{{ project.plan_name }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500">{{ project.participants }}</td> <td class="py-6 px-4 text-sm font-bold text-gray-500">{{ project.plan_type }}</td>
-                        <td class="py-6 px-4 text-sm font-black text-[#2A1D1A] text-right">{{ project.approved_budget | number }} ฿</td>
-                        <td class="py-6 px-4 text-center">
-                          <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
-                                [ngClass]="{
-                                  'bg-green-100 text-green-700': project.status === 'ดำเนินการแล้วเสร็จ',
-                                  'bg-blue-100 text-blue-700': project.status === 'อยู่ระหว่างดำเนินการ',
-                                  'bg-gray-100 text-gray-500': project.status === 'ยังไม่ได้ดำเนินการ'
-                                }">
-                            {{ project.status }}
-                          </span>
+                    <tr class="group hover:bg-gray-50 transition-colors">
+                        
+                        <td class="py-6 px-6 text-sm font-bold text-gray-400 align-top pt-8 sticky left-0 bg-white group-hover:bg-gray-50 z-10 transition-colors border-r border-gray-50">#{{ project.id }}</td>
+                        
+                        <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] pr-4 leading-relaxed align-top pt-8 sticky left-[90px] bg-white group-hover:bg-gray-50 z-10 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] border-r border-gray-100">{{ project.plan_name }}</td>
+                        
+                        <td class="py-6 px-6 align-top pt-7">
+                          @if (project.strategy) {
+                            <div class="text-xs font-black text-[#8a6800] bg-[#F9BD15]/15 border border-[#F9BD15]/30 px-3 py-2.5 rounded-xl leading-relaxed">
+                              {{ project.strategy }}
+                            </div>
+                          } @else {
+                            <span class="text-sm font-bold text-gray-300">-</span>
+                          }
+                        </td>
+                        
+                        <td class="py-6 px-4 align-top pt-8">
+                          @if (project.sub_activities.length > 0 && project.sub_activities[0] !== '') {
+                            <ul class="flex flex-col gap-2">
+                              @for (act of project.sub_activities; track $index) {
+                                <li class="text-[11px] font-bold text-gray-500 leading-snug flex items-start gap-2">
+                                  <div class="w-1.5 h-1.5 rounded-full bg-[#F9BD15] mt-1.5 flex-none"></div>
+                                  <span>{{ act }}</span>
+                                </li>
+                              }
+                            </ul>
+                          } @else {
+                            <span class="text-sm font-bold text-gray-300">-</span>
+                          }
                         </td>
 
-                        <td class="py-6 px-4 text-center">
+                        <td class="py-6 px-4 text-xs font-bold text-gray-500 align-top pt-8">{{ project.participants || '-' }}</td>
+                        <td class="py-6 px-4 text-xs font-bold text-gray-500 align-top pt-8">{{ project.plan_type || '-' }}</td>
+                        <td class="py-6 px-4 text-sm font-black text-[#2A1D1A] text-right align-top pt-8">{{ project.approved_budget | number }} ฿</td>
+                        <td class="py-6 px-4 text-sm font-black text-red-500 text-right align-top pt-8">{{ project.used_budget | number }} ฿</td>
+                        
+                        <td class="py-6 px-4 text-center align-top pt-8">
+                          <span class="px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider whitespace-nowrap"
+                                [ngClass]="{
+                                  'bg-green-100 text-green-700': project.status === 'ดำเนินการแล้วเสร็จ',
+                                  'bg-yellow-100 text-yellow-700': project.status === 'อยู่ระหว่างดำเนินการ',
+                                  'bg-red-100 text-red-700': project.status === 'ยังไม่ได้ดำเนินการ' || !project.status
+                                }">
+                            {{ project.status || 'ยังไม่ได้ดำเนินการ' }}
+                          </span>
+                        </td>
+                        
+                        <td class="py-6 px-4 text-xs font-bold text-gray-500 leading-relaxed align-top pt-8">
+                          <div class="line-clamp-3" title="{{ project.details }}">{{ project.details || '-' }}</div>
+                        </td>
+
+                        <td class="py-6 px-4 text-center align-top pt-8">
                           @if (project.attachedFile) {
                             <a [href]="project.attachedFile" target="_blank" class="text-blue-500 hover:text-blue-700 font-bold text-[10px] uppercase tracking-wider flex flex-col items-center gap-1 transition-colors">
                               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -106,7 +150,7 @@
                           }
                         </td>
 
-                        <td class="py-6 px-8 text-center">
+                        <td class="py-6 px-8 text-center align-top pt-8">
                           @if (project.can_edit || project.can_delete) {
                             <div class="flex items-center justify-center gap-2">
                               @if (project.can_edit) {
@@ -131,7 +175,7 @@
                   }
               } @else if (!loading()) {
                   <tr>
-                    <td colspan="8" class="py-20 text-center text-gray-400 font-bold">ไม่พบข้อมูลแผนงาน หรือคุณไม่มีสิทธิ์เข้าถึง</td>
+                    <td colspan="12" class="py-20 text-center text-gray-400 font-bold">ไม่พบข้อมูลแผนงาน หรือคุณไม่มีสิทธิ์เข้าถึง</td>
                   </tr>
               }
             </tbody>

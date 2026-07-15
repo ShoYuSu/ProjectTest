@@ -85,10 +85,10 @@
       </div>
 
       <div class="h-64 flex items-end justify-around relative px-10 pb-6 mt-4">
-        <div class="absolute left-8 right-8 top-0 h-px bg-gray-100"></div>
-        <div class="absolute left-8 right-8 top-1/4 h-px bg-gray-100"></div>
-        <div class="absolute left-8 right-8 top-2/4 h-px bg-gray-100"></div>
-        <div class="absolute left-8 right-8 top-3/4 h-px bg-gray-100"></div>
+        <div class="absolute left-8 right-8 top-0 border-t border-dashed border-gray-200"></div>
+        <div class="absolute left-8 right-8 top-1/4 border-t border-dashed border-gray-200"></div>
+        <div class="absolute left-8 right-8 top-2/4 border-t border-dashed border-gray-200"></div>
+        <div class="absolute left-8 right-8 top-3/4 border-t border-dashed border-gray-200"></div>
         <div class="absolute left-8 right-8 bottom-6 h-px bg-gray-200"></div>
 
         @if (chartData1().length === 0) {
@@ -98,8 +98,9 @@
         @for (item of chartData1(); track item.year) {
           <div class="relative z-10 w-16 h-full flex flex-col items-center justify-end group">
             
-            <span class="text-[#F9BD15] font-bold text-xs mb-2 opacity-0 animate-[fadeInTop_0.5s_ease-out_0.5s_forwards] truncate w-24 text-center">
-              {{ selectedOption1() === 'งบประมาณ' ? (item.value | number:'1.0-0') : (item.value | number) }}
+            <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute bottom-full mb-2 px-3 py-1.5 bg-[#2A1D1A] text-white rounded-lg shadow-md text-xs font-black whitespace-nowrap pointer-events-none z-20">
+              {{ selectedOption1() === 'งบประมาณ' ? (item.value | number:'1.0-0') + ' ฿' : (item.value | number) }}
+              <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#2A1D1A]"></div>
             </span>
 
             <div class="w-12 bg-[#F9BD15] rounded-t-sm transition-all duration-1000 ease-out origin-bottom animate-[growUp_1s_ease-out_forwards] hover:brightness-110 cursor-pointer"
@@ -140,10 +141,10 @@
       </div>
 
       <div class="h-64 flex items-end justify-around relative px-10 pb-6 mt-4">
-        <div class="absolute left-8 right-8 top-0 h-px bg-gray-100"></div>
-        <div class="absolute left-8 right-8 top-1/4 h-px bg-gray-100"></div>
-        <div class="absolute left-8 right-8 top-2/4 h-px bg-gray-100"></div>
-        <div class="absolute left-8 right-8 top-3/4 h-px bg-gray-100"></div>
+        <div class="absolute left-8 right-8 top-0 border-t border-dashed border-gray-200"></div>
+        <div class="absolute left-8 right-8 top-1/4 border-t border-dashed border-gray-200"></div>
+        <div class="absolute left-8 right-8 top-2/4 border-t border-dashed border-gray-200"></div>
+        <div class="absolute left-8 right-8 top-3/4 border-t border-dashed border-gray-200"></div>
         <div class="absolute left-8 right-8 bottom-6 h-px bg-gray-200"></div>
 
         @if (chartData2().length === 0) {
@@ -152,7 +153,10 @@
 
         @for (item of chartData2(); track item.year) {
           <div class="relative z-10 w-16 h-full flex flex-col items-center justify-end group">
-            <span class="text-[#F9BD15] font-bold text-sm mb-2 opacity-0 animate-[fadeInTop_0.5s_ease-out_0.5s_forwards]">{{item.value | number}}</span>
+            <span class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute bottom-full mb-2 px-3 py-1.5 bg-[#2A1D1A] text-white rounded-lg shadow-md text-xs font-black whitespace-nowrap pointer-events-none z-20">
+              {{ item.value | number }}
+              <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#2A1D1A]"></div>
+            </span>
             <div class="w-12 bg-[#F9BD15] rounded-t-sm transition-all duration-1000 ease-out origin-bottom animate-[growUp_1s_ease-out_forwards] hover:brightness-110 cursor-pointer"
                  [style.height.%]="item.percentage"></div>
             <span class="absolute -bottom-6 text-xs font-bold text-[#2A1D1A]">{{item.year}}</span>

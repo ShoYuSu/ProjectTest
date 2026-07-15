@@ -19,8 +19,9 @@ export class PlansComponent implements OnInit {
   canAdd = signal(false); 
   errorMessage = signal<string>('');
   loading = signal(true);
+  
   searchQuery = signal<string>('');
-  currentDept = signal<string>('ทั้งหมด');
+  currentYear = signal<string>('ทั้งหมด'); // 🌟 เหลือแค่ฟิลเตอร์ปี
 
   currentPage = signal(1);
   itemsPerPage = 10;
@@ -72,8 +73,9 @@ export class PlansComponent implements OnInit {
         next: (data) => {
           const mappedData = (data || []).map(item => ({
             ...item,
-            attachedFile: item.attachedFile || null,  // 🌟 แมปค่าไฟล์
-            participants: item.participants || '-'    // 🌟 แมปผู้รับผิดชอบ
+            attachedFile: item.attachedFile || null,
+            participants: item.participants || '-',
+            sub_activities: item.sub_activities ? item.sub_activities.split('|||') : []
           }));
           this.allPlans.set(mappedData);
           this.applyFilters();
@@ -103,13 +105,19 @@ export class PlansComponent implements OnInit {
     }
   }
 
+  availableYears = computed(() => {
+    const years = this.allPlans().map(p => p.year).filter(y => y !== null && y !== undefined);
+    const uniqueYears = Array.from(new Set(years)).sort((a, b) => b - a); 
+    return ['ทั้งหมด', ...uniqueYears.map(String)];
+  });
+
   applyFilters() {
     let result = this.allPlans();
     const query = this.searchQuery().toLowerCase().trim();
-    const dept = this.currentDept();
+    const year = this.currentYear();
 
-    if (dept !== 'ทั้งหมด') {
-      result = result.filter(p => p.involved_departments && p.involved_departments.includes(dept));
+    if (year !== 'ทั้งหมด') {
+      result = result.filter(p => String(p.year) === year);
     }
 
     if (query) {
@@ -124,7 +132,7 @@ export class PlansComponent implements OnInit {
     this.currentPage.set(1); 
   }
 
-  setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(); }
+  setYear(year: string) { this.currentYear.set(year); this.applyFilters(); }
   onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
 
   paginatedPlans = computed(() => {
