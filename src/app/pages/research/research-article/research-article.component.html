@@ -15,7 +15,7 @@
       <button routerLink="/research/article/add" 
               class="w-fit flex-none bg-[#2A1D1A] text-[#F9BD15] px-6 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-sm active:scale-95 whitespace-nowrap">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
-        เพิ่มบทความวิจัย
+        เพิ่มบทความ
       </button>
     }
   </div>
@@ -32,21 +32,43 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       </div>
       <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)"
-             placeholder="ค้นหาชื่อบทความ" 
+             placeholder="ค้นหาชื่อบทความ, ชื่อผู้จัดทำ, หรือชื่อวารสาร/งานประชุม..." 
              class="w-full pl-12 pr-4 py-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
     </div>
   </div>
 
-  <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 md:items-start">
-      <span class="text-sm font-bold text-gray-500 whitespace-nowrap mt-2">ภาควิชา</span>
-      <div class="flex flex-wrap gap-3">
-        @for (dept of ['ทั้งหมด', 'คณิตศาสตร์', 'เคมี', 'เทคโนโลยีการอาหาร', 'ฟิสิกส์', 'วิทยาการคอมพิวเตอร์']; track dept) {
-          <button (click)="setDepartment(dept)"
-                  [ngClass]="currentDept() === dept ? 'bg-[#F9BD15] text-[#2A1D1A] shadow-sm' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
-                  class="px-6 py-2.5 rounded-full font-bold text-sm transition-all active:scale-95">
-            {{ dept === 'ทั้งหมด' ? 'ทั้งหมด' : 'ภาควิชา' + dept }}
+  <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-6">
+      
+      <div class="flex flex-col md:flex-row gap-4 md:items-start pb-4 border-b border-gray-100">
+        <span class="text-sm font-bold text-gray-500 whitespace-nowrap mt-2 w-20">ประเภท</span>
+        <div class="flex gap-4">
+          <button (click)="setTab('journal')"
+                  [ngClass]="activeTab() === 'journal' ? 'bg-[#2A1D1A] text-[#F9BD15] shadow-sm' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
+                  class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+            วารสารวิชาการ (Journal)
           </button>
-        }
+          
+          <button (click)="setTab('conference')"
+                  [ngClass]="activeTab() === 'conference' ? 'bg-[#2A1D1A] text-[#F9BD15] shadow-sm' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
+                  class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            การประชุมวิชาการ (Conference)
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-col md:flex-row gap-4 md:items-start">
+        <span class="text-sm font-bold text-gray-500 whitespace-nowrap mt-2 w-20">ภาควิชา</span>
+        <div class="flex flex-wrap gap-3">
+          @for (dept of ['ทั้งหมด', 'คณิตศาสตร์', 'เคมี', 'เทคโนโลยีการอาหาร', 'ฟิสิกส์', 'วิทยาการคอมพิวเตอร์']; track dept) {
+            <button (click)="setDepartment(dept)"
+                    [ngClass]="currentDept() === dept ? 'bg-[#F9BD15] text-[#2A1D1A] shadow-sm' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
+                    class="px-6 py-2.5 rounded-full font-bold text-sm transition-all active:scale-95">
+              {{ dept === 'ทั้งหมด' ? 'ทั้งหมด' : 'ภาควิชา' + dept }}
+            </button>
+          }
+        </div>
       </div>
   </div>
 
@@ -57,96 +79,82 @@
         </div>
       }
 
-      <div class="p-8 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-            <div class="text-[#F9BD15]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
-            </div>
-            <h3 class="font-black text-[#2A1D1A] text-lg">บทความวิจัย <span class="text-gray-400 text-sm font-bold ml-2">({{ filteredArticles().length }} รายการ)</span></h3>
+      <div class="p-8 border-b border-gray-50 flex items-center gap-3">
+        <div class="text-[#F9BD15]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         </div>
-
-        <div class="bg-gray-50 p-1.5 rounded-2xl flex items-center border border-gray-100">
-            <button (click)="setTab('conference')" 
-                    [class.bg-white]="activeTab() === 'conference'" [class.shadow-sm]="activeTab() === 'conference'" [class.text-[#2A1D1A]]="activeTab() === 'conference'"
-                    [class.text-gray-400]="activeTab() !== 'conference'"
-                    class="px-8 py-2.5 rounded-xl font-bold text-sm transition-all">
-              ประชุมวิชาการ
-            </button>
-            <button (click)="setTab('journal')" 
-                    [class.bg-white]="activeTab() === 'journal'" [class.shadow-sm]="activeTab() === 'journal'" [class.text-[#2A1D1A]]="activeTab() === 'journal'"
-                    [class.text-gray-400]="activeTab() !== 'journal'"
-                    class="px-8 py-2.5 rounded-xl font-bold text-sm transition-all">
-              วารสารวิชาการ
-            </button>
-        </div>
+        <h3 class="font-black text-[#2A1D1A] text-lg">รายการบทความ <span class="text-gray-400 text-sm font-bold ml-2">({{ filteredArticles().length }} รายการ)</span></h3>
       </div>
       
       <div class="overflow-x-auto">
         <table class="w-full text-left min-w-[1100px]">
             <thead class="bg-gray-50 text-xs text-gray-500 font-bold">
               <tr>
-                  <th class="py-5 px-8 w-20">ลำดับ</th>
-                  <th class="py-5 px-4 w-64">ชื่อเรื่อง</th>
-                  <th class="py-5 px-4 w-48">ชื่อผู้เขียนบทความ</th>
-                  
-                  @if (activeTab() === 'conference') {
-                    <th class="py-5 px-4 w-56">ชื่อการประชุม</th>
-                    <th class="py-5 px-4 w-48">สถานที่จัด</th>
-                    <th class="py-5 px-8 w-32">วันเดือนปีที่นำเสนอ</th>
-                  } @else {
-                    <th class="py-5 px-4 w-56">ชื่อวารสาร</th>
-                    <th class="py-5 px-4 w-24">ฉบับที่</th>
-                    <th class="py-5 px-4 w-24">ฐานข้อมูล (Quartile)</th>
-                    <th class="py-5 px-8 w-32">ปีที่พิมพ์</th>
-                  }
-                  
-                  <th class="py-5 px-8 w-32 text-center">จัดการ</th>
+                  <th class="py-5 px-8 w-16">ID</th>
+                  <th class="py-5 px-4">ชื่อบทความ</th>
+                  <th class="py-5 px-4 w-40">ผู้นิพนธ์</th>
+                  <th class="py-5 px-4 w-28 text-center">ปีที่ตีพิมพ์</th>
+                  <th class="py-5 px-4 w-56">รายละเอียดตีพิมพ์</th>
+                  <th class="py-5 px-4 w-24 text-center">เอกสารแนบ</th> <th class="py-5 px-8 w-28 text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
               @if (paginatedArticles().length > 0 && !loading()) {
                   @for (article of paginatedArticles(); track article.id) {
                     <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="py-6 px-8 text-sm font-bold text-gray-500 align-top">#{{ article.id }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] leading-relaxed align-top pr-6">{{ article.title }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ article.author }}</td>
+                        <td class="py-6 px-8 text-sm font-bold text-gray-400">#{{ article.id }}</td>
+                        <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] pr-10 leading-relaxed">{{ article.title }}</td>
+                        <td class="py-6 px-4 text-sm font-bold text-gray-500">{{ article.author }}</td>
                         
-                        @if (activeTab() === 'conference') {
-                          <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ article.conference_name }}</td>
-                          <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ article.conference_location || '-' }}</td>
-                          <td class="py-6 px-8 text-sm font-bold text-[#2A1D1A] align-top">{{ article.conference_date || article.year }}</td>
-                        } @else {
-                          <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ article.journal_name }}</td>
-                          <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ article.journal_vol_issue || '-' }}</td>
-                          <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top">{{ article.journal_quartile || '-' }}</td>
-                          <td class="py-6 px-8 text-sm font-bold text-[#2A1D1A] align-top">{{ article.year }}</td>
-                        }
+                        <td class="py-6 px-4 text-sm font-bold text-gray-500 text-center">{{ article.year }}</td>
+                        
+                        <td class="py-6 px-4 text-sm text-gray-500 leading-relaxed pr-6">
+                            @if (article.type === 'journal') {
+                              <div class="font-bold text-[#2A1D1A] text-[13px] mb-0.5">{{ article.journal_name }}</div>
+                              <div class="text-[11px]">{{ article.journal_vol_issue }} <span class="font-bold text-[#F9BD15] ml-1">{{ article.journal_quartile }}</span></div>
+                            } @else {
+                              <div class="font-bold text-[#2A1D1A] text-[13px] mb-0.5">{{ article.conference_name }}</div>
+                              <div class="text-[11px]">{{ article.conference_date }} <span class="text-gray-400">({{ article.conference_location }})</span></div>
+                            }
+                        </td>
+                        
+                        <td class="py-6 px-4 text-center">
+                          @if (article.attachedFile) {
+                            <a [href]="article.attachedFile" target="_blank" class="text-blue-500 hover:text-blue-700 font-bold text-[10px] uppercase tracking-wider flex flex-col items-center gap-1 transition-colors">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                              ดูไฟล์
+                            </a>
+                          } @else {
+                            <span class="text-gray-300 font-bold text-xs">-</span>
+                          }
+                        </td>
 
-                        <td class="py-6 px-8 text-center align-top">
-                          
-                          @if (article.can_edit) {
+                        <td class="py-6 px-8 text-center">
+                          @if (article.can_edit || article.can_delete) {
                             <div class="flex items-center justify-center gap-2">
-                              <button [routerLink]="['/research/article/edit']" 
-                                      [queryParams]="{ edit: article.id }" 
-                                      [state]="{ articleData: article }"
-                                      class="text-[#F9BD15] bg-[#F9BD15]/10 hover:bg-[#F9BD15] hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
-                                  แก้ไข
-                              </button>
-                              <button (click)="deleteArticle(article.id)" 
-                                      class="text-red-500 bg-red-50 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
-                                  ลบ
-                              </button>
+                              @if (article.can_edit) {
+                                <button [routerLink]="['/research/article/add']" 
+                                        [queryParams]="{ edit: article.id }" 
+                                        class="text-[#F9BD15] bg-[#F9BD15]/10 hover:bg-[#F9BD15] hover:text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all">
+                                    แก้ไข
+                                </button>
+                              }
+                              @if (article.can_delete) {
+                                <button (click)="deleteArticle(article.id)" 
+                                        class="text-red-500 bg-red-50 hover:bg-red-500 hover:text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all">
+                                    ลบ
+                                </button>
+                              }
                             </div>
                           } @else {
                             <span class="text-xs text-gray-300 font-bold">-</span>
                           }
-
                         </td>
                     </tr>
                   }
               } @else if (!loading()) {
                   <tr>
-                    <td colspan="8" class="py-20 text-center text-gray-400 font-bold">ยังไม่มีข้อมูลบทความวิจัยที่ตรงกับการค้นหา</td>
+                    <td colspan="7" class="py-20 text-center text-gray-400 font-bold">ไม่พบข้อมูลบทความวิจัยที่ตรงกับการค้นหา หรือคุณไม่มีสิทธิ์เข้าถึงข้อมูล</td>
                   </tr>
               }
             </tbody>
@@ -172,9 +180,7 @@
 
         <button (click)="nextPage()" [disabled]="currentPage() === totalPages() || totalPages() === 0"
             class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>
   </div>

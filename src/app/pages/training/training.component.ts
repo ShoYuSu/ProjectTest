@@ -32,64 +32,65 @@ export class TrainingComponent implements OnInit {
     this.fetchTrainingData();
   }
 
+  // 🌟 Permission-Based Only 
   fetchPermissionsFromDB() {
-    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     
     this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers })
       .subscribe({
-        next: (perms) => {
+        next: (res) => {
+          const p = res.permissions || res || {}; 
           let hasAdd = false;
-          // 🌟 ป้องกันบั๊กกรณี API get_permissions.php ส่งค่ากลับมาเป็น Array หรือค่าว่าง
-          if (perms && typeof perms === 'object' && !Array.isArray(perms)) {
-              const trainingKey = Object.keys(perms).find(k => k.toLowerCase().includes('training'));
-              if (trainingKey && perms[trainingKey]) {
-                const addScope = perms[trainingKey]['add'];
-                if (addScope && addScope.toLowerCase() !== 'none') {
-                  hasAdd = true;
-                }
-              }
+          
+          const modPerms = p['training_info'] || p['training'];
+          if (modPerms && modPerms['add']) {
+             const scope = modPerms['add'].toString().toLowerCase().trim();
+             if (['all', 'department', 'self', 'own'].includes(scope)) {
+                hasAdd = true;
+             }
           }
           this.canAdd.set(hasAdd);
         },
-        error: (err) => console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err)
+        error: (err) => {
+          console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err);
+          this.canAdd.set(false);
+        }
       });
   }
 
   fetchTrainingData() {
     this.loading.set(true);
-    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
     this.http.get<any[]>('http://localhost:8080/api/get_training.php', { headers })
       .subscribe({
         next: (data) => {
-          this.allTrainings.set(data || []); 
+          this.allTrainings.set(data || []);
           this.applyFilters();
           this.loading.set(false);
         },
         error: (err) => {
-          console.error('API Error details:', err);
-          // 🌟 ดึงข้อความ Error เชิงลึกจาก Backend (หรือ HTTP) มาโชว์หน้าเว็บเลย!
-          const errorDetail = err.error?.error || err.message || JSON.stringify(err.error) || 'Unknown Error';
-          this.errorMessage.set(`ระบบขัดข้อง: ${errorDetail}`);
+          console.error(err);
+          this.errorMessage.set('ไม่สามารถโหลดข้อมูลการอบรมได้ (เซสชั่นอาจหมดอายุ หรือไม่มีสิทธิ์เข้าถึง)');
           this.loading.set(false);
         }
       });
   }
 
   deleteTraining(id: number) {
-    if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลการอบรม/สัมมนานี้?\n(การลบจะไม่สามารถกู้คืนได้)')) {
-      const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลการอบรมนี้?\n(การลบจะไม่สามารถกู้คืนได้)')) {
+      const token = localStorage.getItem('token') || '';
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      
       this.http.post<any>('http://localhost:8080/api/delete_training.php', { id: id }, { headers })
         .subscribe({
           next: (res) => {
-            if (res && res.success) { 
-              alert('✅ ลบข้อมูลสำเร็จ'); 
-              this.fetchTrainingData(); 
-            } else { 
-              alert('❌ ' + res.message); 
-            }
+            if (res && res.success) { alert('✅ ลบข้อมูลสำเร็จ'); this.fetchTrainingData(); } 
+            else { alert('❌ ' + res.message); }
           },
-          error: (err) => alert('เกิดข้อผิดพลาด: ' + (err.error?.error || err.message))
+          error: () => alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์')
         });
     }
   }
@@ -100,7 +101,7 @@ export class TrainingComponent implements OnInit {
     const dept = this.currentDept();
 
     if (dept !== 'ทั้งหมด') {
-      result = result.filter(t => t.department === dept);
+      result = result.filter(t => t.involved_departments && t.involved_departments.includes(dept));
     }
 
     if (query) {
@@ -115,15 +116,8 @@ export class TrainingComponent implements OnInit {
     this.currentPage.set(1); 
   }
 
-  setDepartment(deptName: string) {
-    this.currentDept.set(deptName);
-    this.applyFilters();
-  }
-
-  onSearchChange(val: string) {
-    this.searchQuery.set(val);
-    this.applyFilters();
-  }
+  setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(); }
+  onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
 
   paginatedTrainings = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.itemsPerPage;

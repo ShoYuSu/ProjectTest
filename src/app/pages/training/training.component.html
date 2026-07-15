@@ -14,8 +14,8 @@
     @if (canAdd()) {
       <button routerLink="/training/add" 
               class="w-fit flex-none bg-[#2A1D1A] text-[#F9BD15] px-6 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-sm active:scale-95 whitespace-nowrap">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
-        เพิ่มข้อมูลการอบรม
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+        เพิ่มข้อมูล
       </button>
     }
   </div>
@@ -32,7 +32,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       </div>
       <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)"
-             placeholder="ค้นหาหัวข้อการอบรม, ผู้เข้าร่วม, สถานที่..." 
+             placeholder="ค้นหาชื่อหัวข้อ, สถานที่, ชื่อผู้เข้าร่วม..." 
              class="w-full pl-12 pr-4 py-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
     </div>
   </div>
@@ -57,53 +57,74 @@
         </div>
       }
 
+      <div class="p-8 border-b border-gray-50 flex items-center gap-3">
+        <div class="text-[#F9BD15]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+        </div>
+        <h3 class="font-black text-[#2A1D1A] text-lg">ประวัติการอบรม <span class="text-gray-400 text-sm font-bold ml-2">({{ filteredTrainings().length }} รายการ)</span></h3>
+      </div>
+      
       <div class="overflow-x-auto">
-        <table class="w-full text-left min-w-[1000px]">
+        <table class="w-full text-left min-w-[1100px]">
             <thead class="bg-gray-50 text-xs text-gray-500 font-bold">
               <tr>
                   <th class="py-5 px-8 w-20">ID</th>
-                  <th class="py-5 px-4 w-64">หัวข้อการอบรม/สัมมนา</th>
+                  <th class="py-5 px-4">หัวข้อการอบรม</th>
                   <th class="py-5 px-4 w-48">ผู้เข้าร่วม</th>
-                  <th class="py-5 px-4 w-32">วันที่เริ่ม</th>
-                  <th class="py-5 px-4 w-32">วันที่สิ้นสุด</th>
-                  <th class="py-5 px-4 w-48">สถานที่</th>
+                  <th class="py-5 px-4 w-40">ระยะเวลา</th>
+                  <th class="py-5 px-4 w-40">สถานที่</th>
+                  <th class="py-5 px-4 w-32 text-right">ค่าใช้จ่าย</th>
                   <th class="py-5 px-8 w-32 text-center">จัดการ</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
               @if (paginatedTrainings().length > 0 && !loading()) {
-                  @for (training of paginatedTrainings(); track training.id) {
+                  @for (item of paginatedTrainings(); track item.id) {
                     <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="py-6 px-8 text-sm font-bold text-gray-400">#{{ training.id }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] pr-10 leading-relaxed">{{ training.title }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500">{{ training.participants }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500">{{ training.start_date }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500">{{ training.end_date }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500">{{ training.location }}</td>
+                        <td class="py-6 px-8 text-sm font-bold text-gray-400">#{{ item.id }}</td>
+                        <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] pr-10 leading-relaxed">{{ item.title }}</td>
+                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed">{{ item.participants }}</td>
+                        
+                        <td class="py-6 px-4 text-xs font-bold text-gray-500">
+                          <div class="flex flex-col gap-1">
+                            <span class="text-[#F9BD15] bg-[#F9BD15]/10 px-2 py-1 rounded w-fit text-[10px] uppercase">เริ่มต้น</span>
+                            <span>{{ item.start_date || '-' }}</span>
+                            <span class="text-gray-400 bg-gray-100 px-2 py-1 rounded w-fit text-[10px] uppercase mt-1">สิ้นสุด</span>
+                            <span>{{ item.end_date || '-' }}</span>
+                          </div>
+                        </td>
+                        
+                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed">{{ item.location }}</td>
+                        <td class="py-6 px-4 text-sm font-black text-[#2A1D1A] text-right">{{ item.budget | number }} ฿</td>
                         
                         <td class="py-6 px-8 text-center">
-                          @if (training.can_edit) {
+                          
+                          @if (item.can_edit || item.can_delete) {
                             <div class="flex items-center justify-center gap-2">
-                              <button [routerLink]="['/training/edit']" 
-                                      [queryParams]="{ edit: training.id }" 
-                                      [state]="{ trainingData: training }"
-                                      class="text-[#F9BD15] bg-[#F9BD15]/10 hover:bg-[#F9BD15] hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
-                                  แก้ไข
-                              </button>
-                              <button (click)="deleteTraining(training.id)" 
-                                      class="text-red-500 bg-red-50 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
-                                  ลบ
-                              </button>
+                              @if (item.can_edit) {
+                                <a [routerLink]="['/training/add']" 
+                                   [queryParams]="{ edit: item.id }" 
+                                   class="text-[#F9BD15] bg-[#F9BD15]/10 hover:bg-[#F9BD15] hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
+                                    แก้ไข
+                                </a>
+                              }
+                              @if (item.can_delete) {
+                                <button (click)="deleteTraining(item.id)" 
+                                        class="text-red-500 bg-red-50 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
+                                    ลบ
+                                </button>
+                              }
                             </div>
                           } @else {
                             <span class="text-xs text-gray-300 font-bold">-</span>
                           }
+
                         </td>
                     </tr>
                   }
               } @else if (!loading()) {
                   <tr>
-                    <td colspan="7" class="py-20 text-center text-gray-400 font-bold">ไม่พบข้อมูลการอบรม หรือคุณไม่มีสิทธิ์เข้าถึง</td>
+                    <td colspan="7" class="py-20 text-center text-gray-400 font-bold">ไม่พบข้อมูลการอบรม หรือคุณไม่มีสิทธิ์เข้าถึงข้อมูล</td>
                   </tr>
               }
             </tbody>
@@ -129,9 +150,7 @@
 
         <button (click)="nextPage()" [disabled]="currentPage() === totalPages() || totalPages() === 0"
           class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
       </div>
   </div>

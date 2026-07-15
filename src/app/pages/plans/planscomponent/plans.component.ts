@@ -16,13 +16,9 @@ export class PlansComponent implements OnInit {
 
   allPlans = signal<any[]>([]);
   filteredPlans = signal<any[]>([]);
-  
-  // 🌟 เก็บสิทธิ์เพิ่มข้อมูลแบบ Real-time จากฐานข้อมูล
   canAdd = signal(false); 
-  
   errorMessage = signal<string>('');
   loading = signal(true);
-  
   searchQuery = signal<string>('');
   currentDept = signal<string>('ทั้งหมด');
 
@@ -34,66 +30,75 @@ export class PlansComponent implements OnInit {
     this.fetchPlanData();
   }
 
-  // 🛡️ เช็คสิทธิ์การ Add ข้อมูล (เผื่อชื่อโมดูลตั้งไว้เป็น Plan_info หรือ Plan_Project)
   fetchPermissionsFromDB() {
-    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     
     this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers })
       .subscribe({
-        next: (perms) => {
+        next: (res) => {
+          const perms = res.permissions || res || {}; 
           let hasAdd = false;
-          if (perms && typeof perms === 'object' && !Array.isArray(perms)) {
-              // หาคีย์ที่มีคำว่า 'plan' อยู่ข้างใน
-              const planKey = Object.keys(perms).find(k => k.toLowerCase().includes('plan'));
-              if (planKey && perms[planKey]) {
-                const addScope = perms[planKey]['add'];
-                if (addScope && addScope.toLowerCase() !== 'none') {
-                  hasAdd = true;
+          
+          const targetModules = ['plan_project', 'plan_info', 'plan']; 
+          for (const mod of targetModules) {
+            if (perms[mod]) {
+              for (const act in perms[mod]) {
+                if (act.toLowerCase() === 'add') {
+                  const scope = (perms[mod][act] || '').toString().toLowerCase().trim();
+                  if (['all', 'department', 'self', 'own'].includes(scope)) {
+                    hasAdd = true;
+                  }
                 }
               }
+            }
           }
           this.canAdd.set(hasAdd);
         },
-        error: (err) => console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err)
+        error: (err) => {
+          console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err);
+          this.canAdd.set(false);
+        }
       });
   }
 
   fetchPlanData() {
     this.loading.set(true);
-    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
     this.http.get<any[]>('http://localhost:8080/api/get_plans.php', { headers })
       .subscribe({
         next: (data) => {
-          this.allPlans.set(data || []); // ข้อมูลแนบ project.can_edit มาแล้ว
+          const mappedData = (data || []).map(item => ({
+            ...item,
+            attachedFile: item.attachedFile || null,  // 🌟 แมปค่าไฟล์
+            participants: item.participants || '-'    // 🌟 แมปผู้รับผิดชอบ
+          }));
+          this.allPlans.set(mappedData);
           this.applyFilters();
           this.loading.set(false);
         },
         error: (err) => {
-          console.error('API Error details:', err);
-          const errorDetail = err.error?.error || err.message || JSON.stringify(err.error) || 'Unknown Error';
-          this.errorMessage.set(`ระบบขัดข้อง: ${errorDetail}`);
+          console.error(err);
+          this.errorMessage.set('ไม่สามารถโหลดข้อมูลแผนงานได้');
           this.loading.set(false);
         }
       });
   }
 
   deletePlan(id: number) {
-    if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบแผนงาน/โครงการนี้?\n(การลบจะไม่สามารถกู้คืนได้ และกิจกรรมย่อยจะถูกลบด้วย)')) {
-      const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลนี้? (ไม่สามารถกู้คืนได้)')) {
+      const token = localStorage.getItem('token') || '';
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
       
-      // ใช้ delete_plan.php ตามชื่อไฟล์ที่เราตั้งไว้
       this.http.post<any>('http://localhost:8080/api/delete_plan.php', { id: id }, { headers })
         .subscribe({
           next: (res) => {
-            if (res && res.success) { 
-              alert('✅ ลบข้อมูลสำเร็จ'); 
-              this.fetchPlanData(); 
-            } else { 
-              alert('❌ ' + res.message); 
-            }
+            if (res && res.success) { alert('✅ ลบข้อมูลสำเร็จ'); this.fetchPlanData(); } 
+            else { alert('❌ ' + res.message); }
           },
-          error: (err) => alert('เกิดข้อผิดพลาด: ' + (err.error?.error || err.message))
+          error: () => alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์')
         });
     }
   }
@@ -104,15 +109,14 @@ export class PlansComponent implements OnInit {
     const dept = this.currentDept();
 
     if (dept !== 'ทั้งหมด') {
-      result = result.filter(p => p.department === dept);
+      result = result.filter(p => p.involved_departments && p.involved_departments.includes(dept));
     }
 
     if (query) {
       result = result.filter(p => 
         (p.plan_name && p.plan_name.toLowerCase().includes(query)) ||
-        (p.strategy && p.strategy.toLowerCase().includes(query)) ||
-        (p.plan_type && p.plan_type.toLowerCase().includes(query)) ||
-        (p.status && p.status.toLowerCase().includes(query))
+        (p.participants && p.participants.toLowerCase().includes(query)) ||
+        (p.strategy && p.strategy.toLowerCase().includes(query))
       );
     }
 
@@ -120,15 +124,8 @@ export class PlansComponent implements OnInit {
     this.currentPage.set(1); 
   }
 
-  setDepartment(deptName: string) {
-    this.currentDept.set(deptName);
-    this.applyFilters();
-  }
-
-  onSearchChange(val: string) {
-    this.searchQuery.set(val);
-    this.applyFilters();
-  }
+  setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(); }
+  onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
 
   paginatedPlans = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.itemsPerPage;
@@ -137,7 +134,6 @@ export class PlansComponent implements OnInit {
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredPlans().length / this.itemsPerPage)));
   pagesArray = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
-
   goToPage(page: number) { this.currentPage.set(page); }
   nextPage() { if(this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1); }
   prevPage() { if(this.currentPage() > 1) this.currentPage.update(p => p - 1); }

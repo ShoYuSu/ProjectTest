@@ -72,7 +72,7 @@
             <input *ngIf="isEditProfileMode" type="email" [(ngModel)]="editData.email" class="w-full p-4 bg-white border border-gray-200 rounded-xl text-sm font-bold outline-none focus:border-[#F9BD15] transition-all">
           </div>
           <div>
-            <label class="text-xs font-bold text-gray-400 mb-2 block">รหัสประจำตัวพนักงาน</label>
+            <label class="text-xs font-bold text-gray-400 mb-2 block">รหัสประจำตัว</label>
             <div class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-[#2A1D1A]">{{ profileData.basic_info?.staff_code || '-' }}</div>
           </div>
         </div>

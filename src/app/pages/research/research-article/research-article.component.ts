@@ -17,9 +17,7 @@ export class ResearchArticleComponent implements OnInit {
   allArticles = signal<any[]>([]);
   filteredArticles = signal<any[]>([]);
   
-  // 🌟 ตัวแปรเก็บสิทธิ์ใน Memory
   canAdd = signal(false);
-  
   errorMessage = signal<string>('');
   loading = signal(true);
   
@@ -35,57 +33,84 @@ export class ResearchArticleComponent implements OnInit {
     this.fetchArticleData();
   }
 
-  // 🛡️ ดึงสิทธิ์ "เพิ่มข้อมูล" จากฐานข้อมูลโดยตรง
+  // 🌟 Permission-Based Only 
   fetchPermissionsFromDB() {
-    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    
     this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers })
       .subscribe({
-        next: (perms) => {
+        next: (res) => {
+          const p = res.permissions || res || {}; 
           let hasAdd = false;
-          const researchKey = Object.keys(perms).find(k => k.toLowerCase() === 'research_info');
-          if (researchKey && perms[researchKey]) {
-            const addScope = perms[researchKey]['add'];
-            if (addScope && addScope.toLowerCase() !== 'none') {
-              hasAdd = true;
-            }
+          
+          const modPerms = p['research_info'] || p['research'];
+          if (modPerms && modPerms['add']) {
+             const scope = modPerms['add'].toString().toLowerCase().trim();
+             if (['all', 'department', 'self', 'own'].includes(scope)) {
+                hasAdd = true;
+             }
           }
           this.canAdd.set(hasAdd);
         },
-        error: (err) => console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err)
+        error: (err) => {
+          console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err);
+          this.canAdd.set(false);
+        }
       });
   }
 
   fetchArticleData() {
     this.loading.set(true);
-    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
     this.http.get<any[]>('http://localhost:8080/api/get_research_articles.php', { headers })
       .subscribe({
         next: (data) => {
-          this.allArticles.set(data || []); // ข้อมูลจะมี .can_edit แนบมาแล้ว
+          const mappedData = (data || []).map(item => ({
+            id: item.id || item.article_id,
+            type: item.type || item.article_type,
+            title: item.title,
+            author: item.author || '-',
+            department: item.department,
+            involved_departments: item.involved_departments || '',
+            year: item.year || item.publish_year,
+            journal_name: item.journal_name || '',
+            journal_vol_issue: item.journal_vol_issue || '',
+            journal_quartile: item.journal_quartile || '',
+            conference_name: item.conference_name || '',
+            conference_date: item.conference_date || '',
+            conference_location: item.conference_location || '',
+            
+            // 🌟 แก้ไขตรงนี้: เพิ่มการดึงค่า attachedFile ให้ตรงกับที่ HTML เรียกใช้
+            attachedFile: item.attachedFile || null,
+            
+            can_edit: item.can_edit,
+            can_delete: item.can_delete
+          }));
+
+          this.allArticles.set(mappedData);
           this.applyFilters();
           this.loading.set(false);
         },
         error: (err) => {
           console.error(err);
-          this.errorMessage.set('ไม่สามารถโหลดข้อมูลบทความวิจัยได้ (กรุณาตรวจสอบการเชื่อมต่อ)');
+          this.errorMessage.set('ไม่สามารถโหลดข้อมูลบทความวิจัยได้ (กรุณาตรวจสอบการเชื่อมต่อฐานข้อมูล)');
           this.loading.set(false);
         }
       });
   }
 
   deleteArticle(id: number) {
-    if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลบทความวิจัยนี้?\n(การลบจะไม่สามารถกู้คืนได้)')) {
-      const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลบทความนี้?\n(การลบจะไม่สามารถกู้คืนได้)')) {
+      const token = localStorage.getItem('token') || '';
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
       this.http.post<any>('http://localhost:8080/api/delete_research_article.php', { id: id }, { headers })
         .subscribe({
           next: (res) => {
-            if (res && res.success) { 
-              alert('✅ ลบข้อมูลสำเร็จ'); 
-              this.fetchArticleData(); 
-            } else { 
-              alert('❌ ' + res.message); 
-            }
+            if (res && res.success) { alert('✅ ลบข้อมูลสำเร็จ'); this.fetchArticleData(); } 
+            else { alert('❌ ' + res.message); }
           },
           error: () => alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์')
         });
@@ -99,7 +124,10 @@ export class ResearchArticleComponent implements OnInit {
     const tab = this.activeTab();
 
     result = result.filter(a => a.type === tab);
-    if (dept !== 'ทั้งหมด') result = result.filter(a => a.department === dept);
+    
+    if (dept !== 'ทั้งหมด') {
+        result = result.filter(a => a.involved_departments && a.involved_departments.includes(dept));
+    }
 
     if (query) {
       result = result.filter(a => 
@@ -125,6 +153,7 @@ export class ResearchArticleComponent implements OnInit {
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredArticles().length / this.itemsPerPage)));
   pagesArray = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
+
   goToPage(page: number) { this.currentPage.set(page); }
   nextPage() { if(this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1); }
   prevPage() { if(this.currentPage() > 1) this.currentPage.update(p => p - 1); }

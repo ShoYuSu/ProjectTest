@@ -60,6 +60,25 @@
                  class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
         </div>
       </div>
+
+      <div class="col-span-1 md:col-span-2 mt-4 pt-4 border-t border-gray-100">
+        <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">
+          แนบไฟล์เอกสารโครงการ (PDF, DOC, DOCX)
+        </label>
+        <div class="relative w-full">
+          <input type="file" (change)="onFileSelected($event)" accept=".pdf,.doc,.docx"
+                 class="w-full bg-gray-50 border border-transparent focus:border-[#F9BD15] focus:bg-white rounded-2xl px-5 py-3.5 text-sm font-bold text-[#2A1D1A] outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-[#2A1D1A] file:text-[#F9BD15] hover:file:bg-black cursor-pointer">
+        </div>
+        @if (selectedFileName()) {
+          <p class="text-xs text-green-600 font-bold mt-2 ml-1">✓ เลือกไฟล์ใหม่แล้ว: {{ selectedFileName() }}</p>
+        } @else if (isEditMode() && formData.attached_file) {
+          <div class="mt-2 ml-1 flex items-center gap-2">
+            <a [href]="formData.attached_file" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 font-bold underline">คลิกดูไฟล์เอกสารเดิมที่แนบไว้</a>
+            <span class="text-xs text-gray-400 font-bold">(หากเลือกอัปโหลดใหม่ ไฟล์เดิมจะถูกเขียนทับ)</span>
+          </div>
+        }
+      </div>
+
     </div>
 
     <div class="border-t border-gray-100 pt-6 space-y-4">
@@ -69,11 +88,9 @@
           <h4 class="font-black text-[#2A1D1A] text-base">รายชื่อผู้จัดทำและคณะผู้ร่วมวิจัย</h4>
         </div>
         
-        @if (userScope() !== 'self') {
-          <button type="button" (click)="addAuthorRow()" class="px-4 py-2 border border-[#F9BD15] text-[#2A1D1A] bg-[#F9BD15]/5 hover:bg-[#F9BD15] hover:text-white rounded-xl text-xs font-black transition-all">
-            + เพิ่มรายชื่อผู้ร่วมวิจัย
-          </button>
-        }
+        <button type="button" (click)="addAuthorRow()" class="px-4 py-2 border border-[#F9BD15] text-[#2A1D1A] bg-[#F9BD15]/5 hover:bg-[#F9BD15] hover:text-white rounded-xl text-xs font-black transition-all">
+          + เพิ่มรายชื่อผู้ร่วมวิจัย
+        </button>
       </div>
 
       @if (loading()) {
@@ -91,8 +108,6 @@
               <div class="flex-1">
                 <label class="text-[10px] font-bold text-gray-400 mb-1 block">ชื่ออาจารย์บุคลากร</label>
                 <select [(ngModel)]="author.staff_id" 
-                        [disabled]="userScope() === 'self'"
-                        [ngClass]="{'opacity-70 cursor-not-allowed bg-gray-200/50': userScope() === 'self'}"
                         class="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-[#F9BD15] text-[#2A1D1A]">
                   <option value="" disabled selected>--- เลือกรายชื่ออาจารย์ ---</option>
                   @for (member of staffMembers(); track member.staff_id) {
@@ -106,8 +121,6 @@
               <div class="w-full sm:w-56">
                 <label class="text-[10px] font-bold text-gray-400 mb-1 block">บทบาทในโครงการ</label>
                 <select [(ngModel)]="author.role" 
-                        [disabled]="userScope() === 'self'"
-                        [ngClass]="{'opacity-70 cursor-not-allowed bg-gray-200/50': userScope() === 'self'}"
                         class="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-[#F9BD15] text-[#2A1D1A]">
                   <option value="หัวหน้าโครงการ">หัวหน้าโครงการ (Principal)</option>
                   <option value="ผู้ร่วมวิจัย">ผู้ร่วมวิจัย (Co-Researcher)</option>
@@ -115,13 +128,11 @@
                 </select>
               </div>
 
-              @if (userScope() !== 'self') {
-                <div class="flex items-end justify-end pb-0.5">
-                  <button type="button" (click)="removeAuthorRow($index)" class="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-colors" title="ลบชื่อออก">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                  </button>
-                </div>
-              }
+              <div class="flex items-end justify-end pb-0.5">
+                <button type="button" (click)="removeAuthorRow($index)" class="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-colors" title="ลบชื่อออก">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                </button>
+              </div>
 
             </div>
           }

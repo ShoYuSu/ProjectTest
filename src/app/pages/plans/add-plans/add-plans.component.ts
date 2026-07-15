@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router'; 
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-add-plans',
@@ -20,206 +21,177 @@ export class AddPlansComponent implements OnInit {
   editId: string | null = null;
   loading = false;
 
-  // 🌟 แมปตัวแปรหลักให้ตรงกับ HTML
   projectName = '';
   approvedBudget: number | null = null;
   usedBudget: number | null = null;
   details = '';
+  
+  // 🌟 เพิ่มตัวแปรสำหรับจัดการไฟล์แนบ
+  attachedFile = ''; 
+  selectedFileName = signal<string>('');
 
-  // 🌟 ตัวแปรรายชื่อผู้รับผิดชอบ
-  participants = [{ staff_id: '' }]; 
+  participants: Array<{ staff_id: string }> = [{ staff_id: '' }]; 
   staffMembers = signal<any[]>([]);
   userScope = signal<string>('none'); 
+  currentStaffId = signal<string>(''); 
 
-  // 🌟 ตัวแปรและฟังก์ชัน กิจกรรมย่อย (Sub Activities)
   subActivities = signal<{id: number, value: string}[]>([{ id: Date.now(), value: '' }]);
 
-  // 🌟 ตัวแปร ยุทธศาสตร์ (Strategy Dropdown)
+  selectedStrategy = signal<string>('เลือกแผนยุทธศาสตร์');
+  strategies = ['แผนยุทธศาสตร์ที่ 1: ผลิตบัณฑิตที่มีคุณภาพ', 'แผนยุทธศาสตร์ที่ 2: งานวิจัยและนวัตกรรม', 'แผนยุทธศาสตร์ที่ 3: บริการวิชาการ', 'แผนยุทธศาสตร์ที่ 4: บริหารจัดการองค์กร'];
   isStrategyOpen = signal(false);
-  selectedStrategy = signal('เลือกแผนยุทธศาสตร์');
-  strategiesList = signal([
-    '1. Future Research and Innovation',
-    '2. Future Education',
-    '3. Future Society',
-    '4. Future System for Management',
-    '5. บริหารจัดการ',
-    '6. บริการวิชาการและบริการชุมชน',
-    '7. ทำนุบำรุงศิลปวัฒนธรรม'
-  ]);
-  editingStrategyIndex = signal<number | null>(null);
-  isAddingStrategy = signal(false);
 
-  // 🌟 ตัวแปร ประเภทแผนงาน (Plan Dropdown)
+  selectedPlan = signal<string>('เลือกแผนงาน');
+  planTypes = ['แผนงานระดับคณะ', 'แผนงานระดับภาควิชา', 'โครงการพิเศษ', 'แผนงานบูรณาการ'];
   isPlanOpen = signal(false);
-  selectedPlan = signal('เลือกแผนงาน');
-  plansList = signal(['แผนงาน1', 'แผนงาน2', 'แผนงาน3', 'แผนงาน4', 'แผนงาน5']);
-  editingPlanIndex = signal<number | null>(null);
-  isAddingPlan = signal(false);
 
-  // 🌟 ตัวแปร สถานะ (Status Dropdown)
+  selectedStatus = signal<string>('ระบุสถานะ');
+  statusList = ['ยังไม่ได้ดำเนินการ', 'อยู่ระหว่างดำเนินการ', 'ดำเนินการแล้วเสร็จ'];
   isStatusOpen = signal(false);
-  selectedStatus = signal('ยังไม่ได้ดำเนินการ');
-  statusList = ['ยังไม่ได้ดำเนินการ', 'อยู่ระหว่างดำเนินการ', 'เสร็จสิ้น'];
 
   ngOnInit() {
-    this.loadActiveStaff();
-
     this.route.queryParams.subscribe(params => {
       if (params['edit']) {
         this.isEditMode.set(true);
         this.editId = params['edit'];
-        
-        const state = history.state;
-        if (state && state.planData) {
-          const data = state.planData;
-          
-          // โหลดข้อมูลเก่ามาแสดงบนฟอร์ม
-          this.projectName = data.plan_name || '';
-          this.selectedStrategy.set(data.strategy || 'เลือกแผนยุทธศาสตร์');
-          this.selectedPlan.set(data.plan_type || 'เลือกแผนงาน');
-          this.approvedBudget = data.approved_budget ? Number(data.approved_budget) : null;
-          this.usedBudget = data.used_budget ? Number(data.used_budget) : null;
-          this.selectedStatus.set(data.status || 'ยังไม่ได้ดำเนินการ');
-          this.details = data.details || '';
-
-          // นำเข้า Sub Activities จาก Backend (ถ้ามี)
-          // สมมติว่า Backend ส่งกลับมาในฟิลด์ที่ชื่อว่า sub_activities_list
-          if (data.sub_activities_list && Array.isArray(data.sub_activities_list) && data.sub_activities_list.length > 0) {
-            const mappedActs = data.sub_activities_list.map((act: any) => ({ id: Math.random(), value: act.activity_name }));
-            this.subActivities.set(mappedActs);
-          }
-
-          // นำเข้า Participants
-          if (data.participants_list && Array.isArray(data.participants_list) && data.participants_list.length > 0) {
-            this.participants = data.participants_list;
-          }
-        }
       }
+      this.loadActiveStaff();
     });
   }
 
   loadActiveStaff() {
-    const currentUserId = localStorage.getItem('user_id') || '0';
-    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+    this.loading = true;
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     
-    this.http.get<any>('http://localhost:8080/api/add_plan.php', { headers })
-      .subscribe({
-        next: (res) => {
-          if (res && res.success) {
-            this.userScope.set(res.scope);
-            this.staffMembers.set(res.staff_list || []);
-            
-            if (res.scope === 'self' && res.staff_list.length > 0) {
-              if (this.participants.length > 0 && !this.participants[0].staff_id) {
-                 this.participants[0].staff_id = res.staff_list[0].staff_id.toString();
-              }
-            }
+    let setupUrl = 'http://localhost:8080/api/add_plan.php';
+    if (this.isEditMode() && this.editId) {
+      setupUrl += `?id=${this.editId}`;
+    }
+
+    forkJoin({
+      profile: this.http.get<any>('http://localhost:8080/api/get_staff_profile.php', { headers }),
+      perms: this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers }),
+      setupData: this.http.get<any>(setupUrl, { headers })
+    }).subscribe({
+      next: (res) => {
+        const mappedStaff = (res.setupData.staff_list || []).map((s: any) => ({
+          staff_id: s.staff_id,
+          full_name: s.full_name,
+          position: s.position
+        }));
+        this.staffMembers.set(mappedStaff);
+
+        let myStaffId = '';
+        if (res.profile && res.profile.status === 'success') {
+          myStaffId = res.profile.data.basic_info.staff_id?.toString() || '';
+          this.currentStaffId.set(myStaffId); 
+        }
+
+        let scope = 'none';
+        const p = res.perms.permissions || res.perms || {};
+        const targetModules = ['plan_project', 'plan_info', 'plan']; 
+        
+        for (const mod of targetModules) {
+          if (p[mod]) {
+             const targetAction = this.isEditMode() ? 'edit' : 'add';
+             if (p[mod][targetAction]) {
+                scope = p[mod][targetAction].toString().toLowerCase().trim();
+                break;
+             }
           }
         }
-      });
+        this.userScope.set(scope);
+
+        if (this.isEditMode() && res.setupData.plan_data) {
+          const pd = res.setupData.plan_data;
+          this.projectName = pd.plan_name || '';
+          this.selectedStrategy.set(pd.strategy || 'เลือกแผนยุทธศาสตร์');
+          this.selectedPlan.set(pd.plan_type || 'เลือกแผนงาน');
+          this.approvedBudget = pd.approved_budget ? Number(pd.approved_budget) : null;
+          this.usedBudget = pd.used_budget ? Number(pd.used_budget) : null;
+          this.selectedStatus.set(pd.status || 'ระบุสถานะ');
+          this.details = pd.details || '';
+
+          // 🌟 ตั้งค่าลิงก์ไฟล์แนบเดิม
+          if (pd.attached_file) {
+            this.attachedFile = "http://localhost:8080/api/" + pd.attached_file;
+          }
+          
+          if (pd.participants && pd.participants.length > 0) {
+            this.participants = pd.participants;
+          }
+          if (pd.sub_activities && pd.sub_activities.length > 0) {
+            this.subActivities.set(
+              pd.sub_activities.map((a: any, i: number) => ({ id: Date.now() + i, value: a.activity_name }))
+            );
+          }
+        }
+
+        if (this.participants.length === 1 && !this.participants[0].staff_id) {
+          if (scope === 'self' && myStaffId) {
+             this.participants[0].staff_id = myStaffId; 
+          }
+        }
+
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error(err);
+        alert('❌ ไม่สามารถดึงข้อมูลพื้นฐานได้');
+        this.loading = false;
+      }
+    });
   }
 
-  // --- ฟังก์ชันจัดการ ผู้รับผิดชอบ ---
-  addParticipant() { this.participants.push({ staff_id: '' }); }
-  removeParticipant(index: number) { if (this.participants.length > 1) this.participants.splice(index, 1); }
-
-  // --- ฟังก์ชันจัดการ กิจกรรมย่อย ---
-  addSubActivity() { this.subActivities.update(acts => [...acts, { id: Date.now(), value: '' }]); }
-  removeSubActivity(id: number) { this.subActivities.update(acts => acts.filter(a => a.id !== id)); }
-  updateSubActivity(id: number, val: string) { 
-    this.subActivities.update(acts => acts.map(a => a.id === id ? { ...a, value: val } : a)); 
+  // 🌟 จัดการอัปโหลดไฟล์เป็น Base64
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 5242880) {
+        alert('❌ ขนาดไฟล์ใหญ่เกินไป! กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB ครับ');
+        event.target.value = ''; 
+        return;
+      }
+      this.selectedFileName.set(file.name);
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.attachedFile = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
-  // --- ฟังก์ชันจัดการ Dropdown ยุทธศาสตร์ ---
-  toggleStrategy() { this.isStrategyOpen.set(!this.isStrategyOpen()); }
+  toggleStrategy() { this.isStrategyOpen.set(!this.isStrategyOpen()); this.isPlanOpen.set(false); this.isStatusOpen.set(false); }
   selectStrategy(item: string) { this.selectedStrategy.set(item); this.isStrategyOpen.set(false); }
-  startEditStrategy(index: number, event: Event) { event.stopPropagation(); this.editingStrategyIndex.set(index); }
-  saveEditStrategy(index: number, val: string, event: Event) {
-    event.stopPropagation();
-    if(val.trim()) {
-      const list = this.strategiesList();
-      if(this.selectedStrategy() === list[index]) this.selectedStrategy.set(val.trim());
-      list[index] = val.trim();
-      this.strategiesList.set([...list]);
-    }
-    this.editingStrategyIndex.set(null);
-  }
-  cancelEditStrategy(event: Event) { event.stopPropagation(); this.editingStrategyIndex.set(null); }
-  deleteStrategy(index: number, event: Event) {
-    event.stopPropagation();
-    if(confirm('ยืนยันการลบยุทธศาสตร์นี้?')) {
-      const list = this.strategiesList();
-      if(this.selectedStrategy() === list[index]) this.selectedStrategy.set('เลือกแผนยุทธศาสตร์');
-      list.splice(index, 1);
-      this.strategiesList.set([...list]);
-    }
-  }
-  addNewStrategy(val: string) {
-    if(val.trim()) {
-      this.strategiesList.update(l => [...l, val.trim()]);
-      this.selectedStrategy.set(val.trim());
-      this.isAddingStrategy.set(false);
-    }
-  }
-
-  // --- ฟังก์ชันจัดการ Dropdown แผนงาน ---
-  togglePlan() { this.isPlanOpen.set(!this.isPlanOpen()); }
+  togglePlan() { this.isPlanOpen.set(!this.isPlanOpen()); this.isStrategyOpen.set(false); this.isStatusOpen.set(false); }
   selectPlan(item: string) { this.selectedPlan.set(item); this.isPlanOpen.set(false); }
-  startEditPlan(index: number, event: Event) { event.stopPropagation(); this.editingPlanIndex.set(index); }
-  saveEditPlan(index: number, val: string, event: Event) {
-    event.stopPropagation();
-    if(val.trim()) {
-      const list = this.plansList();
-      if(this.selectedPlan() === list[index]) this.selectedPlan.set(val.trim());
-      list[index] = val.trim();
-      this.plansList.set([...list]);
-    }
-    this.editingPlanIndex.set(null);
-  }
-  cancelEditPlan(event: Event) { event.stopPropagation(); this.editingPlanIndex.set(null); }
-  deletePlan(index: number, event: Event) {
-    event.stopPropagation();
-    if(confirm('ยืนยันการลบแผนงานนี้?')) {
-      const list = this.plansList();
-      if(this.selectedPlan() === list[index]) this.selectedPlan.set('เลือกแผนงาน');
-      list.splice(index, 1);
-      this.plansList.set([...list]);
-    }
-  }
-  addNewPlan(val: string) {
-    if(val.trim()) {
-      this.plansList.update(l => [...l, val.trim()]);
-      this.selectedPlan.set(val.trim());
-      this.isAddingPlan.set(false);
-    }
-  }
-
-  // --- ฟังก์ชันจัดการ Dropdown สถานะ ---
-  toggleStatus() { this.isStatusOpen.set(!this.isStatusOpen()); }
+  toggleStatus() { this.isStatusOpen.set(!this.isStatusOpen()); this.isStrategyOpen.set(false); this.isPlanOpen.set(false); }
   selectStatus(item: string) { this.selectedStatus.set(item); this.isStatusOpen.set(false); }
 
-  // --- ฟังก์ชันกดบันทึกข้อมูล ---
+  addParticipant() { this.participants.push({ staff_id: '' }); }
+  removeParticipant(index: number) { if (this.participants.length > 1) { this.participants.splice(index, 1); } }
+
+  addSubActivity() { this.subActivities.update(items => [...items, { id: Date.now(), value: '' }]); }
+  removeSubActivity(id: number) { this.subActivities.update(items => items.filter(item => item.id !== id)); }
+  updateSubActivity(id: number, newValue: string) { this.subActivities.update(items => items.map(item => item.id === id ? { ...item, value: newValue } : item)); }
+
   submitForm() {
-    if (!this.projectName.trim()) {
-      alert('กรุณากรอกชื่อโครงการให้ครบถ้วน');
-      return;
-    }
+    if (!this.projectName.trim()) { alert('กรุณาระบุชื่อโครงการ'); return; }
+    if (this.participants.some(p => !p.staff_id)) { alert('กรุณาเลือกชื่อผู้รับผิดชอบให้ครบถ้วน'); return; }
 
-    if (this.participants.some(p => !p.staff_id)) {
-      alert('กรุณาเลือกรายชื่อผู้รับผิดชอบโครงการในช่องว่างให้ครบ');
-      return;
-    }
-
-    if (this.selectedStatus() === 'อยู่ระหว่างดำเนินการ' && !this.details.trim()) {
-      alert('กรุณาระบุรายละเอียดความคืบหน้า');
-      return;
+    if (this.userScope() === 'self' && this.currentStaffId()) {
+      const hasSelf = this.participants.some(p => p.staff_id.toString() === this.currentStaffId().toString());
+      if (!hasSelf) {
+        alert('❌ ในฐานะผู้ใช้งานทั่วไป คุณจำเป็นต้องระบุชื่อตนเองเป็นผู้รับผิดชอบโครงการด้วยครับ');
+        return;
+      }
     }
 
     this.loading = true;
-    const currentUserId = localStorage.getItem('user_id') || '0';
-    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    // 🌟 แมปตัวแปรทั้งหมดจากหน้า UI เพื่อส่งกลับไปให้ PHP
     const payload = {
       id: this.editId,
       plan_name: this.projectName,
@@ -229,8 +201,8 @@ export class AddPlansComponent implements OnInit {
       used_budget: this.usedBudget,
       status: this.selectedStatus() === 'ระบุสถานะ' ? 'ยังไม่ได้ดำเนินการ' : this.selectedStatus(),
       details: this.details,
+      attached_file: this.attachedFile, // 🌟 แนบไฟล์ส่งไปให้ API
       participants: this.participants,
-      // แปลงข้อมูล Signal กลับเป็น Array { activity_name: '...' } ให้ PHP อ่านง่ายๆ
       sub_activities: this.subActivities().filter(a => a.value.trim() !== '').map(a => ({ activity_name: a.value }))
     };
     
@@ -251,8 +223,7 @@ export class AddPlansComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          const errorDetail = err.error?.error || err.message || JSON.stringify(err.error);
-          alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ' + errorDetail);
+          alert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
           this.loading = false;
         }
       });

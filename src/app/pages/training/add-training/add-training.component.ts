@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router'; 
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { forkJoin } from 'rxjs'; 
 
 @Component({
   selector: 'app-add-training',
@@ -18,12 +19,13 @@ export class AddTrainingComponent implements OnInit {
 
   isEditMode = signal(false);
   editId: string | null = null;
+  loading = false;
 
-  searchQuery = '';
-  participants = [{ staff_id: '' }]; 
+  participants: Array<{ staff_id: string }> = [{ staff_id: '' }]; 
   
   staffMembers = signal<any[]>([]);
   userScope = signal<string>('none'); 
+  currentStaffId = signal<string>(''); 
 
   isDropdownOpen = false;
   newBenefit = '';               
@@ -42,132 +44,151 @@ export class AddTrainingComponent implements OnInit {
     startDate: '',       
     endDate: '',         
     location: '',        
+    cost: null as number | null,             
     benefits: '',        
     implementation: '',  
-    remarks: '',         
-    cost: null as number | null 
+    remarks: ''          
   };
 
-  loading = false;
-  // showSuccessModal = false; // 🌟 ปิดการใช้งาน Modal ไว้ เพราะเราใช้ Alert แทนแล้ว
-
   ngOnInit() {
-    this.loadActiveStaff();
-
     this.route.queryParams.subscribe(params => {
       if (params['edit']) {
         this.isEditMode.set(true);
         this.editId = params['edit'];
-        
-        const state = history.state;
-        if (state && state.trainingData) {
-          const data = state.trainingData;
-          
-          // Data Mapping ขาเข้า (โหลดมาแสดงบนฟอร์ม)
-          this.trainingData.topic = data.title || data.topic || ''; 
-          this.trainingData.startDate = data.start_date || data.startDate || ''; 
-          this.trainingData.endDate = data.end_date || data.endDate || ''; 
-          this.trainingData.location = data.location || '';
-          this.trainingData.benefits = data.benefits || '';
-          this.trainingData.implementation = data.implementation || '';
-          this.trainingData.remarks = data.remarks || '';
-          this.trainingData.cost = data.budget ? Number(data.budget) : (data.cost ? Number(data.cost) : null); 
-
-          if (data.benefits && !this.benefitOptions.includes(data.benefits)) {
-            this.benefitOptions.push(data.benefits);
-          }
-
-          if (data.participants_list && Array.isArray(data.participants_list) && data.participants_list.length > 0) {
-            this.participants = data.participants_list;
-          }
-        }
       }
+      this.loadActiveStaff();
     });
   }
 
   loadActiveStaff() {
-    const currentUserId = localStorage.getItem('user_id') || '0';
-    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+    this.loading = true;
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     
-    this.http.get<any>('http://localhost:8080/api/add_training.php', { headers })
-      .subscribe({
-        next: (res) => {
-          if (res && res.success) {
-            this.userScope.set(res.scope);
-            this.staffMembers.set(res.staff_list || []);
-            
-            if (res.scope === 'self' && res.staff_list.length > 0) {
-              if (this.participants.length > 0 && !this.participants[0].staff_id) {
-                 this.participants[0].staff_id = res.staff_list[0].staff_id.toString();
-              }
-            }
+    let setupUrl = 'http://localhost:8080/api/add_training.php';
+    if (this.isEditMode() && this.editId) {
+      setupUrl += `?id=${this.editId}`;
+    }
+
+    forkJoin({
+      profile: this.http.get<any>('http://localhost:8080/api/get_staff_profile.php', { headers }),
+      perms: this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers }),
+      setupData: this.http.get<any>(setupUrl, { headers })
+    }).subscribe({
+      next: (res) => {
+        const mappedStaff = (res.setupData.staff_list || []).map((s: any) => ({
+          staff_id: s.staff_id,
+          full_name: s.full_name,
+          position: s.position
+        }));
+        this.staffMembers.set(mappedStaff);
+
+        let myStaffId = '';
+        if (res.profile && res.profile.status === 'success') {
+          myStaffId = res.profile.data.basic_info.staff_id?.toString() || '';
+          this.currentStaffId.set(myStaffId); 
+        }
+
+        // 🌟 Permission-Based Only
+        let scope = 'none';
+        const p = res.perms.permissions || res.perms || {};
+        const modPerms = p['training_info'] || p['training'];
+        
+        if (modPerms) {
+           const targetAction = this.isEditMode() ? 'edit' : 'add';
+           if (modPerms[targetAction]) {
+              scope = modPerms[targetAction].toString().toLowerCase().trim();
+           }
+        }
+        this.userScope.set(scope);
+
+        if (this.isEditMode() && res.setupData.training_data) {
+          const td = res.setupData.training_data;
+          this.trainingData.topic = td.topic || '';
+          this.trainingData.startDate = td.start_date || '';
+          this.trainingData.endDate = td.end_date || '';
+          this.trainingData.location = td.location || '';
+          this.trainingData.cost = td.cost ? Number(td.cost) : null;
+          this.trainingData.benefits = td.benefits || '';
+          this.trainingData.implementation = td.implementation || '';
+          this.trainingData.remarks = td.remarks || '';
+          
+          if (td.participants && td.participants.length > 0) {
+            this.participants = td.participants;
           }
         }
-      });
+
+        if (this.participants.length === 1 && !this.participants[0].staff_id) {
+          if (scope === 'self' && myStaffId) {
+             this.participants[0].staff_id = myStaffId; 
+          }
+        }
+
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error(err);
+        alert('❌ ไม่สามารถดึงข้อมูลพื้นฐานได้');
+        this.loading = false;
+      }
+    });
   }
 
   addParticipant() { this.participants.push({ staff_id: '' }); }
-  removeParticipant(index: number) { if (this.participants.length > 1) this.participants.splice(index, 1); }
-  toggleDropdown() { this.isDropdownOpen = !this.isDropdownOpen; this.editingIndex = null; }
-  selectBenefit(opt: string) { this.trainingData.benefits = opt; this.isDropdownOpen = false; }
+  removeParticipant(index: number) { if (this.participants.length > 1) { this.participants.splice(index, 1); } }
 
-  addNewBenefit(event: Event) {
-    event.stopPropagation();
-    if (this.newBenefit.trim()) {
-      this.benefitOptions.push(this.newBenefit.trim());
-      this.trainingData.benefits = this.newBenefit.trim();
-      this.newBenefit = '';
-    }
-  }
-
-  startEdit(index: number, opt: string, event: Event) {
-    event.stopPropagation();
-    this.editingIndex = index;
-    this.editValue = opt;
-  }
-
-  saveEdit(index: number, event: Event) {
-    event.stopPropagation();
-    if (this.editValue.trim()) {
+  // --- Benefits Dropdown Logic ---
+  toggleDropdown() { this.isDropdownOpen = !this.isDropdownOpen; }
+  selectBenefit(option: string) { this.trainingData.benefits = option; this.isDropdownOpen = false; }
+  startEdit(index: number, value: string, event: Event) { event.stopPropagation(); this.editingIndex = index; this.editValue = value; }
+  saveEdit(index: number) {
+    if (this.editValue.trim() !== '') {
+      this.benefitOptions[index] = this.editValue.trim();
       if (this.trainingData.benefits === this.benefitOptions[index]) {
         this.trainingData.benefits = this.editValue.trim();
       }
-      this.benefitOptions[index] = this.editValue.trim();
     }
     this.editingIndex = null;
   }
-
+  cancelEdit() { this.editingIndex = null; }
   deleteBenefit(index: number, event: Event) {
     event.stopPropagation();
-    if (confirm('ยืนยันการลบรายการนี้?')) {
-      if (this.trainingData.benefits === this.benefitOptions[index]) {
-        this.trainingData.benefits = ''; 
-      }
+    if (confirm('ยืนยันการลบตัวเลือกนี้?')) {
+      if (this.trainingData.benefits === this.benefitOptions[index]) { this.trainingData.benefits = ''; }
       this.benefitOptions.splice(index, 1);
     }
   }
+  addNewBenefit() {
+    if (this.newBenefit.trim() !== '') {
+      this.benefitOptions.push(this.newBenefit.trim());
+      this.trainingData.benefits = this.newBenefit.trim();
+      this.newBenefit = '';
+      this.isDropdownOpen = false;
+    }
+  }
+  // --- End Benefits Dropdown Logic ---
 
   onSubmit() {
-    if (!this.trainingData.topic.trim() || !this.trainingData.startDate) {
-      alert('กรุณากรอกหัวข้ออบรมและวันที่เริ่มต้นให้ครบถ้วน');
-      return;
-    }
-    
-    if (this.participants.some(p => !p.staff_id)) {
-      alert('กรุณาเลือกรายชื่อผู้เข้าอบรมในช่องว่างให้ครบ');
-      return;
+    if (!this.trainingData.topic || !this.trainingData.startDate || !this.trainingData.endDate) {
+      alert('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน (หัวข้อ, วันที่เริ่มต้น-สิ้นสุด)'); return;
     }
 
-    if (this.trainingData.endDate && new Date(this.trainingData.startDate) > new Date(this.trainingData.endDate)) {
-      alert('วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่มต้น');
-      return;
+    if (this.participants.some(p => !p.staff_id)) {
+      alert('กรุณาเลือกชื่อผู้เข้าร่วมให้ครบในช่องที่เพิ่มไว้ครับ'); return;
+    }
+
+    if (this.userScope() === 'self' && this.currentStaffId()) {
+      const hasSelf = this.participants.some(p => p.staff_id.toString() === this.currentStaffId().toString());
+      if (!hasSelf) {
+        alert('❌ ในฐานะผู้ใช้งานทั่วไป คุณจำเป็นต้องระบุชื่อตนเองเป็นหนึ่งในผู้เข้าร่วมการอบรมด้วยครับ');
+        return;
+      }
     }
 
     this.loading = true;
-    const currentUserId = localStorage.getItem('user_id') || '0';
-    const headers = new HttpHeaders().set('X-User-Id', currentUserId);
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    // Data Mapping ขาออก
     const payload = {
       id: this.editId,
       title: this.trainingData.topic,             
@@ -189,7 +210,6 @@ export class AddTrainingComponent implements OnInit {
       .subscribe({
         next: (res) => {
           if (res && res.success) {
-            // 🌟 แจ้งเตือนและกลับหน้าหลัก
             alert('✅ บันทึกข้อมูลการอบรมสำเร็จ!');
             this.router.navigate(['/training']); 
           } else {
@@ -199,14 +219,9 @@ export class AddTrainingComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+          alert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
           this.loading = false;
         }
       });
   }
-
-  // closeModal() {
-  //   this.showSuccessModal = false;
-  //   this.router.navigate(['/training']); 
-  // }
 }

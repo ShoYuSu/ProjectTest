@@ -17,9 +17,7 @@ export class ResearchComponent implements OnInit {
   allProjects = signal<any[]>([]);
   filteredProjects = signal<any[]>([]);
   
-  // 🌟 ตัวแปรเก็บสิทธิ์ใน Memory (F12 เข้ามาแก้ไม่ได้)
   canAdd = signal(false); 
-  
   errorMessage = signal<string>('');
   loading = signal(true);
   
@@ -30,52 +28,67 @@ export class ResearchComponent implements OnInit {
   itemsPerPage = 10;
 
   ngOnInit() {
-    this.fetchPermissionsFromDB(); // 🌟 ยิง API เช็คสิทธิ์ Add สดๆ จาก DB
-    this.fetchResearchData();      // 🌟 ยิง API โหลดข้อมูล (ที่แนบสิทธิ์ Edit/Delete มาแล้ว)
+    this.fetchPermissionsFromDB(); 
+    this.fetchResearchData();      
   }
 
-  // 🛡️ ฟังก์ชันเช็คสิทธิ์แบบปลอดภัย (ไม่สน LocalStorage)
+  // 🌟 Permission-Based Only (ไม่มี Role Admin)
   fetchPermissionsFromDB() {
-    // X-User-Id เป็นตัวเดียวที่ต้องใช้ เพื่อระบุตัวตน (Backend มี Guard เช็คอีกชั้นตอนบันทึก)
-    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     
     this.http.get<any>('http://localhost:8080/api/get_permissions.php', { headers })
       .subscribe({
-        next: (perms) => {
+        next: (res) => {
+          const p = res.permissions || res || {}; 
           let hasAdd = false;
-          // perms จะได้มาจาก API ของคุณโดยตรงเช่น { "Research_info": { "add": "department" } }
           
-          // ค้นหา key 'research_info' แบบไม่สนตัวพิมพ์เล็ก/ใหญ่
-          const researchKey = Object.keys(perms).find(k => k.toLowerCase() === 'research_info');
-          
-          if (researchKey && perms[researchKey]) {
-            const addScope = perms[researchKey]['add'];
-            if (addScope && addScope.toLowerCase() !== 'none') {
-              hasAdd = true; // ถ้า DB บอกว่ามีสิทธิ์ ก็เปิดปุ่ม Add!
+          const modPerms = p['research_info'] || p['research'];
+          if (modPerms && modPerms['add']) {
+            const scope = modPerms['add'].toString().toLowerCase().trim();
+            if (['all', 'department', 'self', 'own'].includes(scope)) {
+              hasAdd = true;
             }
           }
-          
           this.canAdd.set(hasAdd);
         },
-        error: (err) => console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err)
+        error: (err) => {
+          console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err);
+          this.canAdd.set(false);
+        }
       });
   }
 
   fetchResearchData() {
     this.loading.set(true);
-    const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
     this.http.get<any[]>('http://localhost:8080/api/get_research.php', { headers })
       .subscribe({
         next: (data) => {
-          // data ที่ได้มา จะมีคำว่า can_edit: true/false ติดมาด้วยทุก Row จากหลังบ้าน
-          this.allProjects.set(data || []);
+          const mappedData = (data || []).map(item => ({
+            id: item.id || item.res_project_id,
+            name: item.name || item.title,
+            author: item.author || '-',
+            department: item.department,
+            involved_departments: item.involved_departments || '', 
+            year: item.year || item.year_funded,
+            yearEnded: item.yearEnded || item.year_ended, 
+            fundSource: item.fundSource || item.funding_source || '-',
+            budget: item.budget || 0,
+            attachedFile: item.attachedFile || null, // 🌟 รับลิงก์ไฟล์จาก Backend
+            can_edit: item.can_edit,
+            can_delete: item.can_delete 
+          }));
+
+          this.allProjects.set(mappedData);
           this.applyFilters();
           this.loading.set(false);
         },
         error: (err) => {
           console.error(err);
-          this.errorMessage.set('ไม่สามารถโหลดข้อมูลโครงการวิจัยได้ (กรุณาตรวจสอบการเชื่อมต่อฐานข้อมูล)');
+          this.errorMessage.set('ไม่สามารถโหลดข้อมูลโครงการวิจัยได้ (เซสชั่นอาจหมดอายุ หรือไม่มีสิทธิ์เข้าถึง)');
           this.loading.set(false);
         }
       });
@@ -83,16 +96,14 @@ export class ResearchComponent implements OnInit {
 
   deleteProject(id: number) {
     if (confirm('⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลโครงการวิจัยนี้?\n(การลบจะไม่สามารถกู้คืนได้)')) {
-      const headers = new HttpHeaders().set('X-User-Id', localStorage.getItem('user_id') || '0');
+      const token = localStorage.getItem('token') || '';
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      
       this.http.post<any>('http://localhost:8080/api/delete_research.php', { id: id }, { headers })
         .subscribe({
           next: (res) => {
-            if (res && res.success) { 
-              alert('✅ ลบข้อมูลสำเร็จ'); 
-              this.fetchResearchData(); 
-            } else { 
-              alert('❌ ' + res.message); 
-            }
+            if (res && res.success) { alert('✅ ลบข้อมูลสำเร็จ'); this.fetchResearchData(); } 
+            else { alert('❌ ' + res.message); }
           },
           error: () => alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์')
         });
@@ -105,7 +116,7 @@ export class ResearchComponent implements OnInit {
     const dept = this.currentDept();
 
     if (dept !== 'ทั้งหมด') {
-      result = result.filter(p => p.department === dept);
+      result = result.filter(p => p.involved_departments && p.involved_departments.includes(dept));
     }
 
     if (query) {
@@ -120,15 +131,8 @@ export class ResearchComponent implements OnInit {
     this.currentPage.set(1); 
   }
 
-  setDepartment(deptName: string) {
-    this.currentDept.set(deptName);
-    this.applyFilters();
-  }
-
-  onSearchChange(val: string) {
-    this.searchQuery.set(val);
-    this.applyFilters();
-  }
+  setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(); }
+  onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
 
   paginatedProjects = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.itemsPerPage;

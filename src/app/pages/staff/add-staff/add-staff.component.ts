@@ -18,6 +18,7 @@ export class AddStaffComponent implements OnInit {
   showSuccessModal = signal<boolean>(false);
   loading = false;
 
+  // 🌟 เพิ่มฟิลด์ role สำหรับส่งไปให้ระบบ Login ของเพื่อน
   staffData = {
     fullName: '',
     staffCode: '',
@@ -118,6 +119,7 @@ export class AddStaffComponent implements OnInit {
     this.currentTemplateName.set(tpl.name);
     this.modules = JSON.parse(JSON.stringify(tpl.permissions));
 
+    // ระบบเปลี่ยน Role อัตโนมัติ (ถ้าเลือกแอดมิน ให้ช่อง Role เป็นแอดมินด้วย)
     if (tpl.name === 'แอดมิน' || tpl.name.toLowerCase().includes('admin')) {
       this.staffData.role = 'admin';
     } else {
@@ -201,7 +203,7 @@ export class AddStaffComponent implements OnInit {
       formData.append('img_profile', this.selectedFile, this.selectedFile.name);
     }
 
-    // 🌟 เปลี่ยนการส่ง Header เป็นการส่ง Token
+    // 🌟 เปลี่ยนการส่ง Header ให้ใช้ JWT Token
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
