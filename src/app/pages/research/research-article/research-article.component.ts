@@ -23,7 +23,7 @@ export class ResearchArticleComponent implements OnInit {
   
   searchQuery = signal<string>('');
   currentDept = signal<string>('ทั้งหมด');
-  activeTab = signal<string>('conference'); 
+  activeTab = signal<string>('journal'); 
 
   currentPage = signal(1);
   itemsPerPage = 10;
