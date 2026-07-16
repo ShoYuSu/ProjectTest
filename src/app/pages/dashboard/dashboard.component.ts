@@ -12,7 +12,6 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
 
-  // โครงสร้างข้อมูลพื้นฐาน กัน Error ตอนรอโหลด
   stats = signal<any>({
     staff: { total: 0, academic: 0, support: 0 },
     research_articles: { total: 0, conference: 0, journal: 0 },
@@ -24,18 +23,26 @@ export class DashboardComponent implements OnInit {
     }
   });
 
-  loading = signal(true);
+  initialLoad = signal(true);
+  
   chartData1 = signal<any[]>([]);
   chartData2 = signal<any[]>([]);
 
-  // ================= ควบคุม Dropdown กราฟ =================
+  availableYears = signal<string[]>(['ทั้งหมด']);
+  currentYear = signal<string>('ทั้งหมด');
+  isYearDropdownOpen = signal(false);
+
+  availablePlanYears = signal<string[]>(['ทั้งหมด']);
+  planYear = signal<string>('ทั้งหมด');
+  isPlanYearDropdownOpen = signal(false);
+
   options1 = ['จำนวน', 'งบประมาณ'];
   isDropdown1Open = signal(false);
-  selectedOption1 = signal(this.options1[0]);
+  selectedOption1 = signal('จำนวน');
 
-  options2 = ['ประชุมวิจัย', 'วารสาร'];
+  options2 = ['วารสาร', 'ประชุมวิชาการ'];
   isDropdown2Open = signal(false);
-  selectedOption2 = signal(this.options2[0]);
+  selectedOption2 = signal('วารสาร');
 
   ngOnInit() {
     this.fetchDashboardData();
@@ -43,75 +50,93 @@ export class DashboardComponent implements OnInit {
 
   fetchDashboardData() {
     const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     
-    // ส่ง Token แนบไปแบบชัวร์ๆ (X-Auth-Token และ Authorization)
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'X-Auth-Token': `Bearer ${token}`
-    });
+    const url = `http://localhost:8080/api/get_dashboard.php?year=${this.currentYear()}&plan_year=${this.planYear()}`;
 
-    this.http.get<any>('http://localhost:8080/api/get_dashboard.php', { headers }).subscribe({
-      next: (res) => {
-        // นำข้อมูลของจริงยัดใส่ตัวแปร
-        this.stats.set(res);
-        // วาดกราฟใหม่
-        this.updateChart1();
-        this.updateChart2();
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error('Failed to fetch dashboard stats', err);
-        if (err.status === 401) {
-           alert("เซสชันหมดอายุ กรุณาล็อกอินใหม่");
-           localStorage.clear();
-           window.location.href = '/login';
+    this.http.get<any>(url, { headers })
+      .subscribe({
+        next: (data) => {
+          this.stats.set(data);
+          
+          if (data.available_years && data.available_years.length > 0) {
+             this.availableYears.set(['ทั้งหมด', ...data.available_years.map(String)]);
+          }
+          if (data.available_plan_years && data.available_plan_years.length > 0) {
+             this.availablePlanYears.set(['ทั้งหมด', ...data.available_plan_years.map(String)]);
+          }
+
+          this.updateChart1();
+          this.updateChart2();
+          this.initialLoad.set(false);
+        },
+        error: (err) => {
+          console.error(err);
+          this.initialLoad.set(false);
         }
-        this.loading.set(false);
-      }
-    });
+      });
   }
 
-  // ================= ฟังก์ชันคำนวณกราฟแท่ง =================
+  setYear(year: string) {
+    this.currentYear.set(year);
+    this.isYearDropdownOpen.set(false);
+    this.fetchDashboardData();
+  }
+
+  setPlanYear(year: string) {
+    this.planYear.set(year);
+    this.isPlanYearDropdownOpen.set(false);
+    this.fetchDashboardData();
+  }
+
+  statusPercent(value: number): string {
+    const total = this.stats().plan_status?.total || 0;
+    if (total === 0) return '0';
+    return ((value / total) * 100).toFixed(0);
+  }
+
   updateChart1() {
-    if (!this.stats().charts) return;
     const dataObj = this.stats().charts;
     const sourceData = this.selectedOption1() === 'จำนวน' ? dataObj.research_projects_count : dataObj.research_projects_budget;
-    if(!sourceData || sourceData.length === 0) return;
+    if(!sourceData || sourceData.length === 0) {
+      this.chartData1.set([]); return;
+    }
     const maxVal = Math.max(...sourceData.map((d: any) => d.value), 1);
     this.chartData1.set(sourceData.map((d: any) => ({ ...d, percentage: (d.value / maxVal) * 100 })));
   }
 
   updateChart2() {
-    if (!this.stats().charts) return;
     const dataObj = this.stats().charts;
-    const sourceData = this.selectedOption2() === 'ประชุมวิจัย' ? dataObj.research_articles_conference : dataObj.research_articles_journal;
-    if(!sourceData || sourceData.length === 0) return;
+    const sourceData = this.selectedOption2() === 'ประชุมวิชาการ' ? dataObj.research_articles_conference : dataObj.research_articles_journal;
+    if(!sourceData || sourceData.length === 0) {
+      this.chartData2.set([]); return;
+    }
     const maxVal = Math.max(...sourceData.map((d: any) => d.value), 1);
     this.chartData2.set(sourceData.map((d: any) => ({ ...d, percentage: (d.value / maxVal) * 100 })));
   }
 
-  // ================= ฟังก์ชันคลิก Dropdown =================
-  toggleDropdown1() { this.isDropdown1Open.set(!this.isDropdown1Open()); this.isDropdown2Open.set(false); }
-  selectOption1(option: string) { this.selectedOption1.set(option); this.isDropdown1Open.set(false); this.updateChart1(); }
+  toggleYearDropdown() { this.isYearDropdownOpen.set(!this.isYearDropdownOpen()); this.closeAllExcept('year'); }
+  togglePlanYearDropdown() { this.isPlanYearDropdownOpen.set(!this.isPlanYearDropdownOpen()); this.closeAllExcept('plan'); }
+  toggleDropdown1() { this.isDropdown1Open.set(!this.isDropdown1Open()); this.closeAllExcept('d1'); }
+  toggleDropdown2() { this.isDropdown2Open.set(!this.isDropdown2Open()); this.closeAllExcept('d2'); }
 
-  toggleDropdown2() { this.isDropdown2Open.set(!this.isDropdown2Open()); this.isDropdown1Open.set(false); }
+  closeAllExcept(exclude: string) {
+    if(exclude !== 'year') this.isYearDropdownOpen.set(false);
+    if(exclude !== 'plan') this.isPlanYearDropdownOpen.set(false);
+    if(exclude !== 'd1') this.isDropdown1Open.set(false);
+    if(exclude !== 'd2') this.isDropdown2Open.set(false);
+  }
+
+  selectOption1(option: string) { this.selectedOption1.set(option); this.isDropdown1Open.set(false); this.updateChart1(); }
   selectOption2(option: string) { this.selectedOption2.set(option); this.isDropdown2Open.set(false); this.updateChart2(); }
 
-  // ================= ฟังก์ชันคำนวณกราฟโดนัท (แก้ Error หน้า HTML) =================
   donutStyle = computed(() => {
     const s = this.stats().plan_status;
     if (!s) return '';
     const total = s.total || 1;
     const p1 = (s.not_started / total) * 100;
     const p2 = p1 + ((s.in_progress / total) * 100);
-    return `conic-gradient(#FDE68A 0% ${p1}%, #FBBF24 ${p1}% ${p2}%, #D97706 ${p2}% 100%)`;
+    // 🌟 เปลี่ยนสี: แดง (#EF4444) -> เหลือง (#EAB308) -> เขียว (#22C55E)
+    return `conic-gradient(#EF4444 0% ${p1}%, #EAB308 ${p1}% ${p2}%, #22C55E ${p2}% 100%)`;
   });
-
-  statusPercent(value: number) {
-    const s = this.stats().plan_status;
-    if (!s) return 0;
-    const total = s.total || 1;
-    return Math.round((value / total) * 100);
-  }
 }
