@@ -16,7 +16,8 @@ export class DashboardComponent implements OnInit {
     staff: { total: 0, academic: 0, support: 0 },
     research_articles: { total: 0, conference: 0, journal: 0 },
     research_projects: { total: 0, total_budget: 0 },
-    plan_status: { not_started: 0, in_progress: 0, completed: 0, total: 0 },
+    // 🌟 เพิ่มฟิลด์รับค่างบประมาณ
+    plan_status: { not_started: 0, in_progress: 0, completed: 0, total: 0, total_approved_budget: 0, total_used_budget: 0 },
     charts: {
       research_projects_count: [], research_projects_budget: [], 
       research_articles_conference: [], research_articles_journal: []
@@ -136,7 +137,6 @@ export class DashboardComponent implements OnInit {
     const total = s.total || 1;
     const p1 = (s.not_started / total) * 100;
     const p2 = p1 + ((s.in_progress / total) * 100);
-    // 🌟 เปลี่ยนสี: แดง (#EF4444) -> เหลือง (#EAB308) -> เขียว (#22C55E)
     return `conic-gradient(#EF4444 0% ${p1}%, #EAB308 ${p1}% ${p2}%, #22C55E ${p2}% 100%)`;
   });
 }
