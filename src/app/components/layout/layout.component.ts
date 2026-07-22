@@ -1,6 +1,6 @@
 import { Component, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router'; // 🌟 เพิ่ม NavigationEnd
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { jwtDecode } from 'jwt-decode'; // 🌟 ใช้แกะ Role จาก Token
 import { ActivatedRoute } from '@angular/router';
@@ -41,10 +41,28 @@ export class LayoutComponent implements OnInit {
   // 🌟 เพิ่มตัวแปรสำหรับเก็บ URL รูปภาพ
   userProfileImage: string = '';
 
+  constructor() {
+    // 🌟 เพิ่ม Event Listener ของ Router เพื่อคอยเช็คการเปลี่ยนรูปล่าสุด
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        this.checkUpdatedProfileImage();
+      }
+    });
+  }
+
+  // 🌟 ฟังก์ชันเช็คอัปเดตรูป
+  checkUpdatedProfileImage() {
+    const overrideImg = localStorage.getItem('profile_image_override');
+    if (overrideImg) {
+      this.userProfileImage = overrideImg;
+    }
+  }
+
   ngOnInit() {
     this.handleUrlParams();
     this.loadUserProfileFromToken();
     this.fetchPermissionsFromDB();
+    this.checkUpdatedProfileImage(); // เช็คตอนโหลดหน้าแรกด้วย
   }
 
   handleUrlParams() {
@@ -79,7 +97,7 @@ export class LayoutComponent implements OnInit {
           this.userInitial = this.userName.charAt(0).toUpperCase();
         }
 
-        // 🌟 ดึงข้อมูลรูปภาพจาก Token มาประกอบเป็น URL
+        // 🌟 ดึงข้อมูลรูปภาพจาก Token มาประกอบเป็น URL (จะโดนทับถ้ามี overrideImg)
         const imgProfile = decoded.img_profile || '';
         if (imgProfile && imgProfile !== 'null') {
           if (imgProfile.startsWith('http')) {

@@ -234,20 +234,38 @@
               }
           </div>
 
-          <div class="md:col-span-2 mt-2 pt-6 border-t border-gray-100">
+          <!-- แบบเสนอโครงการ (PDF) -->
+          <div class="mt-2 pt-6 border-t border-gray-100">
             <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">
-              แนบไฟล์เอกสารโครงการ (PDF, DOC, DOCX)
+              แนบไฟล์แบบเสนอโครงการ (PDF)
             </label>
             <div class="relative w-full">
-              <input type="file" (change)="onFileSelected($event)" accept=".pdf,.doc,.docx"
+              <input type="file" (change)="onProposalSelected($event)" accept=".pdf"
                      class="w-full bg-gray-50 border border-transparent focus:border-[#F9BD15] focus:bg-white rounded-2xl px-5 py-3.5 text-sm font-bold text-[#2A1D1A] outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-[#2A1D1A] file:text-[#F9BD15] hover:file:bg-black cursor-pointer">
             </div>
-            @if (selectedFileName()) {
-              <p class="text-xs text-green-600 font-bold mt-2 ml-1">✓ เลือกไฟล์ใหม่แล้ว: {{ selectedFileName() }}</p>
-            } @else if (isEditMode() && attachedFile) {
+            @if (selectedProposalName()) {
+              <p class="text-xs text-green-600 font-bold mt-2 ml-1">✓ เลือกไฟล์ใหม่แล้ว: {{ selectedProposalName() }}</p>
+            } @else if (isEditMode() && proposalFile) {
               <div class="mt-2 ml-1 flex items-center gap-2">
-                <a [href]="attachedFile" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 font-bold underline">คลิกดูไฟล์เอกสารเดิมที่แนบไว้</a>
-                <span class="text-xs text-gray-400 font-bold">(หากเลือกอัปโหลดใหม่ ไฟล์เดิมจะถูกเขียนทับ)</span>
+                <a [href]="proposalFile" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 font-bold underline">คลิกดูแบบเสนอโครงการเดิม</a>
+              </div>
+            }
+          </div>
+
+          <!-- แบบสรุปโครงการ (PDF) -->
+          <div class="mt-2 pt-6 border-t border-gray-100">
+            <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">
+              แนบไฟล์แบบสรุปโครงการ (PDF)
+            </label>
+            <div class="relative w-full">
+              <input type="file" (change)="onSummarySelected($event)" accept=".pdf"
+                     class="w-full bg-gray-50 border border-transparent focus:border-[#F9BD15] focus:bg-white rounded-2xl px-5 py-3.5 text-sm font-bold text-[#2A1D1A] outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-[#2A1D1A] file:text-[#F9BD15] hover:file:bg-black cursor-pointer">
+            </div>
+            @if (selectedSummaryName()) {
+              <p class="text-xs text-green-600 font-bold mt-2 ml-1">✓ เลือกไฟล์ใหม่แล้ว: {{ selectedSummaryName() }}</p>
+            } @else if (isEditMode() && summaryFile) {
+              <div class="mt-2 ml-1 flex items-center gap-2">
+                <a [href]="summaryFile" target="_blank" class="text-xs text-blue-500 hover:text-blue-700 font-bold underline">คลิกดูแบบสรุปโครงการเดิม</a>
               </div>
             }
           </div>

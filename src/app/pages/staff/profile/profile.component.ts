@@ -140,8 +140,12 @@ export class ProfileComponent implements OnInit {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        this.editData.newImage = reader.result as string; 
-        this.imagePreview = reader.result as string;
+        // 🌟 เพิ่ม ngZone และ cdr เพื่อให้รูปตัวอย่างโชว์ทันที
+        this.ngZone.run(() => {
+          this.editData.newImage = reader.result as string; 
+          this.imagePreview = reader.result as string;
+          this.cdr.detectChanges();
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -252,6 +256,12 @@ export class ProfileComponent implements OnInit {
       .subscribe({
         next: (res: any) => {
           if (res.status === 'success') {
+            
+            // 🌟 เพิ่มโค้ดส่วนนี้เพื่อเก็บรูปลง LocalStorage
+            if (this.isEditProfileMode && this.imagePreview) {
+              localStorage.setItem('profile_image_override', this.imagePreview);
+            }
+
             this.isEditProfileMode = false;
             this.isEditPermissionMode = false;
             alert('✅ บันทึกข้อมูลเรียบร้อยแล้ว!');
