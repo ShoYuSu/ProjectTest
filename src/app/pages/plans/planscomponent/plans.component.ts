@@ -21,7 +21,9 @@ export class PlansComponent implements OnInit {
   loading = signal(true);
   
   searchQuery = signal<string>('');
-  currentYear = signal<string>('ทั้งหมด'); // 🌟 เหลือแค่ฟิลเตอร์ปี
+  currentYear = signal<string>('ทั้งหมด');
+  
+  sortDirection = signal<'desc' | 'asc'>('desc');
 
   currentPage = signal(1);
   itemsPerPage = 10;
@@ -73,7 +75,8 @@ export class PlansComponent implements OnInit {
         next: (data) => {
           const mappedData = (data || []).map(item => ({
             ...item,
-            attachedFile: item.attachedFile || null,
+            proposalFile: item.proposalFile || null,
+            summaryFile: item.summaryFile || null,
             participants: item.participants || '-',
             sub_activities: item.sub_activities ? item.sub_activities.split('|||') : []
           }));
@@ -111,6 +114,11 @@ export class PlansComponent implements OnInit {
     return ['ทั้งหมด', ...uniqueYears.map(String)];
   });
 
+  toggleSort() {
+    this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
+    this.applyFilters();
+  }
+
   applyFilters() {
     let result = this.allPlans();
     const query = this.searchQuery().toLowerCase().trim();
@@ -128,7 +136,16 @@ export class PlansComponent implements OnInit {
       );
     }
 
-    this.filteredPlans.set(result);
+    // 🌟 สร้าง Array ตัวใหม่ [...result] เพื่อบังคับให้ UI อัปเดตทันที
+    const sortedResult = [...result].sort((a, b) => {
+      if (this.sortDirection() === 'desc') {
+        return b.id - a.id;
+      } else {
+        return a.id - b.id;
+      }
+    });
+
+    this.filteredPlans.set(sortedResult);
     this.currentPage.set(1); 
   }
 

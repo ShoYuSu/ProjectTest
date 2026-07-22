@@ -24,6 +24,8 @@ export class ResearchComponent implements OnInit {
   searchQuery = signal<string>('');
   currentDept = signal<string>('ทั้งหมด');
 
+  sortDirection = signal<'desc' | 'asc'>('desc');
+
   currentPage = signal(1);
   itemsPerPage = 10;
 
@@ -32,7 +34,6 @@ export class ResearchComponent implements OnInit {
     this.fetchResearchData();      
   }
 
-  // 🌟 Permission-Based Only (ไม่มี Role Admin)
   fetchPermissionsFromDB() {
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
@@ -77,7 +78,7 @@ export class ResearchComponent implements OnInit {
             yearEnded: item.yearEnded || item.year_ended, 
             fundSource: item.fundSource || item.funding_source || '-',
             budget: item.budget || 0,
-            attachedFile: item.attachedFile || null, // 🌟 รับลิงก์ไฟล์จาก Backend
+            attachedFile: item.attachedFile || null,
             can_edit: item.can_edit,
             can_delete: item.can_delete 
           }));
@@ -88,7 +89,7 @@ export class ResearchComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.errorMessage.set('ไม่สามารถโหลดข้อมูลโครงการวิจัยได้ (เซสชั่นอาจหมดอายุ หรือไม่มีสิทธิ์เข้าถึง)');
+          this.errorMessage.set('ไม่สามารถโหลดข้อมูลโครงการวิจัยได้');
           this.loading.set(false);
         }
       });
@@ -110,6 +111,11 @@ export class ResearchComponent implements OnInit {
     }
   }
 
+  toggleSort() {
+    this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
+    this.applyFilters();
+  }
+
   applyFilters() {
     let result = this.allProjects();
     const query = this.searchQuery().toLowerCase().trim();
@@ -127,7 +133,16 @@ export class ResearchComponent implements OnInit {
       );
     }
 
-    this.filteredProjects.set(result);
+    // 🌟 สร้าง Array ตัวใหม่ [...result] เพื่อบังคับให้ UI อัปเดตทันที
+    const sortedResult = [...result].sort((a, b) => {
+      if (this.sortDirection() === 'desc') {
+        return b.id - a.id;
+      } else {
+        return a.id - b.id;
+      }
+    });
+
+    this.filteredProjects.set(sortedResult);
     this.currentPage.set(1); 
   }
 

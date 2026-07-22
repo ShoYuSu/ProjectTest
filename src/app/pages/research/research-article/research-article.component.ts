@@ -25,6 +25,8 @@ export class ResearchArticleComponent implements OnInit {
   currentDept = signal<string>('ทั้งหมด');
   activeTab = signal<string>('journal'); 
 
+  sortDirection = signal<'desc' | 'asc'>('desc');
+
   currentPage = signal(1);
   itemsPerPage = 10;
 
@@ -33,7 +35,6 @@ export class ResearchArticleComponent implements OnInit {
     this.fetchArticleData();
   }
 
-  // 🌟 Permission-Based Only 
   fetchPermissionsFromDB() {
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
@@ -82,10 +83,7 @@ export class ResearchArticleComponent implements OnInit {
             conference_name: item.conference_name || '',
             conference_date: item.conference_date || '',
             conference_location: item.conference_location || '',
-            
-            // 🌟 แก้ไขตรงนี้: เพิ่มการดึงค่า attachedFile ให้ตรงกับที่ HTML เรียกใช้
             attachedFile: item.attachedFile || null,
-            
             can_edit: item.can_edit,
             can_delete: item.can_delete
           }));
@@ -96,7 +94,7 @@ export class ResearchArticleComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.errorMessage.set('ไม่สามารถโหลดข้อมูลบทความวิจัยได้ (กรุณาตรวจสอบการเชื่อมต่อฐานข้อมูล)');
+          this.errorMessage.set('ไม่สามารถโหลดข้อมูลบทความวิจัยได้');
           this.loading.set(false);
         }
       });
@@ -115,6 +113,11 @@ export class ResearchArticleComponent implements OnInit {
           error: () => alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์')
         });
     }
+  }
+
+  toggleSort() {
+    this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
+    this.applyFilters();
   }
 
   applyFilters() {
@@ -138,7 +141,16 @@ export class ResearchArticleComponent implements OnInit {
       );
     }
 
-    this.filteredArticles.set(result);
+    // 🌟 สร้าง Array ตัวใหม่ [...result] เพื่อบังคับให้ UI อัปเดตทันที
+    const sortedResult = [...result].sort((a, b) => {
+      if (this.sortDirection() === 'desc') {
+        return b.id - a.id;
+      } else {
+        return a.id - b.id;
+      }
+    });
+
+    this.filteredArticles.set(sortedResult);
     this.currentPage.set(1);
   }
 

@@ -22,13 +22,16 @@ export class AddPlansComponent implements OnInit {
   loading = false;
 
   projectName = '';
-  planYear: number = new Date().getFullYear() + 543; // 🌟 รับค่าปี
+  planYear: number = new Date().getFullYear() + 543;
   approvedBudget: number | null = null;
   usedBudget: number | null = null;
   details = '';
   
-  attachedFile = ''; 
-  selectedFileName = signal<string>('');
+  // ไฟล์ 2 ส่วน
+  proposalFile = ''; 
+  selectedProposalName = signal<string>('');
+  summaryFile = '';
+  selectedSummaryName = signal<string>('');
 
   participants: Array<{ staff_id: string }> = [{ staff_id: '' }]; 
   staffMembers = signal<any[]>([]);
@@ -140,7 +143,7 @@ export class AddPlansComponent implements OnInit {
         if (this.isEditMode() && res.setupData.plan_data) {
           const pd = res.setupData.plan_data;
           this.projectName = pd.plan_name || '';
-          this.planYear = pd.plan_year ? Number(pd.plan_year) : new Date().getFullYear() + 543; // 🌟 ดึงค่าปีลงฟอร์ม
+          this.planYear = pd.plan_year ? Number(pd.plan_year) : new Date().getFullYear() + 543;
           
           if (pd.strategy && !this.strategiesList().includes(pd.strategy)) {
              this.addNewStrategy(pd.strategy);
@@ -156,8 +159,11 @@ export class AddPlansComponent implements OnInit {
           this.selectedStatus.set(pd.status || 'ระบุสถานะ');
           this.details = pd.details || '';
 
-          if (pd.attached_file) {
-            this.attachedFile = "http://localhost:8080/api/" + pd.attached_file;
+          if (pd.proposal_file) {
+            this.proposalFile = "http://localhost:8080/api/" + pd.proposal_file;
+          }
+          if (pd.summary_file) {
+            this.summaryFile = "http://localhost:8080/api/" + pd.summary_file;
           }
           
           if (pd.participants && pd.participants.length > 0) {
@@ -267,18 +273,47 @@ export class AddPlansComponent implements OnInit {
   removeSubActivity(id: number) { this.subActivities.update(items => items.filter(item => item.id !== id)); }
   updateSubActivity(id: number, newValue: string) { this.subActivities.update(items => items.map(item => item.id === id ? { ...item, value: newValue } : item)); }
 
-  onFileSelected(event: any) {
+  // 🌟 ฟังก์ชันจัดการไฟล์แบบเสนอ
+  onProposalSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
+      if (file.type !== 'application/pdf') {
+        alert('❌ กรุณาเลือกเฉพาะไฟล์ PDF เท่านั้นครับ');
+        event.target.value = '';
+        return;
+      }
       if (file.size > 5242880) {
         alert('❌ ขนาดไฟล์ใหญ่เกินไป! กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB ครับ');
         event.target.value = ''; 
         return;
       }
-      this.selectedFileName.set(file.name);
+      this.selectedProposalName.set(file.name);
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.attachedFile = e.target.result;
+        this.proposalFile = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  // 🌟 ฟังก์ชันจัดการไฟล์แบบสรุป
+  onSummarySelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        alert('❌ กรุณาเลือกเฉพาะไฟล์ PDF เท่านั้นครับ');
+        event.target.value = '';
+        return;
+      }
+      if (file.size > 5242880) {
+        alert('❌ ขนาดไฟล์ใหญ่เกินไป! กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB ครับ');
+        event.target.value = ''; 
+        return;
+      }
+      this.selectedSummaryName.set(file.name);
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.summaryFile = e.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -304,14 +339,15 @@ export class AddPlansComponent implements OnInit {
     const payload = {
       id: this.editId,
       plan_name: this.projectName,
-      plan_year: this.planYear, // 🌟 ส่งค่าปีไปให้ API
+      plan_year: this.planYear, 
       strategy: this.selectedStrategy() === 'เลือกแผนยุทธศาสตร์' ? '' : this.selectedStrategy(),
       plan_type: this.selectedPlan() === 'เลือกแผนงาน' ? '' : this.selectedPlan(),
       approved_budget: this.approvedBudget,
       used_budget: this.usedBudget,
       status: this.selectedStatus() === 'ระบุสถานะ' ? 'ยังไม่ได้ดำเนินการ' : this.selectedStatus(),
       details: this.details,
-      attached_file: this.attachedFile, 
+      proposal_file: this.proposalFile, 
+      summary_file: this.summaryFile, 
       participants: this.participants,
       sub_activities: this.subActivities().filter(a => a.value.trim() !== '').map(a => ({ activity_name: a.value }))
     };
