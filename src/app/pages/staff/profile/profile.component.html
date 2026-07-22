@@ -132,41 +132,143 @@
         </div>
       </div>
 
+      <!-- 🌟 ส่วนจัดการ เอกสารแนบ / ใบประกาศนียบัตร -->
       <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100" [class.opacity-50]="isEditPermissionMode">
         <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
-          <h3 class="font-black text-[#2A1D1A] text-lg">ใบประกาศนียบัตร / เกียรติบัตร</h3>
+          <h3 class="font-black text-[#2A1D1A] text-lg">เอกสารแนบ / ใบประกาศนียบัตร / เกียรติบัตร</h3>
         </div>
 
+        <!-- โหมดดูข้อมูล (View Mode) -->
         <div *ngIf="!isEditProfileMode">
-          <div *ngIf="!profileData?.certificates || profileData?.certificates?.length === 0" class="text-sm text-gray-400 font-bold">ไม่มีข้อมูลเกียรติบัตร</div>
+          <div *ngIf="!profileData?.certificates || profileData?.certificates?.length === 0" class="text-sm text-gray-400 font-bold">ไม่มีข้อมูลเอกสารแนบ</div>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" *ngIf="profileData?.certificates && profileData?.certificates?.length > 0">
-            <div *ngFor="let certUrl of profileData.certificates" class="aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
-              <img [src]="certUrl" alt="Certificate" class="w-full h-full object-cover">
+            <div *ngFor="let certUrl of profileData.certificates" class="aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm relative group">
+
+              <!-- 🌟 โชว์ไอคอนสีแดง ถ้าเป็น PDF แล้วเปิด Modal แทนการใช้ iframe ตรงนี้ -->
+              <ng-container *ngIf="certUrl.toLowerCase().endsWith('.pdf'); else checkOtherView">
+                <div (click)="openModal(certUrl, getFileName(certUrl))" class="w-full h-full flex flex-col items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 transition-colors p-2 text-center cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  <span class="text-xs font-bold mt-2 text-center px-2 line-clamp-2 w-full">{{ getFileName(certUrl) }}</span>
+                </div>
+              </ng-container>
+
+              <ng-template #checkOtherView>
+                <!-- โชว์รูปภาพและเปิด Modal ถ้าเป็นรูปภาพ -->
+                <ng-container *ngIf="certUrl.toLowerCase().endsWith('.png') || certUrl.toLowerCase().endsWith('.jpg') || certUrl.toLowerCase().endsWith('.jpeg') || certUrl.toLowerCase().endsWith('.gif') || certUrl.toLowerCase().endsWith('.webp'); else fileView">
+                  <div (click)="openModal(certUrl, getFileName(certUrl))" class="block w-full h-full cursor-pointer relative">
+                    <img [src]="certUrl" alt="Certificate" class="w-full h-full object-cover hover:scale-105 transition-transform">
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                    </div>
+                  </div>
+                </ng-container>
+              </ng-template>
+
+              <ng-template #fileView>
+                <!-- โชว์ไอคอนให้ดาวน์โหลดสำหรับไฟล์อื่นๆ (Word, Excel) -->
+                <a [href]="certUrl" target="_blank" class="w-full h-full flex flex-col items-center justify-center text-blue-500 bg-blue-50 hover:bg-blue-100 transition-colors p-2 text-center cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  <span class="text-xs font-bold mt-2 line-clamp-2 w-full">{{ getFileName(certUrl) }}</span>
+                </a>
+              </ng-template>
+
             </div>
           </div>
         </div>
 
+        <!-- โหมดแก้ไขข้อมูล (Edit Mode) -->
         <div *ngIf="isEditProfileMode">
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+
+            <!-- 1. วนลูปไฟล์เก่าที่มีอยู่ในฐานข้อมูล -->
             <div *ngFor="let certUrl of editData.existingCertificates; let i = index" class="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm group">
-              <img [src]="certUrl" alt="Certificate" class="w-full h-full object-cover">
-              <button (click)="removeExistingCertificate(certUrl, i)" class="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600">
+              
+              <!-- PDF Preview แสดงเป็น Icon แดง -->
+              <ng-container *ngIf="certUrl.toLowerCase().endsWith('.pdf'); else checkOtherExisting">
+                <div (click)="openModal(certUrl, getFileName(certUrl))" class="w-full h-full flex flex-col items-center justify-center text-red-500 bg-red-50 hover:bg-red-100 transition-colors p-2 text-center cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                  <span class="text-xs font-bold mt-2 line-clamp-2 w-full">{{ getFileName(certUrl) }}</span>
+                </div>
+              </ng-container>
+              
+              <ng-template #checkOtherExisting>
+                <!-- Image Preview -->
+                <ng-container *ngIf="certUrl.toLowerCase().endsWith('.png') || certUrl.toLowerCase().endsWith('.jpg') || certUrl.toLowerCase().endsWith('.jpeg') || certUrl.toLowerCase().endsWith('.gif') || certUrl.toLowerCase().endsWith('.webp'); else fileExisting">
+                  <div class="w-full h-full relative cursor-pointer" (click)="openModal(certUrl, getFileName(certUrl))">
+                    <img [src]="certUrl" alt="Certificate" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 z-10 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>
+                    </div>
+                  </div>
+                </ng-container>
+              </ng-template>
+              
+              <ng-template #fileExisting>
+                <!-- Other File -->
+                <a [href]="certUrl" target="_blank" class="w-full h-full flex flex-col items-center justify-center text-blue-500 bg-blue-50 hover:bg-blue-100 transition-colors p-2 text-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                  <span class="text-xs font-bold mt-2 line-clamp-2 w-full">{{ getFileName(certUrl) }}</span>
+                </a>
+              </ng-template>
+
+              <button (click)="removeExistingCertificate(certUrl, i)" class="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600 z-20">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
-            <div *ngFor="let prev of editData.newCertificatesPreview; let i = index" class="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border-2 border-green-400 shadow-sm group">
-              <img [src]="prev" alt="New Certificate" class="w-full h-full object-cover">
-              <div class="absolute bottom-0 left-0 w-full bg-green-500/80 text-white text-[10px] font-bold text-center py-1">รออัปโหลด...</div>
-              <button (click)="removeNewCertificate(i)" class="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600">
+            
+            <!-- 2. วนลูปไฟล์ใหม่ที่เพิ่งกดอัปโหลด (รอเซฟ) -->
+            <div *ngFor="let prev of editData.newCertificatesPreview; let i = index" class="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-50 border-2 border-green-400 shadow-sm group flex flex-col">
+              
+              <div class="relative flex-1 overflow-hidden bg-white">
+                <!-- PDF Preview แสดงเป็น Icon แดง -->
+                <ng-container *ngIf="prev.type === 'application/pdf' || prev.name.toLowerCase().endsWith('.pdf'); else checkOtherNew">
+                  <div class="w-full h-full flex flex-col items-center justify-center text-red-500 bg-red-50 p-2 text-center cursor-pointer" (click)="openModal(prev.data, prev.name)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                    <span class="text-[10px] font-bold text-gray-500 mb-1 line-clamp-2 w-full">{{ prev.name }}</span>
+                  </div>
+                </ng-container>
+
+                <!-- Other File Icon -->
+                <ng-template #checkOtherNew>
+                  <ng-container *ngIf="!prev.type.includes('image/'); else newImgPrev">
+                    <div class="w-full h-full flex flex-col items-center justify-center text-blue-500 bg-blue-50 p-2 text-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                      <span class="text-[10px] font-bold text-gray-500 mb-1 line-clamp-2 w-full">{{ prev.name }}</span>
+                    </div>
+                  </ng-container>
+                </ng-template>
+
+                <!-- Image Preview -->
+                <ng-template #newImgPrev>
+                  <div class="w-full h-full relative cursor-pointer" (click)="openModal(prev.data, prev.name)">
+                    <img [src]="prev.data" alt="New Certificate" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 z-10 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>
+                    </div>
+                  </div>
+                </ng-template>
+              </div>
+
+              <!-- กล่องแก้ไขชื่อไฟล์ก่อนกดบันทึก -->
+              <div class="bg-green-50 p-1.5 border-t border-green-200 flex flex-col z-10">
+                <input type="text" [(ngModel)]="prev.name" (input)="updateNewFileName(i, prev.name)" class="w-full text-[11px] font-bold text-gray-700 bg-white border border-green-300 rounded px-1.5 py-1 outline-none focus:border-green-500 transition-colors" placeholder="ตั้งชื่อไฟล์...">
+                <span class="text-[9px] font-black text-green-600 text-center mt-1">รออัปโหลด...</span>
+              </div>
+
+              <button (click)="removeNewCertificate(i)" class="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md hover:bg-red-600 z-20">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
-            <label class="aspect-[4/3] rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-[#F9BD15]/10 hover:border-[#F9BD15] transition-colors group">
+
+            <!-- 3. กล่องปุ่มกดอัปโหลดไฟล์ -->
+            <label class="aspect-[4/3] rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-[#F9BD15]/10 hover:border-[#F9BD15] transition-colors group p-2 text-center">
               <span class="text-3xl text-gray-300 group-hover:text-[#F9BD15] transition-colors">+</span>
-              <span class="text-xs font-bold text-gray-400 mt-2 group-hover:text-[#F9BD15] transition-colors">เพิ่มรูปภาพใหม่</span>
-              <input type="file" multiple accept="image/*" (change)="onCertificateSelected($event)" class="hidden">
+              <span class="text-xs font-bold text-gray-400 mt-2 group-hover:text-[#F9BD15] transition-colors">เพิ่มเอกสารแนบ</span>
+              <span class="text-[10px] font-bold text-gray-300 mt-1 leading-tight group-hover:text-[#F9BD15]/70">รองรับ รูปภาพ, PDF</span>
+              <input type="file" multiple accept="image/*, .pdf" (change)="onCertificateSelected($event)" class="hidden">
             </label>
+
           </div>
         </div>
 
@@ -262,4 +364,52 @@
 
     </div>
   </div>
+
+  <!-- 🌟 ส่วนของหน้าต่าง Modal สำหรับคลิกดูรูปและ PDF (แก้ขอบขาว และซูมรูปได้) -->
+  <div *ngIf="isModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" (click)="closeModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+      
+      <div class="flex justify-between items-center p-4 border-b border-gray-100 bg-white z-10">
+        <h3 class="font-bold text-[#2A1D1A] truncate pr-4 text-sm md:text-base">{{ modalFileName }}</h3>
+        <div class="flex items-center gap-2">
+          
+          <ng-container *ngIf="modalFileType === 'image'">
+             <button (click)="zoomOut()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 font-black text-gray-600 transition-colors">-</button>
+             <span class="text-xs font-bold w-10 text-center text-gray-500">{{ zoomLevel * 100 }}%</span>
+             <button (click)="zoomIn()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 font-black text-gray-600 transition-colors">+</button>
+             <div class="w-px h-4 bg-gray-300 mx-1"></div>
+          </ng-container>
+
+          <button (click)="closeModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-red-500 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 🌟 ใช้พื้นหลังสีดำเข้ม ลบขอบขาว เปลี่ยนวิธีแสดง PDF เป็น <object> เพื่อกันเบราว์เซอร์เอ๋อ -->
+      <div class="flex-1 overflow-auto bg-[#1A1A1A] flex items-center justify-center min-h-[50vh] relative">
+        <ng-container *ngIf="modalFileType === 'pdf'; else imgModal">
+          <object [data]="modalFileUrl" type="application/pdf" class="w-full h-full min-h-[75vh]">
+            <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-4 opacity-50"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                <p class="font-bold">เบราว์เซอร์นี้ไม่รองรับการแสดงตัวอย่าง PDF ฝังในจอ</p>
+                <a [href]="modalFileUrl" target="_blank" class="mt-4 px-6 py-2 bg-[#F9BD15] text-[#2A1D1A] rounded-xl font-bold hover:brightness-105 transition-all">คลิกเพื่อเปิดไฟล์ PDF</a>
+            </div>
+          </object>
+        </ng-container>
+        
+        <ng-template #imgModal>
+          <div class="w-full h-full flex items-center justify-center p-4">
+              <img [src]="modalFileUrl" 
+                   class="max-w-full max-h-[75vh] object-contain transition-transform duration-200"
+                   [style.transform]="'scale(' + zoomLevel + ')'"
+                   [style.transformOrigin]="'center center'">
+          </div>
+        </ng-template>
+      </div>
+
+    </div>
+  </div>
+
 </div>

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms'; 
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'; 
 
 @Component({
   selector: 'app-profile',
@@ -27,6 +28,13 @@ export class ProfileComponent implements OnInit {
   selectedFile: File | null = null;
   imagePreview: string | null = null;
 
+  // 🌟 ตัวแปรสำหรับควบคุม Modal
+  isModalOpen = false;
+  modalFileUrl: SafeResourceUrl | string = '';
+  modalFileType: 'image' | 'pdf' = 'image';
+  modalFileName: string = ''; 
+  zoomLevel: number = 1; 
+
   modules = [
     { id: 1, name: 'Dashboard', subName: 'แดชบอร์ด', moduleCode: 'Dashboard', isDashboard: true, viewAccess: false, view: 'none', add: 'none', edit: 'none' },
     { id: 2, name: 'Staff Info', subName: 'ข้อมูลบุคลากร', moduleCode: 'Staff_info', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' },
@@ -39,15 +47,13 @@ export class ProfileComponent implements OnInit {
     private route: ActivatedRoute,
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone          
+    private ngZone: NgZone,
+    private sanitizer: DomSanitizer 
   ) {}
 
   ngOnInit(): void {
-    // 🌟 ดึง id จาก URL (เผื่อกรณีคลิกเข้ามาดูโปรไฟล์คนอื่นจากหน้ารายชื่อพนักงาน)
     this.route.queryParams.subscribe(params => {
       const id = params['id'];
-      // 🌟 ไม่ว่าจะมี id หรือไม่ ให้เรียก fetchProfileData() 
-      // (ถ้าไม่มี id ระบบหลังบ้านจะดึงโปรไฟล์ของตัวเราเองจาก Token อัตโนมัติ)
       this.fetchProfileData(id);
     });
   }
@@ -56,7 +62,6 @@ export class ProfileComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
 
-    // 🌟 ดึง JWT Token
     const token = localStorage.getItem('token') || '';
     if (!token) {
         this.errorMessage = 'ไม่พบ Token การเข้าสู่ระบบ กรุณาเข้าสู่ระบบใหม่';
@@ -64,10 +69,8 @@ export class ProfileComponent implements OnInit {
         return;
     }
 
-    // 🌟 แนบ Token ไปใน Header
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    // 🌟 สร้าง URL ถ้ามี id ให้ส่งไปด้วย (ดูของคนอื่น) ถ้าไม่มีส่งแค่ api (ดูของตัวเอง)
     let apiUrl = 'http://localhost:8080/api/get_staff_profile.php';
     if (id) {
         apiUrl += `?id=${id}`;
@@ -140,7 +143,6 @@ export class ProfileComponent implements OnInit {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        // 🌟 เพิ่ม ngZone และ cdr เพื่อให้รูปตัวอย่างโชว์ทันที
         this.ngZone.run(() => {
           this.editData.newImage = reader.result as string; 
           this.imagePreview = reader.result as string;
@@ -160,16 +162,68 @@ export class ProfileComponent implements OnInit {
     this.editData.education.splice(index, 1);
   }
 
+  sanitizeUrl(url: string): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  }
+
+  // 🌟 อัปเดตฟังก์ชันถอดรหัสให้รองรับ URL-Safe Base64 ได้สมบูรณ์ 100%
+  getFileName(url: string): string {
+    try {
+      let fileName = url.split('/').pop() || 'Document';
+      fileName = decodeURIComponent(fileName);
+      
+      if (fileName.includes('_b64')) {
+        const parts = fileName.split('_b64');
+        const extIndex = parts[1].lastIndexOf('.');
+        let encodedPart = extIndex !== -1 ? parts[1].substring(0, extIndex) : parts[1];
+        
+        // แปลง URL-Safe Base64 กลับเป็น Base64 ปกติ
+        let base64Str = encodedPart.replace(/-/g, '+').replace(/_/g, '/');
+        while (base64Str.length % 4) {
+          base64Str += '=';
+        }
+        
+        // ถอดรหัสอักขระภาษาไทย (UTF-8) ได้อย่างถูกต้อง
+        return decodeURIComponent(escape(window.atob(base64Str)));
+      }
+      
+      return fileName;
+    } catch (e) {
+      return url.split('/').pop() || 'Document';
+    }
+  }
+
+  updateNewFileName(index: number, newName: string) {
+    if (this.editData.newCertificates && this.editData.newCertificates[index]) {
+      this.editData.newCertificates[index].file_name = newName;
+    }
+  }
+
   onCertificateSelected(event: any) {
     const files = event.target.files;
     if (files && files.length > 0) {
       for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         const reader = new FileReader();
         reader.onload = (e: any) => {
-          this.editData.newCertificatesPreview.push(e.target.result);
-          this.editData.newCertificates.push(e.target.result);
+          this.ngZone.run(() => {
+            const base64 = e.target.result;
+            
+            this.editData.newCertificatesPreview.push({
+              data: base64,
+              name: file.name,
+              type: file.type || 'unknown'
+            });
+
+            this.editData.newCertificates.push({
+              file_data: base64,
+              file_name: file.name
+            });
+
+            this.cdr.detectChanges();
+          });
         };
-        reader.readAsDataURL(files[i]);
+        reader.readAsDataURL(file);
       }
     }
   }
@@ -191,6 +245,29 @@ export class ProfileComponent implements OnInit {
 
   removeAchievement(index: number) {
     this.editData.achievements.splice(index, 1);
+  }
+
+  // 🌟 ฟังก์ชันเปิด Modal พร้อมแนบชื่อไฟล์
+  openModal(url: string, fileName: string) {
+    const isPdf = url.toLowerCase().endsWith('.pdf') || url.includes('application/pdf');
+    this.modalFileType = isPdf ? 'pdf' : 'image';
+    this.modalFileUrl = isPdf ? this.sanitizeUrl(url) : url;
+    this.modalFileName = fileName; 
+    this.zoomLevel = 1; 
+    this.isModalOpen = true;
+  }
+
+  closeModal() {
+    this.isModalOpen = false;
+    this.modalFileUrl = '';
+  }
+
+  zoomIn() {
+    if (this.zoomLevel < 3) this.zoomLevel += 0.25;
+  }
+
+  zoomOut() {
+    if (this.zoomLevel > 0.5) this.zoomLevel -= 0.25;
   }
 
   toggleEditPermissions() {
@@ -235,6 +312,13 @@ export class ProfileComponent implements OnInit {
     let payload: any = {};
 
     if (this.isEditProfileMode) {
+      if (this.editData.newCertificatesPreview) {
+        this.editData.newCertificates = this.editData.newCertificatesPreview.map((item: any) => ({
+          file_data: item.data,
+          file_name: item.name
+        }));
+      }
+
       payload = { ...this.editData };
     } 
     else if (this.isEditPermissionMode) {
@@ -257,7 +341,6 @@ export class ProfileComponent implements OnInit {
         next: (res: any) => {
           if (res.status === 'success') {
             
-            // 🌟 เพิ่มโค้ดส่วนนี้เพื่อเก็บรูปลง LocalStorage
             if (this.isEditProfileMode && this.imagePreview) {
               localStorage.setItem('profile_image_override', this.imagePreview);
             }
