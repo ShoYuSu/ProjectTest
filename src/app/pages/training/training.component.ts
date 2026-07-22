@@ -24,6 +24,8 @@ export class TrainingComponent implements OnInit {
   searchQuery = signal<string>('');
   currentDept = signal<string>('ทั้งหมด');
 
+  sortDirection = signal<'desc' | 'asc'>('desc');
+
   currentPage = signal(1);
   itemsPerPage = 10;
 
@@ -32,7 +34,6 @@ export class TrainingComponent implements OnInit {
     this.fetchTrainingData();
   }
 
-  // 🌟 Permission-Based Only 
   fetchPermissionsFromDB() {
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
@@ -73,7 +74,7 @@ export class TrainingComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.errorMessage.set('ไม่สามารถโหลดข้อมูลการอบรมได้ (เซสชั่นอาจหมดอายุ หรือไม่มีสิทธิ์เข้าถึง)');
+          this.errorMessage.set('ไม่สามารถโหลดข้อมูลการอบรมได้');
           this.loading.set(false);
         }
       });
@@ -95,6 +96,11 @@ export class TrainingComponent implements OnInit {
     }
   }
 
+  toggleSort() {
+    this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
+    this.applyFilters();
+  }
+
   applyFilters() {
     let result = this.allTrainings();
     const query = this.searchQuery().toLowerCase().trim();
@@ -112,7 +118,16 @@ export class TrainingComponent implements OnInit {
       );
     }
 
-    this.filteredTrainings.set(result);
+    // 🌟 สร้าง Array ตัวใหม่ [...result] เพื่อบังคับให้ UI อัปเดตทันที
+    const sortedResult = [...result].sort((a, b) => {
+      if (this.sortDirection() === 'desc') {
+        return b.id - a.id;
+      } else {
+        return a.id - b.id;
+      }
+    });
+
+    this.filteredTrainings.set(sortedResult);
     this.currentPage.set(1); 
   }
 
