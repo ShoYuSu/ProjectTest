@@ -28,13 +28,6 @@ export class ProfileComponent implements OnInit {
   selectedFile: File | null = null;
   imagePreview: string | null = null;
 
-  // 🌟 ตัวแปรสำหรับควบคุม Modal
-  isModalOpen = false;
-  modalFileUrl: SafeResourceUrl | string = '';
-  modalFileType: 'image' | 'pdf' = 'image';
-  modalFileName: string = ''; 
-  zoomLevel: number = 1; 
-
   modules = [
     { id: 1, name: 'Dashboard', subName: 'แดชบอร์ด', moduleCode: 'Dashboard', isDashboard: true, viewAccess: false, view: 'none', add: 'none', edit: 'none' },
     { id: 2, name: 'Staff Info', subName: 'ข้อมูลบุคลากร', moduleCode: 'Staff_info', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' },
@@ -42,6 +35,15 @@ export class ProfileComponent implements OnInit {
     { id: 4, name: 'Plans / Projects', subName: 'แผนงาน / โครงการ', moduleCode: 'Plan_Project', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' },
     { id: 5, name: 'Training', subName: 'ข้อมูลอบรม', moduleCode: 'Training', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' }
   ];
+
+  isModalOpen = false;
+  modalFileUrl: SafeResourceUrl | string = '';
+  modalFileType: 'image' | 'pdf' = 'image';
+  modalFileName: string = ''; 
+  zoomLevel: number = 1; 
+
+  // 🌟 เพิ่มตัวแปรเก็บรายการปี พ.ศ.
+  yearsList: string[] = [];
 
   constructor(
     private route: ActivatedRoute,
@@ -52,6 +54,12 @@ export class ProfileComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // 🌟 สร้างชุดข้อมูลปี พ.ศ. (ปีปัจจุบัน + 543) ย้อนหลัง 50 ปี
+    const currentYearBE = new Date().getFullYear() + 543;
+    for (let i = 0; i <= 50; i++) {
+      this.yearsList.push((currentYearBE - i).toString());
+    }
+
     this.route.queryParams.subscribe(params => {
       const id = params['id'];
       this.fetchProfileData(id);
@@ -116,15 +124,14 @@ export class ProfileComponent implements OnInit {
       update_type: 'profile',
       person_id: this.profileData.person_id,
       fullName: this.profileData.basic_info.full_name,
-      email: this.profileData.basic_info.email,
-      expertise: ''
+      email: this.profileData.basic_info.email
     };
 
     this.editData.education = this.profileData.education ? JSON.parse(JSON.stringify(this.profileData.education)) : [];
 
-    if (this.profileData.expertise && this.profileData.expertise.length > 0) {
-      this.editData.expertise = this.profileData.expertise.join(', ');
-    }
+    this.editData.expertiseList = this.profileData.expertise 
+      ? this.profileData.expertise.map((exp: string) => ({ value: exp })) 
+      : [];
 
     this.editData.achievements = this.profileData.achievements ? JSON.parse(JSON.stringify(this.profileData.achievements)) : [];
     this.editData.existingCertificates = this.profileData.certificates ? [...this.profileData.certificates] : [];
@@ -162,11 +169,23 @@ export class ProfileComponent implements OnInit {
     this.editData.education.splice(index, 1);
   }
 
-  sanitizeUrl(url: string): SafeResourceUrl {
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+  addExpertise() {
+    if (!this.editData.expertiseList) this.editData.expertiseList = [];
+    this.editData.expertiseList.push({ value: '' });
   }
 
-  // 🌟 อัปเดตฟังก์ชันถอดรหัสให้รองรับ URL-Safe Base64 ได้สมบูรณ์ 100%
+  removeExpertise(index: number) {
+    this.editData.expertiseList.splice(index, 1);
+  }
+
+  sanitizeUrl(url: string, isPdf: boolean = false): SafeResourceUrl {
+    let finalUrl = url;
+    if (isPdf && !url.includes('#toolbar=0')) {
+      finalUrl = `${url}#toolbar=0&navpanes=0&scrollbar=0`;
+    }
+    return this.sanitizer.bypassSecurityTrustResourceUrl(finalUrl);
+  }
+
   getFileName(url: string): string {
     try {
       let fileName = url.split('/').pop() || 'Document';
@@ -177,13 +196,11 @@ export class ProfileComponent implements OnInit {
         const extIndex = parts[1].lastIndexOf('.');
         let encodedPart = extIndex !== -1 ? parts[1].substring(0, extIndex) : parts[1];
         
-        // แปลง URL-Safe Base64 กลับเป็น Base64 ปกติ
         let base64Str = encodedPart.replace(/-/g, '+').replace(/_/g, '/');
         while (base64Str.length % 4) {
           base64Str += '=';
         }
         
-        // ถอดรหัสอักขระภาษาไทย (UTF-8) ได้อย่างถูกต้อง
         return decodeURIComponent(escape(window.atob(base64Str)));
       }
       
@@ -247,11 +264,10 @@ export class ProfileComponent implements OnInit {
     this.editData.achievements.splice(index, 1);
   }
 
-  // 🌟 ฟังก์ชันเปิด Modal พร้อมแนบชื่อไฟล์
   openModal(url: string, fileName: string) {
     const isPdf = url.toLowerCase().endsWith('.pdf') || url.includes('application/pdf');
     this.modalFileType = isPdf ? 'pdf' : 'image';
-    this.modalFileUrl = isPdf ? this.sanitizeUrl(url) : url;
+    this.modalFileUrl = isPdf ? this.sanitizeUrl(url, true) : url;
     this.modalFileName = fileName; 
     this.zoomLevel = 1; 
     this.isModalOpen = true;
@@ -317,6 +333,12 @@ export class ProfileComponent implements OnInit {
           file_data: item.data,
           file_name: item.name
         }));
+      }
+
+      if (this.editData.expertiseList) {
+        this.editData.expertise = this.editData.expertiseList
+          .map((exp: any) => exp.value)
+          .filter((val: string) => val && val.trim() !== '');
       }
 
       payload = { ...this.editData };
