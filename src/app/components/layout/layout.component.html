@@ -156,6 +156,40 @@
 
     <div class="mt-auto flex flex-col gap-3 transition-all duration-300" [ngClass]="isMiniSidebar() ? 'p-3' : 'p-6'">
       
+      <!-- 🌟 ส่วนตั้งค่าขนาดตัวอักษร -->
+      @if (!isMiniSidebar()) {
+        <div class="mb-1">
+          <label class="text-[10px] font-bold text-gray-400/60 uppercase tracking-wider mb-2 block">
+            ขนาดตัวอักษร
+          </label>
+          <div class="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/5 shadow-inner">
+            <button (click)="changeFontSize('14px')" 
+                    [class.bg-[#F9BD15]]="currentFontSize === '14px'" 
+                    [class.text-[#2A1D1A]]="currentFontSize === '14px'" 
+                    [class.text-gray-400]="currentFontSize !== '14px'"
+                    class="flex-1 py-1.5 rounded-lg font-black text-xs hover:text-white transition-all duration-200">
+              A-
+            </button>
+            
+            <button (click)="changeFontSize('16px')" 
+                    [class.bg-[#F9BD15]]="currentFontSize === '16px'" 
+                    [class.text-[#2A1D1A]]="currentFontSize === '16px'" 
+                    [class.text-gray-400]="currentFontSize !== '16px'"
+                    class="flex-1 py-1.5 rounded-lg font-black text-sm hover:text-white transition-all duration-200">
+              A
+            </button>
+            
+            <button (click)="changeFontSize('18px')" 
+                    [class.bg-[#F9BD15]]="currentFontSize === '18px'" 
+                    [class.text-[#2A1D1A]]="currentFontSize === '18px'" 
+                    [class.text-gray-400]="currentFontSize !== '18px'"
+                    class="flex-1 py-1.5 rounded-lg font-black text-base hover:text-white transition-all duration-200">
+              A+
+            </button>
+          </div>
+        </div>
+      }
+
       @if (canViewAdvisorSystem()) {
         <a (click)="goToAdvisorSystem($event)" class="cursor-pointer flex items-center rounded-2xl border border-white/5 transition-all group shadow-sm bg-white/5 hover:bg-white/10" [ngClass]="isMiniSidebar() ? 'justify-center p-3' : 'justify-between p-4'">
              <div class="flex items-center" [ngClass]="!isMiniSidebar() ? 'gap-3' : ''">

@@ -4,6 +4,7 @@ import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } fro
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { jwtDecode } from 'jwt-decode'; // 🌟 ใช้แกะ Role จาก Token
 import { ActivatedRoute } from '@angular/router';
+
 @Component({
   selector: 'app-layout',
   standalone: true,
@@ -41,6 +42,9 @@ export class LayoutComponent implements OnInit {
   // 🌟 เพิ่มตัวแปรสำหรับเก็บ URL รูปภาพ
   userProfileImage: string = '';
 
+  // 🌟 เพิ่มตัวแปรเก็บขนาด Font ปัจจุบัน (ค่าเริ่มต้นคือ 16px)
+  currentFontSize: string = '16px';
+
   constructor() {
     // 🌟 เพิ่ม Event Listener ของ Router เพื่อคอยเช็คการเปลี่ยนรูปล่าสุด
     this.router.events.subscribe((event) => {
@@ -63,6 +67,20 @@ export class LayoutComponent implements OnInit {
     this.loadUserProfileFromToken();
     this.fetchPermissionsFromDB();
     this.checkUpdatedProfileImage(); // เช็คตอนโหลดหน้าแรกด้วย
+
+    // 🌟 โหลดขนาด Font ที่เคยบันทึกไว้ในเครื่อง (ถ้ามี)
+    const savedFont = localStorage.getItem('appFontSize');
+    if (savedFont) {
+      this.currentFontSize = savedFont;
+      document.documentElement.style.fontSize = savedFont;
+    }
+  }
+
+  // 🌟 ฟังก์ชันเปลี่ยนขนาด Font 
+  changeFontSize(size: string) {
+    this.currentFontSize = size;
+    document.documentElement.style.fontSize = size;
+    localStorage.setItem('appFontSize', size);
   }
 
   handleUrlParams() {
