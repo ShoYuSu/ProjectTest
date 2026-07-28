@@ -19,7 +19,9 @@ export class AddPlansComponent implements OnInit {
 
   isEditMode = signal(false);
   editId: string | null = null;
-  loading = false;
+  
+  loading = false; // 🌟 ใช้สำหรับตอนดึงข้อมูลรายชื่อเริ่มต้น
+  isSubmitting = false; // 🌟 แยกตัวแปรใหม่ ใช้เฉพาะตอนกดปุ่ม "บันทึก"
 
   projectName = '';
   planYear: number = new Date().getFullYear() + 543;
@@ -27,7 +29,6 @@ export class AddPlansComponent implements OnInit {
   usedBudget: number | null = null;
   details = '';
   
-  // ไฟล์ 2 ส่วน
   proposalFile = ''; 
   selectedProposalName = signal<string>('');
   summaryFile = '';
@@ -55,6 +56,41 @@ export class AddPlansComponent implements OnInit {
   selectedStatus = signal<string>('ระบุสถานะ');
   statusList = ['ยังไม่ได้ดำเนินการ', 'อยู่ระหว่างดำเนินการ', 'ดำเนินการแล้วเสร็จ'];
   isStatusOpen = signal(false);
+
+  // ==========================================
+  // 🌟 ส่วนระบบค้นหา Dropdown
+  // ==========================================
+  staffSearchQueries: { [index: number]: string } = {};
+  isStaffDropdownOpen: { [index: number]: boolean } = {};
+
+  getStaffName(staffId: string): string {
+    if (!staffId) return '';
+    const staff = this.staffMembers().find(s => s.staff_id === staffId);
+    return staff ? `${staff.full_name} (${staff.position || 'บุคลากร'})` : '';
+  }
+
+  toggleStaffDropdown(index: number, event: Event) {
+    event.stopPropagation();
+    this.isStaffDropdownOpen[index] = !this.isStaffDropdownOpen[index];
+    if (this.isStaffDropdownOpen[index]) {
+      this.staffSearchQueries[index] = ''; 
+    }
+  }
+
+  selectStaffForParticipant(index: number, staffId: string) {
+    this.participants[index].staff_id = staffId;
+    this.isStaffDropdownOpen[index] = false;
+  }
+
+  getFilteredStaffList(index: number) {
+    const query = (this.staffSearchQueries[index] || '').toLowerCase().trim();
+    if (!query) return this.staffMembers();
+    return this.staffMembers().filter(s =>
+      s.full_name.toLowerCase().includes(query) ||
+      (s.position && s.position.toLowerCase().includes(query))
+    );
+  }
+  // ==========================================
 
   ngOnInit() {
     this.initDropdownData(); 
@@ -98,7 +134,7 @@ export class AddPlansComponent implements OnInit {
   }
 
   loadActiveStaff() {
-    this.loading = true;
+    this.loading = true; // 🌟 ใช้ loading สำหรับหน้าจอหมุนโหลดข้อมูลเริ่มต้น
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     
@@ -273,7 +309,6 @@ export class AddPlansComponent implements OnInit {
   removeSubActivity(id: number) { this.subActivities.update(items => items.filter(item => item.id !== id)); }
   updateSubActivity(id: number, newValue: string) { this.subActivities.update(items => items.map(item => item.id === id ? { ...item, value: newValue } : item)); }
 
-  // 🌟 ฟังก์ชันจัดการไฟล์แบบเสนอ
   onProposalSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -296,7 +331,6 @@ export class AddPlansComponent implements OnInit {
     }
   }
 
-  // 🌟 ฟังก์ชันจัดการไฟล์แบบสรุป
   onSummarySelected(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -332,7 +366,7 @@ export class AddPlansComponent implements OnInit {
       }
     }
 
-    this.loading = true;
+    this.isSubmitting = true; // 🌟 ใช้ isSubmitting สำหรับโชว์ป็อปอัปกำลังบันทึก
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
@@ -365,12 +399,12 @@ export class AddPlansComponent implements OnInit {
           } else {
             alert('❌ ' + res.message);
           }
-          this.loading = false;
+          this.isSubmitting = false;
         },
         error: (err) => {
           console.error(err);
           alert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
-          this.loading = false;
+          this.isSubmitting = false;
         }
       });
   }

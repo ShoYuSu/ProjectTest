@@ -162,19 +162,45 @@
       @if (!loading()) {
         <div class="space-y-3">
           @for (author of formData.authors; track $index) {
-            <div class="flex flex-col sm:flex-row gap-3 p-4 bg-gray-50 rounded-2xl relative border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
+            <!-- 🌟 เพิ่ม z-index ให้อยู่บนสุดตอนคลิกเปิด dropdown -->
+            <div class="flex flex-col sm:flex-row gap-3 p-4 bg-gray-50 rounded-2xl relative border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200 transition-all"
+                 [ngClass]="{'z-50': isStaffDropdownOpen[$index]}">
               
-              <div class="flex-1">
+              <div class="flex-1 relative">
                 <label class="text-[10px] font-bold text-gray-400 mb-1 block">ชื่ออาจารย์บุคลากร</label>
-                <select [(ngModel)]="author.staff_id" 
-                        class="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-[#F9BD15] text-[#2A1D1A]">
-                  <option value="" disabled selected>--- เลือกรายชื่ออาจารย์ ---</option>
-                  @for (member of staffMembers(); track member.staff_id) {
-                    <option [value]="member.staff_id">
-                      {{ member.full_name }} ({{ member.position || 'อาจารย์ประจำ' }})
-                    </option>
-                  }
-                </select>
+                
+                <!-- ปุ่ม Dropdown หลัก -->
+                <button type="button" (click)="toggleStaffDropdown($index, $event)"
+                        class="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-[#F9BD15] transition-all text-left flex justify-between items-center"
+                        [ngClass]="{'text-[#2A1D1A]': author.staff_id, 'text-gray-400': !author.staff_id}">
+                  <span class="truncate">{{ author.staff_id ? getStaffName(author.staff_id) : '--- ค้นหาและเลือกรายชื่ออาจารย์ ---' }}</span>
+                  <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+
+                <!-- 🌟 กล่องค้นหา Dropdown -->
+                @if (isStaffDropdownOpen[$index]) {
+                  <div class="fixed inset-0 z-40" (click)="isStaffDropdownOpen[$index] = false"></div>
+                  
+                  <div class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                    <div class="p-3 border-b border-gray-100 bg-gray-50 relative">
+                      <svg class="w-4 h-4 absolute left-6 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                      <input type="text" [(ngModel)]="staffSearchQueries[$index]" (click)="$event.stopPropagation()" placeholder="พิมพ์ชื่อเพื่อค้นหา..." class="w-full pl-9 pr-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-[#F9BD15] text-[#2A1D1A] bg-white">
+                    </div>
+                    
+                    <ul class="max-h-60 overflow-y-auto">
+                      @if (getFilteredStaffList($index).length === 0) {
+                        <li class="p-4 text-center text-sm font-bold text-gray-400">ไม่พบรายชื่อที่ค้นหา</li>
+                      }
+                      @for (staff of getFilteredStaffList($index); track staff.staff_id) {
+                        <li (click)="selectStaffForParticipant($index, staff.staff_id)"
+                            class="p-3 hover:bg-gray-50 cursor-pointer font-bold text-sm text-[#2A1D1A] transition-colors border-b border-gray-50 last:border-0"
+                            [class.bg-[#F9BD15]/10]="author.staff_id === staff.staff_id">
+                          {{ staff.full_name }} <span class="text-xs text-gray-400 font-normal">({{ staff.position || 'บุคลากร' }})</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                }
               </div>
 
               <div class="w-full sm:w-56">

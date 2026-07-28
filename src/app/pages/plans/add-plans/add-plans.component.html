@@ -9,7 +9,7 @@
 
   <div class="space-y-6 relative">
     
-    @if (loading) {
+    @if (isSubmitting) {
       <div class="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-50 rounded-[2rem] flex items-center justify-center pointer-events-none">
          <div class="bg-[#2A1D1A] text-[#F9BD15] px-6 py-3 rounded-full font-bold text-sm shadow-xl flex items-center gap-3">
             <div class="w-4 h-4 border-2 border-[#F9BD15] border-t-transparent rounded-full animate-spin"></div>
@@ -39,7 +39,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
-                <div class="relative">
+                <div class="relative" [ngClass]="{'z-50': isStrategyOpen()}">
                   <label class="text-xs font-bold text-gray-400 mb-2 block">แผนยุทธศาสตร์ที่สอดคล้อง</label>
                   <button (click)="toggleStrategy()" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-left flex justify-between items-center border border-transparent hover:border-[#F9BD15] transition-all text-[#2A1D1A] truncate pr-10 relative">
                       <span class="truncate">{{ selectedStrategy() }}</span>
@@ -87,7 +87,7 @@
                   }
                 </div>
 
-                <div class="relative">
+                <div class="relative" [ngClass]="{'z-50': isPlanOpen()}">
                   <label class="text-xs font-bold text-gray-400 mb-2 block">ประเภทแผนงาน</label>
                   <button (click)="togglePlan()" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-left flex justify-between items-center border border-transparent hover:border-[#F9BD15] transition-all text-[#2A1D1A] truncate pr-10 relative">
                       <span class="truncate">{{ selectedPlan() }}</span>
@@ -151,13 +151,41 @@
 
         <div class="space-y-3">
             @for (participant of participants; track $index) {
-                <div class="flex items-center gap-3 animate-in fade-in slide-in-from-left-2">
-                    <select [(ngModel)]="participant.staff_id" class="flex-1 p-3.5 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all text-[#2A1D1A]">
-                        <option value="" disabled selected>--- เลือกรายชื่อบุคลากร ---</option>
-                        @for (staff of staffMembers(); track staff.staff_id) {
-                            <option [value]="staff.staff_id">{{ staff.full_name }} ({{ staff.position || 'บุคลากร' }})</option>
-                        }
-                    </select>
+                <div class="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 transition-all" [ngClass]="{'relative z-50': isStaffDropdownOpen[$index]}">
+                    
+                    <div class="relative flex-1">
+                      <button type="button" (click)="toggleStaffDropdown($index, $event)"
+                              class="w-full p-3.5 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all text-left flex justify-between items-center"
+                              [ngClass]="{'text-[#2A1D1A]': participant.staff_id, 'text-gray-400': !participant.staff_id}">
+                        <span class="truncate">{{ participant.staff_id ? getStaffName(participant.staff_id) : '--- ค้นหาและเลือกรายชื่อบุคลากร ---' }}</span>
+                        <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                      </button>
+
+                      @if (isStaffDropdownOpen[$index]) {
+                        <div class="fixed inset-0 z-40" (click)="isStaffDropdownOpen[$index] = false"></div>
+                        
+                        <div class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                          <div class="p-3 border-b border-gray-100 bg-gray-50 relative">
+                            <svg class="w-4 h-4 absolute left-6 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" [(ngModel)]="staffSearchQueries[$index]" (click)="$event.stopPropagation()" placeholder="พิมพ์ชื่อเพื่อค้นหา..." class="w-full pl-9 pr-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-[#F9BD15] text-[#2A1D1A] bg-white">
+                          </div>
+                          
+                          <ul class="max-h-60 overflow-y-auto">
+                            @if (getFilteredStaffList($index).length === 0) {
+                              <li class="p-4 text-center text-sm font-bold text-gray-400">ไม่พบรายชื่อที่ค้นหา</li>
+                            }
+                            @for (staff of getFilteredStaffList($index); track staff.staff_id) {
+                              <li (click)="selectStaffForParticipant($index, staff.staff_id)"
+                                  class="p-3 hover:bg-gray-50 cursor-pointer font-bold text-sm text-[#2A1D1A] transition-colors border-b border-gray-50 last:border-0"
+                                  [class.bg-[#F9BD15]/10]="participant.staff_id === staff.staff_id">
+                                {{ staff.full_name }} <span class="text-xs text-gray-400 font-normal">({{ staff.position || 'บุคลากร' }})</span>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      }
+                    </div>
+
                     <button (click)="removeParticipant($index)" class="p-3.5 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>
@@ -207,7 +235,7 @@
           </div>
           
           <div class="md:col-span-2 border-t border-gray-50 pt-6 space-y-6">
-              <div class="relative">
+              <div class="relative" [ngClass]="{'z-50': isStatusOpen()}">
                 <label class="text-xs font-bold text-gray-400 mb-2 block">สถานะการดำเนินการปัจจุบัน</label>
                 <button (click)="toggleStatus()" class="w-full p-4 bg-gray-50 rounded-xl font-bold text-sm text-left flex justify-between items-center border border-transparent hover:border-[#F9BD15] transition-all"
                         [ngClass]="{'text-gray-400': selectedStatus() === 'ระบุสถานะ', 'text-[#2A1D1A]': selectedStatus() !== 'ระบุสถานะ'}">
@@ -234,7 +262,6 @@
               }
           </div>
 
-          <!-- แบบเสนอโครงการ (PDF) -->
           <div class="mt-2 pt-6 border-t border-gray-100">
             <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">
               แนบไฟล์แบบเสนอโครงการ (PDF)
@@ -252,7 +279,6 @@
             }
           </div>
 
-          <!-- แบบสรุปโครงการ (PDF) -->
           <div class="mt-2 pt-6 border-t border-gray-100">
             <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">
               แนบไฟล์แบบสรุปโครงการ (PDF)
@@ -274,9 +300,9 @@
     </div>
 
     <div class="flex justify-end gap-4 pt-6">
-        <button routerLink="/plans" [disabled]="loading" class="px-8 py-3 rounded-xl font-bold text-gray-400 hover:text-[#2A1D1A] transition-colors disabled:opacity-50">ยกเลิก</button>
+        <button routerLink="/plans" [disabled]="isSubmitting" class="px-8 py-3 rounded-xl font-bold text-gray-400 hover:text-[#2A1D1A] transition-colors disabled:opacity-50">ยกเลิก</button>
         
-        <button (click)="submitForm()" [disabled]="loading" class="px-10 py-3 rounded-xl font-black bg-[#F9BD15] text-[#2A1D1A] shadow-md hover:brightness-105 transition-all disabled:opacity-50 active:scale-95">
+        <button (click)="submitForm()" [disabled]="isSubmitting" class="px-10 py-3 rounded-xl font-black bg-[#F9BD15] text-[#2A1D1A] shadow-md hover:brightness-105 transition-all disabled:opacity-50 active:scale-95">
           {{ isEditMode() ? 'บันทึกการแก้ไข' : 'เพิ่มแผนงาน' }}
         </button>
     </div>

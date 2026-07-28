@@ -34,16 +34,44 @@
 
       <div class="space-y-3">
         @for (participant of participants; track $index) {
-          <div class="flex gap-3 items-center group">
-            <span class="text-xs font-black text-gray-300 w-6">{{ $index + 1 }}.</span>
+          <!-- 🌟 เพิ่ม z-index ให้อยู่บนสุดตอนคลิกเปิด dropdown -->
+          <div class="flex gap-3 items-center group transition-all" [ngClass]="{'relative z-50': isStaffDropdownOpen[$index]}">
+            <span class="text-xs font-black text-gray-300 w-6 shrink-0">{{ $index + 1 }}.</span>
             
-            <select [(ngModel)]="participant.staff_id"
-                    class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold text-[#2A1D1A] outline-none focus:border-[#F9BD15] focus:ring-2 focus:ring-[#F9BD15]/20 transition-all">
-              <option value="" disabled selected>--- เลือกรายชื่อบุคลากร ---</option>
-              @for (staff of staffMembers(); track staff.staff_id) {
-                <option [value]="staff.staff_id">{{ staff.full_name }} ({{ staff.position || 'บุคลากร' }})</option>
+            <div class="relative flex-1">
+              <!-- ปุ่ม Dropdown หลัก -->
+              <button type="button" (click)="toggleStaffDropdown($index, $event)"
+                      class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-[#F9BD15] transition-all text-left flex justify-between items-center"
+                      [ngClass]="{'text-[#2A1D1A]': participant.staff_id, 'text-gray-400': !participant.staff_id}">
+                <span class="truncate">{{ participant.staff_id ? getStaffName(participant.staff_id) : '--- ค้นหาและเลือกรายชื่อบุคลากร ---' }}</span>
+                <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </button>
+
+              <!-- 🌟 กล่องค้นหา Dropdown -->
+              @if (isStaffDropdownOpen[$index]) {
+                <div class="fixed inset-0 z-40" (click)="isStaffDropdownOpen[$index] = false"></div>
+                
+                <div class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                  <div class="p-3 border-b border-gray-100 bg-gray-50 relative">
+                    <svg class="w-4 h-4 absolute left-6 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" [(ngModel)]="staffSearchQueries[$index]" (click)="$event.stopPropagation()" placeholder="พิมพ์ชื่อเพื่อค้นหา..." class="w-full pl-9 pr-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-[#F9BD15] text-[#2A1D1A] bg-white">
+                  </div>
+                  
+                  <ul class="max-h-60 overflow-y-auto">
+                    @if (getFilteredStaffList($index).length === 0) {
+                      <li class="p-4 text-center text-sm font-bold text-gray-400">ไม่พบรายชื่อที่ค้นหา</li>
+                    }
+                    @for (staff of getFilteredStaffList($index); track staff.staff_id) {
+                      <li (click)="selectStaffForParticipant($index, staff.staff_id)"
+                          class="p-3 hover:bg-gray-50 cursor-pointer font-bold text-sm text-[#2A1D1A] transition-colors border-b border-gray-50 last:border-0"
+                          [class.bg-[#F9BD15]/10]="participant.staff_id === staff.staff_id">
+                        {{ staff.full_name }} <span class="text-xs text-gray-400 font-normal">({{ staff.position || 'บุคลากร' }})</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
               }
-            </select>
+            </div>
             
             <button (click)="removeParticipant($index)" 
                     class="p-3 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-100" 
@@ -96,7 +124,8 @@
                class="w-full bg-gray-50 border border-transparent focus:border-[#F9BD15] focus:bg-white rounded-2xl px-5 py-3.5 text-sm font-bold text-[#2A1D1A] outline-none transition-all">
       </div>
 
-      <div class="md:col-span-2 space-y-5 pt-4 border-t border-gray-100">
+      <!-- 🌟 เพิ่ม z-index รองลงมา เพื่อไม่ให้กล่อง dropdown ด้านบนมาทะลุโดนกล่องนี้ -->
+      <div class="md:col-span-2 space-y-5 pt-4 border-t border-gray-100 relative" [ngClass]="{'z-40': isDropdownOpen}">
         <div>
           <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">
             สรุปประโยชน์ที่ได้รับจากการอบรม

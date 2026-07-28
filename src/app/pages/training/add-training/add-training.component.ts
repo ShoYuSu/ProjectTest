@@ -50,6 +50,43 @@ export class AddTrainingComponent implements OnInit {
     remarks: ''          
   };
 
+  // ==========================================
+  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันใหม่สำหรับ Dropdown พิมพ์ค้นหาได้
+  // ==========================================
+  staffSearchQueries: { [index: number]: string } = {};
+  isStaffDropdownOpen: { [index: number]: boolean } = {};
+
+  getStaffName(staffId: string): string {
+    if (!staffId) return '';
+    const staff = this.staffMembers().find(s => s.staff_id === staffId);
+    return staff ? `${staff.full_name} (${staff.position || 'บุคลากร'})` : '';
+  }
+
+  toggleStaffDropdown(index: number, event: Event) {
+    event.stopPropagation();
+    this.isStaffDropdownOpen[index] = !this.isStaffDropdownOpen[index];
+    if (this.isStaffDropdownOpen[index]) {
+      this.staffSearchQueries[index] = ''; 
+    }
+  }
+
+  selectStaffForParticipant(index: number, staffId: string) {
+    this.participants[index].staff_id = staffId;
+    this.isStaffDropdownOpen[index] = false;
+  }
+
+  getFilteredStaffList(index: number) {
+    const query = (this.staffSearchQueries[index] || '').toLowerCase().trim();
+    if (!query) return this.staffMembers();
+    return this.staffMembers().filter(s =>
+      s.full_name.toLowerCase().includes(query) ||
+      (s.position && s.position.toLowerCase().includes(query))
+    );
+  }
+  // ==========================================
+  // 🌟 [จบ] ส่วนระบบค้นหา
+  // ==========================================
+
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       if (params['edit']) {
