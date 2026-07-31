@@ -110,7 +110,8 @@
         <h3 class="font-black text-[#2A1D1A] text-lg">ประวัติการอบรม <span class="text-gray-400 text-sm font-bold ml-2">({{ filteredTrainings().length }} รายการ)</span></h3>
       </div>
       
-      <div class="overflow-auto max-h-[65vh] w-full">
+      <!-- 🌟 เพิ่ม #scrollContainer และ (scroll)="onScroll($event)" -->
+      <div #scrollContainer (scroll)="onScroll($event)" class="overflow-auto max-h-[65vh] w-full">
         <table class="w-full text-left min-w-[1100px] border-collapse">
             <thead class="text-xs text-gray-500 font-bold">
               <tr>
@@ -190,7 +191,7 @@
                   }
               } @else if (!loading()) {
                   <tr>
-                    <td colspan="7" class="py-20 text-center text-gray-400 font-bold">ไม่พบข้อมูลการอบรม หรือคุณไม่มีสิทธิ์เข้าถึงข้อมูล</td>
+                    <td colspan="8" class="py-20 text-center text-gray-400 font-bold">ไม่พบข้อมูลการอบรม หรือคุณไม่มีสิทธิ์เข้าถึงข้อมูล</td>
                   </tr>
               }
             </tbody>

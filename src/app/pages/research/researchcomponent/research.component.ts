@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router'; 
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './research.component.html',
   styleUrl: './research.component.css'
 })
-export class ResearchComponent implements OnInit {
+export class ResearchComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute); 
 
@@ -27,20 +27,55 @@ export class ResearchComponent implements OnInit {
   currentYear = signal<string>('ทั้งหมด'); 
   sortDirection = signal<'desc' | 'asc'>('desc');
 
-  // 🌟 ระบบ Export Report
   isExportMode = signal(false);
   selectedIds = signal<Set<number>>(new Set());
 
   currentPage = signal(1);
   itemsPerPage = 10;
 
+  // 🌟 ตัวแปรสำหรับจำตำแหน่ง Scroll และ State
+  private stateKey = 'research_state';
+  currentScroll = 0;
+  @ViewChild('scrollContainer') scrollContainer!: ElementRef;
+
   ngOnInit() {
+    // 🌟 1. โหลด State เดิมที่เคยบันทึกไว้ตอนเปลี่ยนหน้า
+    const savedState = sessionStorage.getItem(this.stateKey);
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      this.currentPage.set(state.page || 1);
+      this.searchQuery.set(state.search || '');
+      this.currentYear.set(state.year || 'ทั้งหมด');
+      this.currentDept.set(state.dept || 'ทั้งหมด');
+      this.sortDirection.set(state.sort || 'desc');
+      this.currentScroll = state.scroll || 0;
+    }
+
+    // 🌟 2. ถ้ารับค่า Params มาจากหน้าโปรไฟล์ ให้บังคับเคลียร์ค่า State ปกติ
     this.route.queryParams.subscribe(params => {
-      if (params['search']) this.searchQuery.set(params['search']);
-      if (params['year']) this.currentYear.set(params['year']);
+      if (params['search'] || params['year']) {
+        if (params['search']) this.searchQuery.set(params['search']);
+        if (params['year']) this.currentYear.set(params['year']);
+        this.currentPage.set(1);
+        this.currentScroll = 0;
+      }
     });
+
     this.fetchPermissionsFromDB(); 
     this.fetchResearchData();      
+  }
+
+  // 🌟 3. บันทึก State ทิ้งไว้เสมอเมื่อ Component ถูกทำลาย (เปลี่ยนไปหน้าแก้/เพิ่ม)
+  ngOnDestroy() {
+    const state = {
+      page: this.currentPage(),
+      search: this.searchQuery(),
+      year: this.currentYear(),
+      dept: this.currentDept(),
+      sort: this.sortDirection(),
+      scroll: this.currentScroll
+    };
+    sessionStorage.setItem(this.stateKey, JSON.stringify(state));
   }
 
   fetchPermissionsFromDB() {
@@ -90,8 +125,15 @@ export class ResearchComponent implements OnInit {
           }));
 
           this.allProjects.set(mappedData);
-          this.applyFilters();
+          this.applyFilters(false); // 🌟 โหลดข้อมูลเสร็จ ห้ามรีเซ็ตหน้าเพจ
           this.loading.set(false);
+          
+          // 🌟 4. เลื่อน Scroll กลับไปตำแหน่งเดิมหลังจาก Render เสร็จ
+          setTimeout(() => {
+            if (this.scrollContainer) {
+              this.scrollContainer.nativeElement.scrollTop = this.currentScroll;
+            }
+          }, 50);
         },
         error: (err) => {
           console.error(err);
@@ -123,12 +165,19 @@ export class ResearchComponent implements OnInit {
     return ['ทั้งหมด', ...uniqueYears.map(String)];
   });
 
-  toggleSort() {
-    this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
-    this.applyFilters();
+  // 🌟 ฟังก์ชันจัดการการรีเซ็ต Scroll และ บันทึก Scroll
+  onScroll(event: any) { this.currentScroll = event.target.scrollTop; }
+  resetScroll() {
+    this.currentScroll = 0;
+    if (this.scrollContainer) this.scrollContainer.nativeElement.scrollTop = 0;
   }
 
-  applyFilters() {
+  toggleSort() {
+    this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
+    this.applyFilters(true);
+  }
+
+  applyFilters(resetPage = true) {
     let result = this.allProjects();
     const query = this.searchQuery().toLowerCase().trim();
     const dept = this.currentDept();
@@ -150,79 +199,54 @@ export class ResearchComponent implements OnInit {
     });
 
     this.filteredProjects.set(sortedResult);
-    this.currentPage.set(1); 
+    
+    // 🌟 จัดการให้เปลี่ยนหน้าเฉพาะเมื่อฟิลเตอร์เปลี่ยน
+    if (resetPage) {
+      this.currentPage.set(1);
+      this.resetScroll();
+    } else {
+      const totalP = Math.max(1, Math.ceil(sortedResult.length / this.itemsPerPage));
+      if (this.currentPage() > totalP) this.currentPage.set(totalP);
+    }
   }
 
-  setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(); }
-  setYear(year: string) { this.currentYear.set(year); this.applyFilters(); }
-  onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
+  setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(true); }
+  setYear(year: string) { this.currentYear.set(year); this.applyFilters(true); }
+  onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(true); }
 
-  // 🌟 ฟังก์ชันจัดการ Report & Export
-  toggleExportMode() {
-    this.isExportMode.set(!this.isExportMode());
-    this.selectedIds.set(new Set()); // ล้างค่าที่เลือกทุกครั้งที่เปิด/ปิดโหมด
-  }
-
+  toggleExportMode() { this.isExportMode.set(!this.isExportMode()); this.selectedIds.set(new Set()); }
   toggleSelection(id: number) {
     const current = new Set(this.selectedIds());
     if (current.has(id)) current.delete(id);
     else current.add(id);
     this.selectedIds.set(current);
   }
-
   toggleAll() {
-    if (this.isAllSelected()) {
-      this.selectedIds.set(new Set());
-    } else {
-      // เลือกทั้งหมดเฉพาะหน้าที่กำลังแสดง หรือทั้งหมดในฟิลเตอร์? (นิยมทั้งหมดในฟิลเตอร์)
-      const allIds = this.filteredProjects().map(p => p.id);
-      this.selectedIds.set(new Set(allIds));
-    }
+    if (this.isAllSelected()) this.selectedIds.set(new Set());
+    else this.selectedIds.set(new Set(this.filteredProjects().map(p => p.id)));
   }
-
-  isAllSelected(): boolean {
-    return this.filteredProjects().length > 0 && this.selectedIds().size === this.filteredProjects().length;
-  }
+  isAllSelected(): boolean { return this.filteredProjects().length > 0 && this.selectedIds().size === this.filteredProjects().length; }
 
   exportSelectedToCSV() {
     let dataToExport = this.filteredProjects();
-    if (this.selectedIds().size > 0) {
-      dataToExport = dataToExport.filter(item => this.selectedIds().has(item.id));
-    }
-
-    if (dataToExport.length === 0) {
-      alert('⚠️ ไม่มีข้อมูลสำหรับ Export');
-      return;
-    }
+    if (this.selectedIds().size > 0) dataToExport = dataToExport.filter(item => this.selectedIds().has(item.id));
+    if (dataToExport.length === 0) { alert('⚠️ ไม่มีข้อมูลสำหรับ Export'); return; }
 
     const headers = ['ID', 'ชื่อโครงการวิจัย', 'ผู้รับผิดชอบโครงการ', 'ปีที่ได้รับ', 'ปีที่สิ้นสุด', 'แหล่งทุน', 'งบประมาณ (บาท)', 'ภาควิชา'];
-    
     const csvRows = dataToExport.map(item => {
       return [
-        item.id,
-        `"${item.name}"`, 
-        `"${item.author}"`,
-        item.year || '-',
-        item.yearEnded || 'ปัจจุบัน',
-        `"${item.fundSource}"`,
-        item.budget || 0,
-        `"${item.department}"`
+        item.id, `"${item.name}"`, `"${item.author}"`, item.year || '-', item.yearEnded || 'ปัจจุบัน', `"${item.fundSource}"`, item.budget || 0, `"${item.department}"`
       ].join(',');
     });
 
     const csvContent = [headers.join(','), ...csvRows].join('\n');
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    
     const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
+    link.setAttribute('href', URL.createObjectURL(blob));
     link.setAttribute('download', `research_project_report_${new Date().getTime()}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    this.toggleExportMode(); // ปิดโหมด Export หลังโหลดเสร็จ
+    link.style.visibility = 'hidden'; document.body.appendChild(link);
+    link.click(); document.body.removeChild(link);
+    this.toggleExportMode(); 
   }
 
   paginatedProjects = computed(() => {
@@ -232,7 +256,7 @@ export class ResearchComponent implements OnInit {
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredProjects().length / this.itemsPerPage)));
   pagesArray = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
-  goToPage(page: number) { this.currentPage.set(page); }
-  nextPage() { if(this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1); }
-  prevPage() { if(this.currentPage() > 1) this.currentPage.update(p => p - 1); }
+  goToPage(page: number) { this.currentPage.set(page); this.resetScroll(); }
+  nextPage() { if(this.currentPage() < this.totalPages()) { this.currentPage.update(p => p + 1); this.resetScroll(); } }
+  prevPage() { if(this.currentPage() > 1) { this.currentPage.update(p => p - 1); this.resetScroll(); } }
 }

@@ -96,7 +96,8 @@
         <h3 class="font-black text-[#2A1D1A] text-lg">รายการแผนงาน <span class="text-gray-400 text-sm font-bold ml-2">({{ filteredPlans().length }} รายการ)</span></h3>
       </div>
       
-      <div class="overflow-auto max-h-[65vh] w-full">
+      <!-- 🌟 เพิ่ม #scrollContainer และ (scroll)="onScroll($event)" -->
+      <div #scrollContainer (scroll)="onScroll($event)" class="overflow-auto max-h-[65vh] w-full">
         <table class="w-full text-left min-w-[2000px] border-collapse">
             <thead class="text-xs text-gray-500 font-bold">
               <tr>

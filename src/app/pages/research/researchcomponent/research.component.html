@@ -68,6 +68,7 @@
   </div>
 
   <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-6">
+      
       <div class="flex flex-col md:flex-row gap-4 md:items-start pb-4 border-b border-gray-50">
         <span class="text-sm font-bold text-gray-500 whitespace-nowrap mt-2 w-20">ปี พ.ศ.</span>
         <div class="flex flex-wrap gap-3">
@@ -109,11 +110,12 @@
         <h3 class="font-black text-[#2A1D1A] text-lg">โครงการวิจัย <span class="text-gray-400 text-sm font-bold ml-2">({{ filteredProjects().length }} รายการ)</span></h3>
       </div>
       
-      <div class="overflow-auto max-h-[65vh] w-full">
+      <!-- 🌟 เพิ่ม #scrollContainer และ (scroll) เพื่อจำตำแหน่ง Scroll -->
+      <div #scrollContainer (scroll)="onScroll($event)" class="overflow-auto max-h-[65vh] w-full">
         <table class="w-full text-left min-w-[1200px] border-collapse">
             <thead class="text-xs text-gray-500 font-bold">
               <tr>
-                  <!-- 🌟 เพิ่มคอลัมน์ Checkbox สำหรับโหมด Export -->
+                  <!-- 🌟 เพิ่ม Checkbox -->
                   @if (isExportMode()) {
                     <th class="py-5 px-6 w-16 sticky top-0 left-0 bg-gray-50 z-50 border-r border-b border-gray-100 text-center">
                       <input type="checkbox" (change)="toggleAll()" [checked]="isAllSelected()" class="w-4 h-4 cursor-pointer accent-[#F9BD15]">
@@ -123,8 +125,10 @@
                   <th class="py-5 px-6 w-[90px] min-w-[90px] max-w-[90px] sticky top-0 left-0 bg-gray-50 z-40 border-r border-b border-gray-100 shadow-[2px_2px_4px_rgba(0,0,0,0.02)]" [ngClass]="{'left-16': isExportMode()}">ID</th>
                   <th class="py-5 px-4 w-[340px] min-w-[340px] max-w-[340px] sticky top-0 left-[90px] bg-gray-50 z-40 border-r border-b border-gray-100 shadow-[4px_2px_12px_-4px_rgba(0,0,0,0.1)]" [ngClass]="{'left-[154px]': isExportMode()}">ชื่อโครงการ</th>
                   <th class="py-5 px-6 w-56 sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">ผู้รับผิดชอบโครงการ</th>
+                  
                   <th class="py-5 px-4 w-28 text-center sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">ปีที่ได้รับ</th>
                   <th class="py-5 px-4 w-28 text-center sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">ปีที่สิ้นสุด</th>
+                  
                   <th class="py-5 px-4 w-40 sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">แหล่งทุน</th>
                   <th class="py-5 px-4 w-28 text-right sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">งบประมาณ</th>
                   <th class="py-5 px-4 w-24 text-center sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">เอกสารแนบ</th> 
@@ -147,7 +151,8 @@
                         <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] pr-4 leading-relaxed align-top pt-6 sticky left-[90px] bg-white group-hover:bg-gray-50 z-10 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] border-r border-gray-100" [ngClass]="{'left-[154px]': isExportMode(), 'bg-[#F9BD15]/5': isExportMode() && selectedIds().has(project.id)}">{{ project.name }}</td>
                         <td class="py-6 px-6 text-sm font-bold text-gray-500 align-top pt-6">{{ project.author }}</td>
                         
-                        <td class="py-6 px-4 text-sm font-bold text-[#F9BD15] text-center align-top pt-6 bg-[#F9BD15]/10 border border-white">
+                        <!-- 🌟 ไฮไลท์สีเหลืองอ่อนเต็มคอลัมน์ปีที่ได้รับ -->
+                        <td class="py-6 px-4 text-sm font-bold text-[#F9BD15] text-center align-top pt-6 bg-[#F9BD15]/10">
                           {{ project.year || '-' }}
                         </td>
                         
@@ -203,7 +208,6 @@
         </table>
       </div>
 
-      <!-- ส่วนแบ่งหน้าเหมือนเดิม -->
       <div class="p-6 border-t border-gray-50 flex justify-center items-center gap-2">
         <button (click)="prevPage()" [disabled]="currentPage() === 1" 
             class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">

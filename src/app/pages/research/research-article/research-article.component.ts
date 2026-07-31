@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './research-article.component.html',
   styleUrl: './research-article.component.css'
 })
-export class ResearchArticleComponent implements OnInit {
+export class ResearchArticleComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
 
@@ -26,24 +26,56 @@ export class ResearchArticleComponent implements OnInit {
   currentDept = signal<string>('ทั้งหมด');
   currentYear = signal<string>('ทั้งหมด'); 
   activeTab = signal<string>('journal'); 
-
   sortDirection = signal<'desc' | 'asc'>('desc');
 
-  // 🌟 ระบบ Export Report
   isExportMode = signal(false);
   selectedIds = signal<Set<number>>(new Set());
 
   currentPage = signal(1);
   itemsPerPage = 10;
 
+  // 🌟 State & Scroll Persistence
+  private stateKey = 'article_state';
+  currentScroll = 0;
+  @ViewChild('scrollContainer') scrollContainer!: ElementRef;
+
   ngOnInit() {
+    const savedState = sessionStorage.getItem(this.stateKey);
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      this.currentPage.set(state.page || 1);
+      this.searchQuery.set(state.search || '');
+      this.currentYear.set(state.year || 'ทั้งหมด');
+      this.currentDept.set(state.dept || 'ทั้งหมด');
+      this.activeTab.set(state.tab || 'journal');
+      this.sortDirection.set(state.sort || 'desc');
+      this.currentScroll = state.scroll || 0;
+    }
+
     this.route.queryParams.subscribe(params => {
-      if (params['search']) this.searchQuery.set(params['search']);
-      if (params['year']) this.currentYear.set(params['year']);
+      if (params['search'] || params['year']) {
+        if (params['search']) this.searchQuery.set(params['search']);
+        if (params['year']) this.currentYear.set(params['year']);
+        this.currentPage.set(1);
+        this.currentScroll = 0;
+      }
     });
 
     this.fetchPermissionsFromDB();
     this.fetchArticleData();
+  }
+
+  ngOnDestroy() {
+    const state = {
+      page: this.currentPage(),
+      search: this.searchQuery(),
+      year: this.currentYear(),
+      dept: this.currentDept(),
+      tab: this.activeTab(),
+      sort: this.sortDirection(),
+      scroll: this.currentScroll
+    };
+    sessionStorage.setItem(this.stateKey, JSON.stringify(state));
   }
 
   fetchPermissionsFromDB() {
@@ -61,10 +93,6 @@ export class ResearchArticleComponent implements OnInit {
              if (['all', 'department', 'self', 'own'].includes(scope)) hasAdd = true;
           }
           this.canAdd.set(hasAdd);
-        },
-        error: (err) => {
-          console.error(err);
-          this.canAdd.set(false);
         }
       });
   }
@@ -97,8 +125,12 @@ export class ResearchArticleComponent implements OnInit {
           }));
 
           this.allArticles.set(mappedData);
-          this.applyFilters();
+          this.applyFilters(false);
           this.loading.set(false);
+
+          setTimeout(() => {
+            if (this.scrollContainer) this.scrollContainer.nativeElement.scrollTop = this.currentScroll;
+          }, 50);
         },
         error: (err) => {
           console.error(err);
@@ -124,19 +156,20 @@ export class ResearchArticleComponent implements OnInit {
   }
 
   availableYears = computed(() => {
-    const years = this.allArticles()
-                    .filter(a => a.type === this.activeTab())
-                    .map(a => a.year).filter(y => y !== null && y !== undefined && y !== '');
+    const years = this.allArticles().filter(a => a.type === this.activeTab()).map(a => a.year).filter(y => y !== null && y !== undefined && y !== '');
     const uniqueYears = Array.from(new Set(years)).sort((a, b) => Number(b) - Number(a)); 
     return ['ทั้งหมด', ...uniqueYears.map(String)];
   });
 
-  toggleSort() {
-    this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
-    this.applyFilters();
+  onScroll(event: any) { this.currentScroll = event.target.scrollTop; }
+  resetScroll() {
+    this.currentScroll = 0;
+    if (this.scrollContainer) this.scrollContainer.nativeElement.scrollTop = 0;
   }
 
-  applyFilters() {
+  toggleSort() { this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc'); this.applyFilters(true); }
+
+  applyFilters(resetPage = true) {
     let result = this.allArticles();
     const query = this.searchQuery().toLowerCase().trim();
     const dept = this.currentDept();
@@ -161,96 +194,58 @@ export class ResearchArticleComponent implements OnInit {
     });
 
     this.filteredArticles.set(sortedResult);
-    this.currentPage.set(1);
+    
+    if (resetPage) {
+      this.currentPage.set(1);
+      this.resetScroll();
+    } else {
+      const totalP = Math.max(1, Math.ceil(sortedResult.length / this.itemsPerPage));
+      if (this.currentPage() > totalP) this.currentPage.set(totalP);
+    }
   }
 
-  setTab(tabName: string) { this.activeTab.set(tabName); this.currentYear.set('ทั้งหมด'); this.applyFilters(); }
-  setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(); }
-  setYear(year: string) { this.currentYear.set(year); this.applyFilters(); }
-  onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
+  setTab(tabName: string) { this.activeTab.set(tabName); this.currentYear.set('ทั้งหมด'); this.applyFilters(true); }
+  setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(true); }
+  setYear(year: string) { this.currentYear.set(year); this.applyFilters(true); }
+  onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(true); }
 
-  // 🌟 ฟังก์ชันจัดการ Report & Export
-  toggleExportMode() {
-    this.isExportMode.set(!this.isExportMode());
-    this.selectedIds.set(new Set()); 
-  }
-
+  toggleExportMode() { this.isExportMode.set(!this.isExportMode()); this.selectedIds.set(new Set()); }
   toggleSelection(id: number) {
     const current = new Set(this.selectedIds());
     if (current.has(id)) current.delete(id);
     else current.add(id);
     this.selectedIds.set(current);
   }
-
   toggleAll() {
-    if (this.isAllSelected()) {
-      this.selectedIds.set(new Set());
-    } else {
-      const allIds = this.filteredArticles().map(a => a.id);
-      this.selectedIds.set(new Set(allIds));
-    }
+    if (this.isAllSelected()) this.selectedIds.set(new Set());
+    else this.selectedIds.set(new Set(this.filteredArticles().map(a => a.id)));
   }
-
-  isAllSelected(): boolean {
-    return this.filteredArticles().length > 0 && this.selectedIds().size === this.filteredArticles().length;
-  }
+  isAllSelected(): boolean { return this.filteredArticles().length > 0 && this.selectedIds().size === this.filteredArticles().length; }
 
   exportSelectedToCSV() {
     let dataToExport = this.filteredArticles();
-    if (this.selectedIds().size > 0) {
-      dataToExport = dataToExport.filter(item => this.selectedIds().has(item.id));
-    }
-
-    if (dataToExport.length === 0) {
-      alert('⚠️ ไม่มีข้อมูลสำหรับ Export');
-      return;
-    }
+    if (this.selectedIds().size > 0) dataToExport = dataToExport.filter(item => this.selectedIds().has(item.id));
+    if (dataToExport.length === 0) { alert('⚠️ ไม่มีข้อมูลสำหรับ Export'); return; }
 
     const isJournal = this.activeTab() === 'journal';
-    
-    // ตั้งชื่อคอลัมน์ตามประเภทแท็บที่กำลังดูอยู่
     const headers = isJournal 
       ? ['ID', 'ชื่อบทความ', 'ผู้นิพนธ์', 'ปีที่ตีพิมพ์', 'ชื่อวารสาร', 'Vol. / Issue', 'Quartile', 'ภาควิชา']
       : ['ID', 'ชื่อบทความ', 'ผู้นิพนธ์', 'ปีที่ตีพิมพ์', 'ชื่องานประชุม', 'วันที่ประชุม', 'สถานที่จัดงาน', 'ภาควิชา'];
     
     const csvRows = dataToExport.map(item => {
       if (isJournal) {
-        return [
-          item.id,
-          `"${item.title}"`, 
-          `"${item.author}"`,
-          item.year || '-',
-          `"${item.journal_name}"`,
-          `"${item.journal_vol_issue}"`,
-          `"${item.journal_quartile}"`,
-          `"${item.department}"`
-        ].join(',');
+        return [ item.id, `"${item.title}"`, `"${item.author}"`, item.year || '-', `"${item.journal_name}"`, `"${item.journal_vol_issue}"`, `"${item.journal_quartile}"`, `"${item.department}"`].join(',');
       } else {
-        return [
-          item.id,
-          `"${item.title}"`, 
-          `"${item.author}"`,
-          item.year || '-',
-          `"${item.conference_name}"`,
-          `"${item.conference_date}"`,
-          `"${item.conference_location}"`,
-          `"${item.department}"`
-        ].join(',');
+        return [ item.id, `"${item.title}"`, `"${item.author}"`, item.year || '-', `"${item.conference_name}"`, `"${item.conference_date}"`, `"${item.conference_location}"`, `"${item.department}"`].join(',');
       }
     });
 
     const csvContent = [headers.join(','), ...csvRows].join('\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM ภาษาไทย
-    
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); 
     const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
+    link.setAttribute('href', URL.createObjectURL(blob));
     link.setAttribute('download', `research_article_${isJournal ? 'journal' : 'conference'}_report_${new Date().getTime()}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
+    link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
     this.toggleExportMode(); 
   }
 
@@ -261,7 +256,7 @@ export class ResearchArticleComponent implements OnInit {
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredArticles().length / this.itemsPerPage)));
   pagesArray = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
-  goToPage(page: number) { this.currentPage.set(page); }
-  nextPage() { if(this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1); }
-  prevPage() { if(this.currentPage() > 1) this.currentPage.update(p => p - 1); }
+  goToPage(page: number) { this.currentPage.set(page); this.resetScroll(); }
+  nextPage() { if(this.currentPage() < this.totalPages()) { this.currentPage.update(p => p + 1); this.resetScroll(); } }
+  prevPage() { if(this.currentPage() > 1) { this.currentPage.update(p => p - 1); this.resetScroll(); } }
 }
