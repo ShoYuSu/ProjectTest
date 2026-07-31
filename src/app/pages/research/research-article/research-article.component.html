@@ -71,7 +71,6 @@
         </div>
       </div>
 
-      <!-- 🌟 เพิ่มส่วนแสดงปุ่มปี พ.ศ. -->
       <div class="flex flex-col md:flex-row gap-4 md:items-start pb-4 border-b border-gray-50">
         <span class="text-sm font-bold text-gray-500 whitespace-nowrap mt-2 w-20">ปี พ.ศ.</span>
         <div class="flex flex-wrap gap-3">
@@ -136,8 +135,9 @@
                           <span class="text-sm font-bold text-gray-500">{{ article.author || '-' }}</span>
                         </td>
                         
-                        <td class="py-6 px-4 text-center">
-                          <span class="text-sm font-black text-[#2A1D1A]">{{ article.year || '-' }}</span>
+                        <!-- 🌟 แก้ไข: ไฮไลท์คอลัมน์ปีที่ตีพิมพ์เป็นสีเหลืองอ่อนเหมือนหน้า Project -->
+                        <td class="py-6 px-4 text-sm font-bold text-[#F9BD15] text-center align-top pt-6 bg-[#F9BD15]/10 rounded-md">
+                          {{ article.year || '-' }}
                         </td>
 
                         <td class="py-6 px-4">
