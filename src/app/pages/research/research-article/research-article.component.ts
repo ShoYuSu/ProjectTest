@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router'; // 🌟 นำเข้า ActivatedRoute
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class ResearchArticleComponent implements OnInit {
   private http = inject(HttpClient);
-  private route = inject(ActivatedRoute); // 🌟 ฉีด ActivatedRoute
+  private route = inject(ActivatedRoute);
 
   allArticles = signal<any[]>([]);
   filteredArticles = signal<any[]>([]);
@@ -24,16 +24,19 @@ export class ResearchArticleComponent implements OnInit {
   
   searchQuery = signal<string>('');
   currentDept = signal<string>('ทั้งหมด');
-  currentYear = signal<string>('ทั้งหมด'); // 🌟 เพิ่ม Signal ปี
+  currentYear = signal<string>('ทั้งหมด'); 
   activeTab = signal<string>('journal'); 
 
   sortDirection = signal<'desc' | 'asc'>('desc');
+
+  // 🌟 ระบบ Export Report
+  isExportMode = signal(false);
+  selectedIds = signal<Set<number>>(new Set());
 
   currentPage = signal(1);
   itemsPerPage = 10;
 
   ngOnInit() {
-    // 🌟 รับค่า Params ที่ส่งมาจากหน้ากราฟ
     this.route.queryParams.subscribe(params => {
       if (params['search']) this.searchQuery.set(params['search']);
       if (params['year']) this.currentYear.set(params['year']);
@@ -55,14 +58,12 @@ export class ResearchArticleComponent implements OnInit {
           const modPerms = p['research_info'] || p['research'];
           if (modPerms && modPerms['add']) {
              const scope = modPerms['add'].toString().toLowerCase().trim();
-             if (['all', 'department', 'self', 'own'].includes(scope)) {
-                hasAdd = true;
-             }
+             if (['all', 'department', 'self', 'own'].includes(scope)) hasAdd = true;
           }
           this.canAdd.set(hasAdd);
         },
         error: (err) => {
-          console.error('ไม่สามารถโหลดสิทธิ์จากฐานข้อมูลได้', err);
+          console.error(err);
           this.canAdd.set(false);
         }
       });
@@ -122,10 +123,9 @@ export class ResearchArticleComponent implements OnInit {
     }
   }
 
-  // 🌟 คำนวณปีให้ปุ่มฟิลเตอร์ทำงาน
   availableYears = computed(() => {
     const years = this.allArticles()
-                    .filter(a => a.type === this.activeTab()) // แยกปีตาม Tab
+                    .filter(a => a.type === this.activeTab())
                     .map(a => a.year).filter(y => y !== null && y !== undefined && y !== '');
     const uniqueYears = Array.from(new Set(years)).sort((a, b) => Number(b) - Number(a)); 
     return ['ทั้งหมด', ...uniqueYears.map(String)];
@@ -144,16 +144,8 @@ export class ResearchArticleComponent implements OnInit {
     const tab = this.activeTab();
 
     result = result.filter(a => a.type === tab);
-    
-    if (dept !== 'ทั้งหมด') {
-        result = result.filter(a => a.involved_departments && a.involved_departments.includes(dept));
-    }
-
-    // 🌟 นำค่า Year มากกรองข้อมูล
-    if (year !== 'ทั้งหมด') {
-      result = result.filter(a => String(a.year) === year);
-    }
-
+    if (dept !== 'ทั้งหมด') result = result.filter(a => a.involved_departments && a.involved_departments.includes(dept));
+    if (year !== 'ทั้งหมด') result = result.filter(a => String(a.year) === year);
     if (query) {
       result = result.filter(a => 
         (a.title && a.title.toLowerCase().includes(query)) ||
@@ -164,11 +156,8 @@ export class ResearchArticleComponent implements OnInit {
     }
 
     const sortedResult = [...result].sort((a, b) => {
-      if (this.sortDirection() === 'desc') {
-        return b.id - a.id;
-      } else {
-        return a.id - b.id;
-      }
+      if (this.sortDirection() === 'desc') return b.id - a.id;
+      else return a.id - b.id;
     });
 
     this.filteredArticles.set(sortedResult);
@@ -180,6 +169,91 @@ export class ResearchArticleComponent implements OnInit {
   setYear(year: string) { this.currentYear.set(year); this.applyFilters(); }
   onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
 
+  // 🌟 ฟังก์ชันจัดการ Report & Export
+  toggleExportMode() {
+    this.isExportMode.set(!this.isExportMode());
+    this.selectedIds.set(new Set()); 
+  }
+
+  toggleSelection(id: number) {
+    const current = new Set(this.selectedIds());
+    if (current.has(id)) current.delete(id);
+    else current.add(id);
+    this.selectedIds.set(current);
+  }
+
+  toggleAll() {
+    if (this.isAllSelected()) {
+      this.selectedIds.set(new Set());
+    } else {
+      const allIds = this.filteredArticles().map(a => a.id);
+      this.selectedIds.set(new Set(allIds));
+    }
+  }
+
+  isAllSelected(): boolean {
+    return this.filteredArticles().length > 0 && this.selectedIds().size === this.filteredArticles().length;
+  }
+
+  exportSelectedToCSV() {
+    let dataToExport = this.filteredArticles();
+    if (this.selectedIds().size > 0) {
+      dataToExport = dataToExport.filter(item => this.selectedIds().has(item.id));
+    }
+
+    if (dataToExport.length === 0) {
+      alert('⚠️ ไม่มีข้อมูลสำหรับ Export');
+      return;
+    }
+
+    const isJournal = this.activeTab() === 'journal';
+    
+    // ตั้งชื่อคอลัมน์ตามประเภทแท็บที่กำลังดูอยู่
+    const headers = isJournal 
+      ? ['ID', 'ชื่อบทความ', 'ผู้นิพนธ์', 'ปีที่ตีพิมพ์', 'ชื่อวารสาร', 'Vol. / Issue', 'Quartile', 'ภาควิชา']
+      : ['ID', 'ชื่อบทความ', 'ผู้นิพนธ์', 'ปีที่ตีพิมพ์', 'ชื่องานประชุม', 'วันที่ประชุม', 'สถานที่จัดงาน', 'ภาควิชา'];
+    
+    const csvRows = dataToExport.map(item => {
+      if (isJournal) {
+        return [
+          item.id,
+          `"${item.title}"`, 
+          `"${item.author}"`,
+          item.year || '-',
+          `"${item.journal_name}"`,
+          `"${item.journal_vol_issue}"`,
+          `"${item.journal_quartile}"`,
+          `"${item.department}"`
+        ].join(',');
+      } else {
+        return [
+          item.id,
+          `"${item.title}"`, 
+          `"${item.author}"`,
+          item.year || '-',
+          `"${item.conference_name}"`,
+          `"${item.conference_date}"`,
+          `"${item.conference_location}"`,
+          `"${item.department}"`
+        ].join(',');
+      }
+    });
+
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM ภาษาไทย
+    
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `research_article_${isJournal ? 'journal' : 'conference'}_report_${new Date().getTime()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    this.toggleExportMode(); 
+  }
+
   paginatedArticles = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.itemsPerPage;
     return this.filteredArticles().slice(startIndex, startIndex + this.itemsPerPage);
@@ -187,7 +261,6 @@ export class ResearchArticleComponent implements OnInit {
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredArticles().length / this.itemsPerPage)));
   pagesArray = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
-
   goToPage(page: number) { this.currentPage.set(page); }
   nextPage() { if(this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1); }
   prevPage() { if(this.currentPage() > 1) this.currentPage.update(p => p - 1); }

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router'; // 🌟 นำเข้า ActivatedRoute
+import { RouterLink, ActivatedRoute } from '@angular/router'; 
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class PlansComponent implements OnInit {
   private http = inject(HttpClient);
-  private route = inject(ActivatedRoute); // 🌟 ฉีด ActivatedRoute
+  private route = inject(ActivatedRoute); 
 
   allPlans = signal<any[]>([]);
   filteredPlans = signal<any[]>([]);
@@ -26,18 +26,17 @@ export class PlansComponent implements OnInit {
   
   sortDirection = signal<'desc' | 'asc'>('desc');
 
+  // 🌟 ระบบ Export Report
+  isExportMode = signal(false);
+  selectedIds = signal<Set<number>>(new Set());
+
   currentPage = signal(1);
   itemsPerPage = 10;
 
   ngOnInit() {
-    // 🌟 รับค่าที่ส่งมาจากหน้าโปรไฟล์ (ถ้ามี)
     this.route.queryParams.subscribe(params => {
-      if (params['search']) {
-        this.searchQuery.set(params['search']);
-      }
-      if (params['year']) {
-        this.currentYear.set(params['year']);
-      }
+      if (params['search']) this.searchQuery.set(params['search']);
+      if (params['year']) this.currentYear.set(params['year']);
     });
 
     this.fetchPermissionsFromDB();
@@ -119,8 +118,8 @@ export class PlansComponent implements OnInit {
   }
 
   availableYears = computed(() => {
-    const years = this.allPlans().map(p => p.year).filter(y => y !== null && y !== undefined);
-    const uniqueYears = Array.from(new Set(years)).sort((a, b) => b - a); 
+    const years = this.allPlans().map(p => p.year).filter(y => y !== null && y !== undefined && y !== '');
+    const uniqueYears = Array.from(new Set(years)).sort((a, b) => Number(b) - Number(a)); 
     return ['ทั้งหมด', ...uniqueYears.map(String)];
   });
 
@@ -134,10 +133,7 @@ export class PlansComponent implements OnInit {
     const query = this.searchQuery().toLowerCase().trim();
     const year = this.currentYear();
 
-    if (year !== 'ทั้งหมด') {
-      result = result.filter(p => String(p.year) === year);
-    }
-
+    if (year !== 'ทั้งหมด') result = result.filter(p => String(p.year) === year);
     if (query) {
       result = result.filter(p => 
         (p.plan_name && p.plan_name.toLowerCase().includes(query)) ||
@@ -147,11 +143,8 @@ export class PlansComponent implements OnInit {
     }
 
     const sortedResult = [...result].sort((a, b) => {
-      if (this.sortDirection() === 'desc') {
-        return b.id - a.id;
-      } else {
-        return a.id - b.id;
-      }
+      if (this.sortDirection() === 'desc') return b.id - a.id;
+      else return a.id - b.id;
     });
 
     this.filteredPlans.set(sortedResult);
@@ -160,6 +153,79 @@ export class PlansComponent implements OnInit {
 
   setYear(year: string) { this.currentYear.set(year); this.applyFilters(); }
   onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
+
+  // 🌟 ฟังก์ชันจัดการ Report & Export
+  toggleExportMode() {
+    this.isExportMode.set(!this.isExportMode());
+    this.selectedIds.set(new Set()); 
+  }
+
+  toggleSelection(id: number) {
+    const current = new Set(this.selectedIds());
+    if (current.has(id)) current.delete(id);
+    else current.add(id);
+    this.selectedIds.set(current);
+  }
+
+  toggleAll() {
+    if (this.isAllSelected()) {
+      this.selectedIds.set(new Set());
+    } else {
+      const allIds = this.filteredPlans().map(p => p.id);
+      this.selectedIds.set(new Set(allIds));
+    }
+  }
+
+  isAllSelected(): boolean {
+    return this.filteredPlans().length > 0 && this.selectedIds().size === this.filteredPlans().length;
+  }
+
+  exportSelectedToCSV() {
+    let dataToExport = this.filteredPlans();
+    if (this.selectedIds().size > 0) {
+      dataToExport = dataToExport.filter(item => this.selectedIds().has(item.id));
+    }
+
+    if (dataToExport.length === 0) {
+      alert('⚠️ ไม่มีข้อมูลสำหรับ Export');
+      return;
+    }
+
+    const escapeCSV = (str: any) => `"${(str || '').toString().replace(/"/g, '""')}"`;
+
+    const headers = ['ID', 'ชื่อแผนงาน', 'ยุทธศาสตร์', 'กิจกรรมย่อย', 'ผู้รับผิดชอบ', 'ประเภทแผนงาน', 'ปี พ.ศ.', 'งบที่ได้รับ (บาท)', 'งบที่ใช้ไป (บาท)', 'สถานะ', 'รายละเอียด'];
+    
+    const csvRows = dataToExport.map(item => {
+      const subActs = item.sub_activities ? item.sub_activities.join(' ; ') : '-';
+      return [
+        item.id,
+        escapeCSV(item.plan_name),
+        escapeCSV(item.strategy),
+        escapeCSV(subActs),
+        escapeCSV(item.participants),
+        escapeCSV(item.plan_type),
+        item.year || '-',
+        item.approved_budget || 0,
+        item.used_budget || 0,
+        escapeCSV(item.status),
+        escapeCSV(item.details)
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...csvRows].join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' }); 
+    
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `plans_projects_report_${new Date().getTime()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    this.toggleExportMode(); 
+  }
 
   paginatedPlans = computed(() => {
     const startIndex = (this.currentPage() - 1) * this.itemsPerPage;
