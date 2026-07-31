@@ -120,7 +120,7 @@ export class StaffComponent implements OnInit {
             image: item.img_profile ? 'http://localhost:8080/api/' + item.img_profile.replace(/^\/+/, '') : null,
             position: item.position,
             department: item.department || 'ส่วนกลาง',
-            researchCount: 0, 
+            researchCount: Number(item.researchCount) || 0, // 🌟 เปลี่ยนตรงนี้จุดเดียวเพื่อให้ดึงค่าผลรวมวิจัยมาแสดง
             can_edit: item.can_delete 
           }));
 

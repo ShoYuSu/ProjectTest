@@ -1,6 +1,6 @@
-import { Component, OnInit, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, NgZone, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router'; 
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms'; 
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'; 
@@ -41,12 +41,16 @@ export class ProfileComponent implements OnInit {
   modalFileType: 'image' | 'pdf' = 'image';
   modalFileName: string = ''; 
   zoomLevel: number = 1; 
-
-  // 🌟 เพิ่มตัวแปรเก็บรายการปี พ.ศ.
   yearsList: string[] = [];
+
+  // 🌟 รวมกลับมาเป็น 3 หมวด แต่เพิ่มตัวแปรแยก Tab ภายในหมวด Research
+  activeChartType = signal<'research' | 'plan_project' | 'training' | null>(null);
+  researchTab = signal<'project' | 'article'>('project'); // Tab สำหรับแยกประเภทวิจัย
+  chartData = signal<{year: string, count: number, heightPercent: number}[]>([]);
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router, 
     private http: HttpClient,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
@@ -54,7 +58,6 @@ export class ProfileComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // 🌟 สร้างชุดข้อมูลปี พ.ศ. (ปีปัจจุบัน + 543) ย้อนหลัง 50 ปี
     const currentYearBE = new Date().getFullYear() + 543;
     for (let i = 0; i <= 50; i++) {
       this.yearsList.push((currentYearBE - i).toString());
@@ -78,11 +81,8 @@ export class ProfileComponent implements OnInit {
     }
 
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-
     let apiUrl = 'http://localhost:8080/api/get_staff_profile.php';
-    if (id) {
-        apiUrl += `?id=${id}`;
-    }
+    if (id) apiUrl += `?id=${id}`;
 
     this.http.get<any>(apiUrl, { headers })
       .subscribe({
@@ -90,12 +90,9 @@ export class ProfileComponent implements OnInit {
           this.ngZone.run(() => {
             if (response && response.status === 'success') {
               this.profileData = response.data;
-              
               this.canEditProfile = response.can_edit_profile;
               this.canEditPermissions = response.can_edit_permissions;
-              
               this.canViewPermissions = this.canEditPermissions || response.is_owner;
-
               this.mapPermissionsToModules(response.data.permissions);
             } else {
               this.errorMessage = response?.message || 'เกิดข้อผิดพลาด';
@@ -115,24 +112,94 @@ export class ProfileComponent implements OnInit {
       });
   }
 
+  // 🌟 ฟังก์ชันคำนวณผลรวม Research (Project + Article) สำหรับหน้าการ์ด
+  getTotalResearchCount(): number {
+    const projCount = this.profileData?.statistics?.research_project?.total || 0;
+    const artCount = this.profileData?.statistics?.research_article?.total || 0;
+    return projCount + artCount;
+  }
+
+  // 🌟 ฟังก์ชันจัดการกราฟ
+  openChart(type: 'research' | 'plan_project' | 'training') {
+    this.activeChartType.set(type);
+    if (type === 'research') {
+      this.researchTab.set('project'); // Default ไปที่โครงการวิจัยก่อน
+    }
+    this.updateChartData();
+  }
+
+  // 🌟 ฟังก์ชันสลับ Tab ภายในกราฟ Research
+  setResearchTab(tab: 'project' | 'article') {
+    this.researchTab.set(tab);
+    this.updateChartData();
+  }
+
+  // 🌟 ฟังก์ชันอัปเดตข้อมูลกราฟตามสิ่งที่เลือก
+  updateChartData() {
+    const type = this.activeChartType();
+    if (!type || !this.profileData?.statistics) return;
+
+    let statKey = type as string;
+    // ถ้าเป็นโหมด Research ให้เช็ค Tab อีกทีว่าดึง object ไหน
+    if (type === 'research') {
+      statKey = this.researchTab() === 'project' ? 'research_project' : 'research_article';
+    }
+
+    const cData = this.profileData.statistics[statKey]?.chart_data || {};
+    const years = Object.keys(cData).sort((a, b) => Number(a) - Number(b)); 
+    
+    let max = 0;
+    years.forEach(y => { if (cData[y] > max) max = cData[y]; });
+    if (max === 0) max = 1; 
+    
+    const mapped = years.map(y => ({
+      year: y,
+      count: cData[y],
+      heightPercent: (cData[y] / max) * 100
+    }));
+    this.chartData.set(mapped);
+  }
+
+  getChartTitle() {
+    const type = this.activeChartType();
+    if (type === 'research') {
+      return this.researchTab() === 'project' ? 'ข้อมูลวิจัย (โครงการวิจัย)' : 'ข้อมูลวิจัย (บทความวิจัย)';
+    }
+    if (type === 'plan_project') return 'แผนงาน / โครงการ';
+    if (type === 'training') return 'ประวัติการอบรม';
+    return '';
+  }
+
+  // 🌟 เจาะลึกข้อมูล พาส่งไปยังหน้าตารางพร้อมแนบ Param
+  goToModule(year: string) {
+    const type = this.activeChartType();
+    const staffName = this.profileData?.basic_info?.full_name;
+    if (!staffName || !type) return;
+
+    let path = '';
+    if (type === 'research') {
+      path = this.researchTab() === 'project' ? '/research' : '/research/article';
+    } else if (type === 'plan_project') {
+      path = '/plans';
+    } else if (type === 'training') {
+      path = '/training';
+    }
+
+    this.router.navigate([path], { queryParams: { search: staffName, year: year } });
+  }
+
   toggleEditProfile() {
     this.isEditProfileMode = true;
     this.isEditPermissionMode = false;
     this.imagePreview = null;
-    
     this.editData = {
       update_type: 'profile',
       person_id: this.profileData.person_id,
       fullName: this.profileData.basic_info.full_name,
       email: this.profileData.basic_info.email
     };
-
     this.editData.education = this.profileData.education ? JSON.parse(JSON.stringify(this.profileData.education)) : [];
-
-    this.editData.expertiseList = this.profileData.expertise 
-      ? this.profileData.expertise.map((exp: string) => ({ value: exp })) 
-      : [];
-
+    this.editData.expertiseList = this.profileData.expertise ? this.profileData.expertise.map((exp: string) => ({ value: exp })) : [];
     this.editData.achievements = this.profileData.achievements ? JSON.parse(JSON.stringify(this.profileData.achievements)) : [];
     this.editData.existingCertificates = this.profileData.certificates ? [...this.profileData.certificates] : [];
     this.editData.deletedCertificates = []; 
@@ -140,10 +207,7 @@ export class ProfileComponent implements OnInit {
     this.editData.newCertificatesPreview = []; 
   }
 
-  cancelEditProfile() {
-    this.isEditProfileMode = false;
-    this.imagePreview = null;
-  }
+  cancelEditProfile() { this.isEditProfileMode = false; this.imagePreview = null; }
 
   onFileSelected(event: any) {
     const file = event.target.files[0];
@@ -164,25 +228,17 @@ export class ProfileComponent implements OnInit {
     if (!this.editData.education) this.editData.education = [];
     this.editData.education.push({ degree_level: '', field_of_study: '', university: '', graduation_year: '' });
   }
-
-  removeEducation(index: number) {
-    this.editData.education.splice(index, 1);
-  }
+  removeEducation(index: number) { this.editData.education.splice(index, 1); }
 
   addExpertise() {
     if (!this.editData.expertiseList) this.editData.expertiseList = [];
     this.editData.expertiseList.push({ value: '' });
   }
-
-  removeExpertise(index: number) {
-    this.editData.expertiseList.splice(index, 1);
-  }
+  removeExpertise(index: number) { this.editData.expertiseList.splice(index, 1); }
 
   sanitizeUrl(url: string, isPdf: boolean = false): SafeResourceUrl {
     let finalUrl = url;
-    if (isPdf && !url.includes('#toolbar=0')) {
-      finalUrl = `${url}#toolbar=0&navpanes=0&scrollbar=0`;
-    }
+    if (isPdf && !url.includes('#toolbar=0')) finalUrl = `${url}#toolbar=0&navpanes=0&scrollbar=0`;
     return this.sanitizer.bypassSecurityTrustResourceUrl(finalUrl);
   }
 
@@ -190,20 +246,14 @@ export class ProfileComponent implements OnInit {
     try {
       let fileName = url.split('/').pop() || 'Document';
       fileName = decodeURIComponent(fileName);
-      
       if (fileName.includes('_b64')) {
         const parts = fileName.split('_b64');
         const extIndex = parts[1].lastIndexOf('.');
         let encodedPart = extIndex !== -1 ? parts[1].substring(0, extIndex) : parts[1];
-        
         let base64Str = encodedPart.replace(/-/g, '+').replace(/_/g, '/');
-        while (base64Str.length % 4) {
-          base64Str += '=';
-        }
-        
+        while (base64Str.length % 4) { base64Str += '='; }
         return decodeURIComponent(escape(window.atob(base64Str)));
       }
-      
       return fileName;
     } catch (e) {
       return url.split('/').pop() || 'Document';
@@ -225,18 +275,8 @@ export class ProfileComponent implements OnInit {
         reader.onload = (e: any) => {
           this.ngZone.run(() => {
             const base64 = e.target.result;
-            
-            this.editData.newCertificatesPreview.push({
-              data: base64,
-              name: file.name,
-              type: file.type || 'unknown'
-            });
-
-            this.editData.newCertificates.push({
-              file_data: base64,
-              file_name: file.name
-            });
-
+            this.editData.newCertificatesPreview.push({ data: base64, name: file.name, type: file.type || 'unknown' });
+            this.editData.newCertificates.push({ file_data: base64, file_name: file.name });
             this.cdr.detectChanges();
           });
         };
@@ -249,7 +289,6 @@ export class ProfileComponent implements OnInit {
     this.editData.deletedCertificates.push(url);
     this.editData.existingCertificates.splice(index, 1);
   }
-
   removeNewCertificate(index: number) {
     this.editData.newCertificates.splice(index, 1);
     this.editData.newCertificatesPreview.splice(index, 1);
@@ -259,10 +298,7 @@ export class ProfileComponent implements OnInit {
     if (!this.editData.achievements) this.editData.achievements = [];
     this.editData.achievements.push({ achievement_name: '', achievement_year: new Date().getFullYear().toString() });
   }
-
-  removeAchievement(index: number) {
-    this.editData.achievements.splice(index, 1);
-  }
+  removeAchievement(index: number) { this.editData.achievements.splice(index, 1); }
 
   openModal(url: string, fileName: string) {
     const isPdf = url.toLowerCase().endsWith('.pdf') || url.includes('application/pdf');
@@ -272,34 +308,16 @@ export class ProfileComponent implements OnInit {
     this.zoomLevel = 1; 
     this.isModalOpen = true;
   }
+  closeModal() { this.isModalOpen = false; this.modalFileUrl = ''; }
+  zoomIn() { if (this.zoomLevel < 3) this.zoomLevel += 0.25; }
+  zoomOut() { if (this.zoomLevel > 0.5) this.zoomLevel -= 0.25; }
 
-  closeModal() {
-    this.isModalOpen = false;
-    this.modalFileUrl = '';
-  }
-
-  zoomIn() {
-    if (this.zoomLevel < 3) this.zoomLevel += 0.25;
-  }
-
-  zoomOut() {
-    if (this.zoomLevel > 0.5) this.zoomLevel -= 0.25;
-  }
-
-  toggleEditPermissions() {
-    this.isEditPermissionMode = true;
-    this.isEditProfileMode = false;
-  }
-
-  cancelEditPermissions() {
-    this.isEditPermissionMode = false;
-    this.mapPermissionsToModules(this.profileData.permissions);
-  }
+  toggleEditPermissions() { this.isEditPermissionMode = true; this.isEditProfileMode = false; }
+  cancelEditPermissions() { this.isEditPermissionMode = false; this.mapPermissionsToModules(this.profileData.permissions); }
 
   mapPermissionsToModules(apiPerms: any[]) {
     this.modules.forEach(m => { m.view = 'none'; m.add = 'none'; m.edit = 'none'; m.viewAccess = false; });
     if (!apiPerms || apiPerms.length === 0) return;
-
     apiPerms.forEach(p => {
       const mod = this.modules.find(m => m.moduleCode === p.module_name);
       if (mod) {
@@ -324,60 +342,40 @@ export class ProfileComponent implements OnInit {
   saveData() {
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    
     let payload: any = {};
 
     if (this.isEditProfileMode) {
       if (this.editData.newCertificatesPreview) {
         this.editData.newCertificates = this.editData.newCertificatesPreview.map((item: any) => ({
-          file_data: item.data,
-          file_name: item.name
+          file_data: item.data, file_name: item.name
         }));
       }
-
       if (this.editData.expertiseList) {
-        this.editData.expertise = this.editData.expertiseList
-          .map((exp: any) => exp.value)
-          .filter((val: string) => val && val.trim() !== '');
+        this.editData.expertise = this.editData.expertiseList.map((exp: any) => exp.value).filter((val: string) => val && val.trim() !== '');
       }
-
       payload = { ...this.editData };
-    } 
-    else if (this.isEditPermissionMode) {
+    } else if (this.isEditPermissionMode) {
       const permsToSend = this.modules.map(mod => ({
         module_name: mod.moduleCode,
         view: mod.isDashboard ? (mod.viewAccess ? 'all' : 'none') : this.mapScopeToDatabase(mod.view),
         add: this.mapScopeToDatabase(mod.add),
         edit: this.mapScopeToDatabase(mod.edit)
       }));
-
-      payload = {
-        update_type: 'permissions',
-        target_user_id: this.profileData.basic_info.user_id,
-        permissions: permsToSend
-      };
+      payload = { update_type: 'permissions', target_user_id: this.profileData.basic_info.user_id, permissions: permsToSend };
     }
 
     this.http.post('http://localhost:8080/api/get_staff_profile.php', payload, { headers })
       .subscribe({
         next: (res: any) => {
           if (res.status === 'success') {
-            
-            if (this.isEditProfileMode && this.imagePreview) {
-              localStorage.setItem('profile_image_override', this.imagePreview);
-            }
-
+            if (this.isEditProfileMode && this.imagePreview) { localStorage.setItem('profile_image_override', this.imagePreview); }
             this.isEditProfileMode = false;
             this.isEditPermissionMode = false;
             alert('✅ บันทึกข้อมูลเรียบร้อยแล้ว!');
             this.fetchProfileData(this.profileData.person_id);
-          } else {
-            alert('❌ บันทึกไม่สำเร็จ: ' + res.message);
-          }
+          } else { alert('❌ บันทึกไม่สำเร็จ: ' + res.message); }
         },
-        error: (err) => {
-          alert('❌ เชื่อมต่อเซิร์ฟเวอร์เพื่อบันทึกข้อมูลล้มเหลว');
-        }
+        error: (err) => { alert('❌ เชื่อมต่อเซิร์ฟเวอร์เพื่อบันทึกข้อมูลล้มเหลว'); }
       });
   }
 }

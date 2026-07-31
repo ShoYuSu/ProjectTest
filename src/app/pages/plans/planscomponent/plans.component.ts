@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router'; // 🌟 นำเข้า ActivatedRoute
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class PlansComponent implements OnInit {
   private http = inject(HttpClient);
+  private route = inject(ActivatedRoute); // 🌟 ฉีด ActivatedRoute
 
   allPlans = signal<any[]>([]);
   filteredPlans = signal<any[]>([]);
@@ -29,6 +30,16 @@ export class PlansComponent implements OnInit {
   itemsPerPage = 10;
 
   ngOnInit() {
+    // 🌟 รับค่าที่ส่งมาจากหน้าโปรไฟล์ (ถ้ามี)
+    this.route.queryParams.subscribe(params => {
+      if (params['search']) {
+        this.searchQuery.set(params['search']);
+      }
+      if (params['year']) {
+        this.currentYear.set(params['year']);
+      }
+    });
+
     this.fetchPermissionsFromDB();
     this.fetchPlanData();
   }
@@ -42,7 +53,6 @@ export class PlansComponent implements OnInit {
         next: (res) => {
           const perms = res.permissions || res || {}; 
           let hasAdd = false;
-          
           const targetModules = ['plan_project', 'plan_info', 'plan']; 
           for (const mod of targetModules) {
             if (perms[mod]) {
@@ -136,7 +146,6 @@ export class PlansComponent implements OnInit {
       );
     }
 
-    // 🌟 สร้าง Array ตัวใหม่ [...result] เพื่อบังคับให้ UI อัปเดตทันที
     const sortedResult = [...result].sort((a, b) => {
       if (this.sortDirection() === 'desc') {
         return b.id - a.id;

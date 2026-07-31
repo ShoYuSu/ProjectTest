@@ -82,53 +82,100 @@
 
     <div class="lg:col-span-8 space-y-6">
 
-      <!-- 🌟 ส่วน Dashboard สรุปสถิติ (แสดงผลเฉพาะโหมด View ปกติ) -->
+      <!-- 🌟 ส่วน Dashboard 3 หมวดการ์ดสรุป -->
       <div *ngIf="!isEditProfileMode && !isEditPermissionMode" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         
-        <!-- 1. ข้อมูลวิจัย -->
-        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer" routerLink="/research">
+        <!-- 1. ข้อมูลวิจัย (รวม Project + Article) -->
+        <div (click)="openChart('research')" class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md hover:border-blue-200 transition-all cursor-pointer">
           <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
           </div>
           <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">ข้อมูลวิจัย</p>
             <div class="flex items-baseline gap-1 mt-0.5">
-              <h4 class="text-2xl font-black text-[#2A1D1A] leading-none">{{ profileData?.statistics?.research || 0 }}</h4>
+              <h4 class="text-2xl font-black text-[#2A1D1A] leading-none">{{ getTotalResearchCount() }}</h4>
               <span class="text-xs font-bold text-gray-400">รายการ</span>
             </div>
           </div>
         </div>
 
         <!-- 2. แผนงาน / โครงการ -->
-        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md hover:border-orange-200 transition-all cursor-pointer" routerLink="/plans">
+        <div (click)="openChart('plan_project')" class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md hover:border-orange-200 transition-all cursor-pointer">
           <div class="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect><line x1="16" x2="16" y1="2" y2="6"></line><line x1="8" x2="8" y1="2" y2="6"></line><line x1="3" x2="21" y1="10" y2="10"></line></svg>
           </div>
           <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">แผนงาน/โครงการ</p>
             <div class="flex items-baseline gap-1 mt-0.5">
-              <h4 class="text-2xl font-black text-[#2A1D1A] leading-none">{{ profileData?.statistics?.project || 0 }}</h4>
+              <h4 class="text-2xl font-black text-[#2A1D1A] leading-none">{{ profileData?.statistics?.plan_project?.total || 0 }}</h4>
               <span class="text-xs font-bold text-gray-400">โครงการ</span>
             </div>
           </div>
         </div>
 
         <!-- 3. ข้อมูลอบรม -->
-        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md hover:border-green-200 transition-all cursor-pointer" routerLink="/training">
+        <div (click)="openChart('training')" class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md hover:border-green-200 transition-all cursor-pointer">
           <div class="w-14 h-14 rounded-2xl bg-green-50 text-green-500 flex items-center justify-center shrink-0">
             <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
           </div>
           <div>
             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">ประวัติการอบรม</p>
             <div class="flex items-baseline gap-1 mt-0.5">
-              <h4 class="text-2xl font-black text-[#2A1D1A] leading-none">{{ profileData?.statistics?.training || 0 }}</h4>
+              <h4 class="text-2xl font-black text-[#2A1D1A] leading-none">{{ profileData?.statistics?.training?.total || 0 }}</h4>
               <span class="text-xs font-bold text-gray-400">ครั้ง</span>
             </div>
           </div>
         </div>
 
       </div>
+
+      <!-- 🌟 ส่วนแสดงกราฟ 5 ปี -->
+      @if (activeChartType()) {
+        <div class="bg-white p-8 rounded-3xl shadow-sm border border-[#F9BD15] animate-in fade-in zoom-in-95 relative overflow-hidden">
+          <div class="flex justify-between items-start mb-6">
+            <h3 class="font-black text-[#2A1D1A] text-lg">สถิติ 5 ปีย้อนหลัง: {{ getChartTitle() }}</h3>
+            <button (click)="activeChartType.set(null)" class="text-gray-400 hover:text-red-500 font-bold text-xs bg-gray-50 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors border border-gray-100 flex-none ml-4">✕ ปิดกราฟ</button>
+          </div>
+          
+          <!-- 🌟 หากกดที่การ์ดข้อมูลวิจัย จะมี Tab โผล่มาให้เลือก -->
+          @if (activeChartType() === 'research') {
+            <div class="flex flex-wrap gap-2 mb-6 pb-4 border-b border-gray-100">
+              <button (click)="setResearchTab('project')"
+                      [ngClass]="researchTab() === 'project' ? 'bg-[#2A1D1A] text-[#F9BD15] shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
+                      class="px-5 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2">
+                โครงการวิจัย
+              </button>
+              <button (click)="setResearchTab('article')"
+                      [ngClass]="researchTab() === 'article' ? 'bg-[#2A1D1A] text-[#F9BD15] shadow-md' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
+                      class="px-5 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2">
+                บทความวิจัย
+              </button>
+            </div>
+          }
+
+          <p class="text-xs text-gray-400 mb-6 font-bold">* สามารถคลิกที่แท่งกราฟเพื่อดูข้อมูลโดยละเอียดในปีนั้นได้</p>
+          
+          <div class="flex items-end justify-around h-64 gap-2 sm:gap-6 border-b border-gray-200 pb-2 px-2">
+            @for (data of chartData(); track data.year) {
+              <div class="flex flex-col items-center justify-end w-full group cursor-pointer h-full" (click)="goToModule(data.year)">
+                
+                <div class="opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-[10px] font-bold px-3 py-1.5 rounded mb-2 whitespace-nowrap shadow-lg translate-y-2 group-hover:translate-y-0 duration-300">
+                  คลิกดู {{ data.count }} รายการ
+                </div>
+                
+                <div class="w-full max-w-[60px] bg-[#F9BD15]/60 group-hover:bg-[#F9BD15] transition-all rounded-t-xl relative flex flex-col justify-end"
+                     [style.height.%]="data.heightPercent === 0 ? 1 : data.heightPercent">
+                   <span class="text-xs font-black text-[#2A1D1A] text-center mb-2" *ngIf="data.count > 0">{{ data.count }}</span>
+                </div>
+                
+                <div class="text-xs font-black text-gray-400 mt-3 group-hover:text-[#2A1D1A] transition-colors">{{ data.year }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      }
       
+      <!-- ส่วนตารางประวัติการศึกษา -->
       <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100" [class.opacity-50]="isEditPermissionMode">
         <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M6 18.8v-4L2 13v6a1 1 0 0 0 1 1h3z"/><path d="M12 22c4 0 7-3 7-7v-3.5l-7 3.2-7-3.2V15c0 4 3 7 7 7z"/></svg>
@@ -203,11 +250,10 @@
 
       <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100" [class.opacity-50]="isEditPermissionMode">
         <div class="flex items-center gap-3 mb-6 text-[#F9BD15]">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
           <h3 class="font-black text-[#2A1D1A] text-lg">ใบประกาศนียบัตร / เกียรติบัตร</h3>
         </div>
 
-        <!-- โหมดดูข้อมูล (View Mode) -->
         <div *ngIf="!isEditProfileMode">
           <div *ngIf="!profileData?.certificates || profileData?.certificates?.length === 0" class="text-sm text-gray-400 font-bold">ไม่มีข้อมูลเอกสารแนบ</div>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" *ngIf="profileData?.certificates && profileData?.certificates?.length > 0">
@@ -247,11 +293,9 @@
           </div>
         </div>
 
-        <!-- โหมดแก้ไขข้อมูล (Edit Mode) -->
         <div *ngIf="isEditProfileMode">
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
 
-            <!-- 1. วนลูปไฟล์เก่าที่มีอยู่ในฐานข้อมูล -->
             <div *ngFor="let certUrl of editData.existingCertificates; let i = index" class="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-200 border border-gray-100 shadow-sm group">
               
               <ng-container *ngIf="certUrl.toLowerCase().endsWith('.pdf'); else checkOtherExisting">
@@ -267,7 +311,6 @@
               </ng-container>
               
               <ng-template #checkOtherExisting>
-                <!-- Image Preview -->
                 <ng-container *ngIf="certUrl.toLowerCase().endsWith('.png') || certUrl.toLowerCase().endsWith('.jpg') || certUrl.toLowerCase().endsWith('.jpeg') || certUrl.toLowerCase().endsWith('.gif') || certUrl.toLowerCase().endsWith('.webp'); else fileExisting">
                   <div class="w-full h-full relative cursor-pointer bg-white" (click)="openModal(certUrl, getFileName(certUrl))">
                     <img [src]="certUrl" alt="Certificate" class="w-full h-full object-cover select-none" (contextmenu)="$event.preventDefault()" draggable="false">
@@ -279,7 +322,6 @@
               </ng-template>
               
               <ng-template #fileExisting>
-                <!-- Other File -->
                 <a [href]="certUrl" target="_blank" class="w-full h-full flex flex-col items-center justify-center text-blue-500 bg-blue-50 hover:bg-blue-100 transition-colors p-2 text-center">
                   <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
                   <span class="text-xs font-bold mt-2 line-clamp-2 w-full">{{ getFileName(certUrl) }}</span>
@@ -291,7 +333,6 @@
               </button>
             </div>
             
-            <!-- 2. วนลูปไฟล์ใหม่ที่เพิ่งกดอัปโหลด (รอเซฟ) -->
             <div *ngFor="let prev of editData.newCertificatesPreview; let i = index" class="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-200 border-2 border-green-400 shadow-sm group flex flex-col">
               
               <div class="relative flex-1 overflow-hidden bg-white">
@@ -304,7 +345,6 @@
                   </div>
                 </ng-container>
 
-                <!-- Other File Icon -->
                 <ng-template #checkOtherNew>
                   <ng-container *ngIf="!prev.type.includes('image/'); else newImgPrev">
                     <div class="w-full h-full flex flex-col items-center justify-center text-green-600 bg-green-50 p-2 text-center">
@@ -314,7 +354,6 @@
                   </ng-container>
                 </ng-template>
 
-                <!-- Image Preview -->
                 <ng-template #newImgPrev>
                   <div class="w-full h-full relative cursor-pointer" (click)="openModal(prev.data, prev.name)">
                     <img [src]="prev.data" alt="New Certificate" class="w-full h-full object-cover select-none" (contextmenu)="$event.preventDefault()" draggable="false">
@@ -325,7 +364,6 @@
                 </ng-template>
               </div>
 
-              <!-- กล่องแก้ไขชื่อไฟล์ก่อนกดบันทึก -->
               <div class="bg-green-50 p-1.5 border-t border-green-200 flex flex-col z-30 relative">
                 <input type="text" [(ngModel)]="prev.name" (input)="updateNewFileName(i, prev.name)" class="w-full text-[11px] font-bold text-gray-700 bg-white border border-green-300 rounded px-1.5 py-1 outline-none focus:border-green-500 transition-colors" placeholder="ตั้งชื่อไฟล์...">
                 <span class="text-[9px] font-black text-green-600 text-center mt-1">รออัปโหลด...</span>
@@ -336,7 +374,6 @@
               </button>
             </div>
 
-            <!-- 3. กล่องปุ่มกดอัปโหลดไฟล์ -->
             <label class="aspect-[4/3] rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-[#F9BD15]/10 hover:border-[#F9BD15] transition-colors group p-2 text-center">
               <span class="text-3xl text-gray-300 group-hover:text-[#F9BD15] transition-colors">+</span>
               <span class="text-xs font-bold text-gray-400 mt-2 group-hover:text-[#F9BD15] transition-colors">เพิ่มเอกสารแนบ</span>

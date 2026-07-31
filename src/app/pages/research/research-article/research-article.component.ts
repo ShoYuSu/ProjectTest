@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router'; // 🌟 นำเข้า ActivatedRoute
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class ResearchArticleComponent implements OnInit {
   private http = inject(HttpClient);
+  private route = inject(ActivatedRoute); // 🌟 ฉีด ActivatedRoute
 
   allArticles = signal<any[]>([]);
   filteredArticles = signal<any[]>([]);
@@ -23,6 +24,7 @@ export class ResearchArticleComponent implements OnInit {
   
   searchQuery = signal<string>('');
   currentDept = signal<string>('ทั้งหมด');
+  currentYear = signal<string>('ทั้งหมด'); // 🌟 เพิ่ม Signal ปี
   activeTab = signal<string>('journal'); 
 
   sortDirection = signal<'desc' | 'asc'>('desc');
@@ -31,6 +33,12 @@ export class ResearchArticleComponent implements OnInit {
   itemsPerPage = 10;
 
   ngOnInit() {
+    // 🌟 รับค่า Params ที่ส่งมาจากหน้ากราฟ
+    this.route.queryParams.subscribe(params => {
+      if (params['search']) this.searchQuery.set(params['search']);
+      if (params['year']) this.currentYear.set(params['year']);
+    });
+
     this.fetchPermissionsFromDB();
     this.fetchArticleData();
   }
@@ -44,7 +52,6 @@ export class ResearchArticleComponent implements OnInit {
         next: (res) => {
           const p = res.permissions || res || {}; 
           let hasAdd = false;
-          
           const modPerms = p['research_info'] || p['research'];
           if (modPerms && modPerms['add']) {
              const scope = modPerms['add'].toString().toLowerCase().trim();
@@ -115,6 +122,15 @@ export class ResearchArticleComponent implements OnInit {
     }
   }
 
+  // 🌟 คำนวณปีให้ปุ่มฟิลเตอร์ทำงาน
+  availableYears = computed(() => {
+    const years = this.allArticles()
+                    .filter(a => a.type === this.activeTab()) // แยกปีตาม Tab
+                    .map(a => a.year).filter(y => y !== null && y !== undefined && y !== '');
+    const uniqueYears = Array.from(new Set(years)).sort((a, b) => Number(b) - Number(a)); 
+    return ['ทั้งหมด', ...uniqueYears.map(String)];
+  });
+
   toggleSort() {
     this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
     this.applyFilters();
@@ -124,12 +140,18 @@ export class ResearchArticleComponent implements OnInit {
     let result = this.allArticles();
     const query = this.searchQuery().toLowerCase().trim();
     const dept = this.currentDept();
+    const year = this.currentYear();
     const tab = this.activeTab();
 
     result = result.filter(a => a.type === tab);
     
     if (dept !== 'ทั้งหมด') {
         result = result.filter(a => a.involved_departments && a.involved_departments.includes(dept));
+    }
+
+    // 🌟 นำค่า Year มากกรองข้อมูล
+    if (year !== 'ทั้งหมด') {
+      result = result.filter(a => String(a.year) === year);
     }
 
     if (query) {
@@ -141,7 +163,6 @@ export class ResearchArticleComponent implements OnInit {
       );
     }
 
-    // 🌟 สร้าง Array ตัวใหม่ [...result] เพื่อบังคับให้ UI อัปเดตทันที
     const sortedResult = [...result].sort((a, b) => {
       if (this.sortDirection() === 'desc') {
         return b.id - a.id;
@@ -154,8 +175,9 @@ export class ResearchArticleComponent implements OnInit {
     this.currentPage.set(1);
   }
 
-  setTab(tabName: string) { this.activeTab.set(tabName); this.applyFilters(); }
+  setTab(tabName: string) { this.activeTab.set(tabName); this.currentYear.set('ทั้งหมด'); this.applyFilters(); }
   setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(); }
+  setYear(year: string) { this.currentYear.set(year); this.applyFilters(); }
   onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
 
   paginatedArticles = computed(() => {

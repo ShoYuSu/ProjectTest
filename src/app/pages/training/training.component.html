@@ -26,7 +26,6 @@
     </div>
   }
 
-  <!-- 🌟 ปรับปรุงกล่องค้นหาและเพิ่มปุ่มจัดเรียงลำดับ -->
   <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col md:flex-row gap-4">
     <div class="relative flex-1">
       <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
@@ -51,16 +50,33 @@
     </button>
   </div>
 
-  <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col md:flex-row gap-6 md:items-start">
-      <span class="text-sm font-bold text-gray-500 whitespace-nowrap mt-2">ภาควิชา</span>
-      <div class="flex flex-wrap gap-3">
-        @for (dept of ['ทั้งหมด', 'คณิตศาสตร์', 'เคมี', 'เทคโนโลยีการอาหาร', 'ฟิสิกส์', 'วิทยาการคอมพิวเตอร์']; track dept) {
-          <button (click)="setDepartment(dept)"
-                  [ngClass]="currentDept() === dept ? 'bg-[#F9BD15] text-[#2A1D1A] shadow-sm' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
-                  class="px-6 py-2.5 rounded-full font-bold text-sm transition-all active:scale-95">
-            {{ dept === 'ทั้งหมด' ? 'ทั้งหมด' : 'ภาควิชา' + dept }}
-          </button>
-        }
+  <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col gap-6">
+      
+      <!-- 🌟 เพิ่มส่วนแสดงปุ่มปี พ.ศ. -->
+      <div class="flex flex-col md:flex-row gap-4 md:items-start pb-4 border-b border-gray-50">
+        <span class="text-sm font-bold text-gray-500 whitespace-nowrap mt-2 w-20">ปี พ.ศ.</span>
+        <div class="flex flex-wrap gap-3">
+          @for (year of availableYears(); track year) {
+            <button (click)="setYear(year)"
+                    [ngClass]="currentYear() === year ? 'bg-[#2A1D1A] text-[#F9BD15] shadow-sm' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
+                    class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2">
+              {{ year === 'ทั้งหมด' ? 'ทุกปี' : 'ประจำปี ' + year }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="flex flex-col md:flex-row gap-4 md:items-start">
+        <span class="text-sm font-bold text-gray-500 whitespace-nowrap mt-2 w-20">ภาควิชา</span>
+        <div class="flex flex-wrap gap-3">
+          @for (dept of ['ทั้งหมด', 'คณิตศาสตร์', 'เคมี', 'เทคโนโลยีการอาหาร', 'ฟิสิกส์', 'วิทยาการคอมพิวเตอร์']; track dept) {
+            <button (click)="setDepartment(dept)"
+                    [ngClass]="currentDept() === dept ? 'bg-[#F9BD15] text-[#2A1D1A] shadow-sm' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'"
+                    class="px-6 py-2.5 rounded-full font-bold text-sm transition-all active:scale-95">
+              {{ dept === 'ทั้งหมด' ? 'ทั้งหมด' : 'ภาควิชา' + dept }}
+            </button>
+          }
+        </div>
       </div>
   </div>
 
@@ -78,28 +94,30 @@
         <h3 class="font-black text-[#2A1D1A] text-lg">ประวัติการอบรม <span class="text-gray-400 text-sm font-bold ml-2">({{ filteredTrainings().length }} รายการ)</span></h3>
       </div>
       
-      <div class="overflow-x-auto">
-        <table class="w-full text-left min-w-[1100px]">
-            <thead class="bg-gray-50 text-xs text-gray-500 font-bold">
+      <div class="overflow-auto max-h-[65vh] w-full">
+        <table class="w-full text-left min-w-[1100px] border-collapse">
+            <thead class="text-xs text-gray-500 font-bold">
               <tr>
-                  <th class="py-5 px-8 w-20">ID</th>
-                  <th class="py-5 px-4">หัวข้อการอบรม</th>
-                  <th class="py-5 px-4 w-48">ผู้เข้าร่วม</th>
-                  <th class="py-5 px-4 w-40">ระยะเวลา</th>
-                  <th class="py-5 px-4 w-40">สถานที่</th>
-                  <th class="py-5 px-4 w-32 text-right">ค่าใช้จ่าย</th>
-                  <th class="py-5 px-8 w-32 text-center">จัดการ</th>
+                  <th class="py-5 px-6 w-[90px] min-w-[90px] max-w-[90px] sticky top-0 left-0 bg-gray-50 z-40 border-r border-b border-gray-100 shadow-[2px_2px_4px_rgba(0,0,0,0.02)]">ID</th>
+                  <th class="py-5 px-4 w-[340px] min-w-[340px] max-w-[340px] sticky top-0 left-[90px] bg-gray-50 z-40 border-r border-b border-gray-100 shadow-[4px_2px_12px_-4px_rgba(0,0,0,0.1)]">หัวข้อการอบรม</th>
+                  
+                  <th class="py-5 px-4 w-48 sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">ผู้เข้าร่วม</th>
+                  <th class="py-5 px-4 w-40 sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">ระยะเวลา</th>
+                  <th class="py-5 px-4 w-40 sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">สถานที่</th>
+                  <th class="py-5 px-4 w-32 text-right sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">ค่าใช้จ่าย</th>
+                  
+                  <th class="py-5 px-8 w-[140px] min-w-[140px] max-w-[140px] text-center sticky top-0 right-0 bg-gray-50 z-40 border-l border-b border-gray-100 shadow-[-4px_2px_12px_-4px_rgba(0,0,0,0.1)]">จัดการ</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
               @if (paginatedTrainings().length > 0 && !loading()) {
                   @for (item of paginatedTrainings(); track item.id) {
-                    <tr class="hover:bg-gray-50/50 transition-colors">
-                        <td class="py-6 px-8 text-sm font-bold text-gray-400">#{{ item.id }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] pr-10 leading-relaxed">{{ item.title }}</td>
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed">{{ item.participants }}</td>
+                    <tr class="group hover:bg-gray-50 transition-colors">
+                        <td class="py-6 px-6 text-sm font-bold text-gray-400 align-top pt-6 sticky left-0 bg-white group-hover:bg-gray-50 z-10 transition-colors border-r border-gray-50">#{{ item.id }}</td>
+                        <td class="py-6 px-4 text-sm font-bold text-[#2A1D1A] pr-4 leading-relaxed align-top pt-6 sticky left-[90px] bg-white group-hover:bg-gray-50 z-10 transition-colors shadow-[4px_0_12px_-4px_rgba(0,0,0,0.05)] border-r border-gray-100">{{ item.title }}</td>
+                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top pt-6">{{ item.participants }}</td>
                         
-                        <td class="py-6 px-4 text-xs font-bold text-gray-500">
+                        <td class="py-6 px-4 text-xs font-bold text-gray-500 align-top pt-6">
                           <div class="flex flex-col gap-1">
                             <span class="text-[#F9BD15] bg-[#F9BD15]/10 px-2 py-1 rounded w-fit text-[10px] uppercase">เริ่มต้น</span>
                             <span>{{ item.start_date || '-' }}</span>
@@ -108,23 +126,23 @@
                           </div>
                         </td>
                         
-                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed">{{ item.location }}</td>
-                        <td class="py-6 px-4 text-sm font-black text-[#2A1D1A] text-right">{{ item.budget | number }} ฿</td>
+                        <td class="py-6 px-4 text-sm font-bold text-gray-500 leading-relaxed align-top pt-6">{{ item.location }}</td>
+                        <td class="py-6 px-4 text-sm font-black text-[#2A1D1A] text-right align-top pt-6">{{ item.budget | number }} ฿</td>
                         
-                        <td class="py-6 px-8 text-center">
+                        <td class="py-6 px-8 text-center align-top pt-6 sticky right-0 bg-white group-hover:bg-gray-50 z-10 transition-colors border-l border-gray-50 shadow-[-4px_0_12px_-4px_rgba(0,0,0,0.05)]">
                           
                           @if (item.can_edit || item.can_delete) {
-                            <div class="flex items-center justify-center gap-2">
+                            <div class="flex items-center justify-center gap-2 flex-wrap">
                               @if (item.can_edit) {
                                 <a [routerLink]="['/training/add']" 
                                    [queryParams]="{ edit: item.id }" 
-                                   class="text-[#F9BD15] bg-[#F9BD15]/10 hover:bg-[#F9BD15] hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
+                                   class="text-[#F9BD15] bg-[#F9BD15]/10 hover:bg-[#F9BD15] hover:text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all">
                                     แก้ไข
                                 </a>
                               }
                               @if (item.can_delete) {
                                 <button (click)="deleteTraining(item.id)" 
-                                        class="text-red-500 bg-red-50 hover:bg-red-500 hover:text-white px-4 py-2 rounded-xl text-xs font-black transition-all">
+                                        class="text-red-500 bg-red-50 hover:bg-red-500 hover:text-white px-3 py-2 rounded-xl text-[10px] font-black uppercase transition-all">
                                     ลบ
                                 </button>
                               }

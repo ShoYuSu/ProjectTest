@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router'; // 🌟 นำเข้า ActivatedRoute
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class ResearchComponent implements OnInit {
   private http = inject(HttpClient);
+  private route = inject(ActivatedRoute); // 🌟 ฉีด ActivatedRoute
 
   allProjects = signal<any[]>([]);
   filteredProjects = signal<any[]>([]);
@@ -23,13 +24,19 @@ export class ResearchComponent implements OnInit {
   
   searchQuery = signal<string>('');
   currentDept = signal<string>('ทั้งหมด');
-
+  currentYear = signal<string>('ทั้งหมด'); // 🌟 เพิ่ม Signal ปี
   sortDirection = signal<'desc' | 'asc'>('desc');
 
   currentPage = signal(1);
   itemsPerPage = 10;
 
   ngOnInit() {
+    // 🌟 รับค่า Params ที่ส่งมาจากหน้ากราฟ
+    this.route.queryParams.subscribe(params => {
+      if (params['search']) this.searchQuery.set(params['search']);
+      if (params['year']) this.currentYear.set(params['year']);
+    });
+
     this.fetchPermissionsFromDB(); 
     this.fetchResearchData();      
   }
@@ -43,7 +50,6 @@ export class ResearchComponent implements OnInit {
         next: (res) => {
           const p = res.permissions || res || {}; 
           let hasAdd = false;
-          
           const modPerms = p['research_info'] || p['research'];
           if (modPerms && modPerms['add']) {
             const scope = modPerms['add'].toString().toLowerCase().trim();
@@ -111,6 +117,13 @@ export class ResearchComponent implements OnInit {
     }
   }
 
+  // 🌟 คำนวณปีให้ปุ่มฟิลเตอร์ทำงาน
+  availableYears = computed(() => {
+    const years = this.allProjects().map(p => p.year).filter(y => y !== null && y !== undefined && y !== '');
+    const uniqueYears = Array.from(new Set(years)).sort((a, b) => Number(b) - Number(a)); 
+    return ['ทั้งหมด', ...uniqueYears.map(String)];
+  });
+
   toggleSort() {
     this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
     this.applyFilters();
@@ -120,9 +133,15 @@ export class ResearchComponent implements OnInit {
     let result = this.allProjects();
     const query = this.searchQuery().toLowerCase().trim();
     const dept = this.currentDept();
+    const year = this.currentYear();
 
     if (dept !== 'ทั้งหมด') {
       result = result.filter(p => p.involved_departments && p.involved_departments.includes(dept));
+    }
+    
+    // 🌟 นำค่า Year มากกรองข้อมูล
+    if (year !== 'ทั้งหมด') {
+      result = result.filter(p => String(p.year) === year);
     }
 
     if (query) {
@@ -133,7 +152,6 @@ export class ResearchComponent implements OnInit {
       );
     }
 
-    // 🌟 สร้าง Array ตัวใหม่ [...result] เพื่อบังคับให้ UI อัปเดตทันที
     const sortedResult = [...result].sort((a, b) => {
       if (this.sortDirection() === 'desc') {
         return b.id - a.id;
@@ -147,6 +165,7 @@ export class ResearchComponent implements OnInit {
   }
 
   setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(); }
+  setYear(year: string) { this.currentYear.set(year); this.applyFilters(); }
   onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
 
   paginatedProjects = computed(() => {
@@ -156,7 +175,6 @@ export class ResearchComponent implements OnInit {
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredProjects().length / this.itemsPerPage)));
   pagesArray = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
-
   goToPage(page: number) { this.currentPage.set(page); }
   nextPage() { if(this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1); }
   prevPage() { if(this.currentPage() > 1) this.currentPage.update(p => p - 1); }

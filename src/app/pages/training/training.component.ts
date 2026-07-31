@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router'; // 🌟 นำเข้า ActivatedRoute
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class TrainingComponent implements OnInit {
   private http = inject(HttpClient);
+  private route = inject(ActivatedRoute); // 🌟 ฉีด ActivatedRoute
 
   allTrainings = signal<any[]>([]);
   filteredTrainings = signal<any[]>([]);
@@ -23,6 +24,7 @@ export class TrainingComponent implements OnInit {
   
   searchQuery = signal<string>('');
   currentDept = signal<string>('ทั้งหมด');
+  currentYear = signal<string>('ทั้งหมด'); // 🌟 เพิ่ม Signal ปี
 
   sortDirection = signal<'desc' | 'asc'>('desc');
 
@@ -30,6 +32,12 @@ export class TrainingComponent implements OnInit {
   itemsPerPage = 10;
 
   ngOnInit() {
+    // 🌟 รับค่า Params ที่ส่งมาจากหน้ากราฟ
+    this.route.queryParams.subscribe(params => {
+      if (params['search']) this.searchQuery.set(params['search']);
+      if (params['year']) this.currentYear.set(params['year']);
+    });
+
     this.fetchPermissionsFromDB();
     this.fetchTrainingData();
   }
@@ -68,7 +76,17 @@ export class TrainingComponent implements OnInit {
     this.http.get<any[]>('http://localhost:8080/api/get_training.php', { headers })
       .subscribe({
         next: (data) => {
-          this.allTrainings.set(data || []);
+          // คำนวณ ปี พ.ศ. จาก start_date เพื่อใช้ฟิลเตอร์
+          const mappedData = (data || []).map(item => {
+             let year = null;
+             if (item.start_date) {
+                const dateObj = new Date(item.start_date);
+                if (!isNaN(dateObj.getTime())) year = dateObj.getFullYear() + 543;
+             }
+             return { ...item, year: year };
+          });
+          
+          this.allTrainings.set(mappedData);
           this.applyFilters();
           this.loading.set(false);
         },
@@ -96,6 +114,13 @@ export class TrainingComponent implements OnInit {
     }
   }
 
+  // 🌟 คำนวณปีให้ปุ่มฟิลเตอร์ทำงาน
+  availableYears = computed(() => {
+    const years = this.allTrainings().map(t => t.year).filter(y => y !== null && y !== undefined && y !== '');
+    const uniqueYears = Array.from(new Set(years)).sort((a, b) => Number(b) - Number(a)); 
+    return ['ทั้งหมด', ...uniqueYears.map(String)];
+  });
+
   toggleSort() {
     this.sortDirection.set(this.sortDirection() === 'desc' ? 'asc' : 'desc');
     this.applyFilters();
@@ -105,9 +130,15 @@ export class TrainingComponent implements OnInit {
     let result = this.allTrainings();
     const query = this.searchQuery().toLowerCase().trim();
     const dept = this.currentDept();
+    const year = this.currentYear();
 
     if (dept !== 'ทั้งหมด') {
       result = result.filter(t => t.involved_departments && t.involved_departments.includes(dept));
+    }
+    
+    // 🌟 นำค่า Year มากกรองข้อมูล
+    if (year !== 'ทั้งหมด') {
+      result = result.filter(t => String(t.year) === year);
     }
 
     if (query) {
@@ -118,7 +149,6 @@ export class TrainingComponent implements OnInit {
       );
     }
 
-    // 🌟 สร้าง Array ตัวใหม่ [...result] เพื่อบังคับให้ UI อัปเดตทันที
     const sortedResult = [...result].sort((a, b) => {
       if (this.sortDirection() === 'desc') {
         return b.id - a.id;
@@ -132,6 +162,7 @@ export class TrainingComponent implements OnInit {
   }
 
   setDepartment(deptName: string) { this.currentDept.set(deptName); this.applyFilters(); }
+  setYear(year: string) { this.currentYear.set(year); this.applyFilters(); }
   onSearchChange(val: string) { this.searchQuery.set(val); this.applyFilters(); }
 
   paginatedTrainings = computed(() => {
@@ -141,7 +172,6 @@ export class TrainingComponent implements OnInit {
 
   totalPages = computed(() => Math.max(1, Math.ceil(this.filteredTrainings().length / this.itemsPerPage)));
   pagesArray = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
-
   goToPage(page: number) { this.currentPage.set(page); }
   nextPage() { if(this.currentPage() < this.totalPages()) this.currentPage.update(p => p + 1); }
   prevPage() { if(this.currentPage() > 1) this.currentPage.update(p => p - 1); }
