@@ -43,10 +43,33 @@ export class ProfileComponent implements OnInit {
   zoomLevel: number = 1; 
   yearsList: string[] = [];
 
-  // 🌟 รวมกลับมาเป็น 3 หมวด แต่เพิ่มตัวแปรแยก Tab ภายในหมวด Research
   activeChartType = signal<'research' | 'plan_project' | 'training' | null>(null);
-  researchTab = signal<'project' | 'article'>('project'); // Tab สำหรับแยกประเภทวิจัย
+  researchTab = signal<'project' | 'article'>('project');
   chartData = signal<{year: string, count: number, heightPercent: number}[]>([]);
+
+  // ==========================================
+  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Alert Modal
+  // ==========================================
+  isAlertModalOpen = signal(false);
+  alertTitle = signal('');
+  alertMessage = signal('');
+  alertCallback: (() => void) | null = null;
+
+  openAlertModal(title: string, message: string, callback: (() => void) | null = null) {
+    this.alertTitle.set(title);
+    this.alertMessage.set(message);
+    this.alertCallback = callback;
+    this.isAlertModalOpen.set(true);
+  }
+
+  closeAlertModal() {
+    this.isAlertModalOpen.set(false);
+    if (this.alertCallback) {
+      this.alertCallback();
+      this.alertCallback = null;
+    }
+  }
+  // ==========================================
 
   constructor(
     private route: ActivatedRoute,
@@ -112,35 +135,30 @@ export class ProfileComponent implements OnInit {
       });
   }
 
-  // 🌟 ฟังก์ชันคำนวณผลรวม Research (Project + Article) สำหรับหน้าการ์ด
   getTotalResearchCount(): number {
     const projCount = this.profileData?.statistics?.research_project?.total || 0;
     const artCount = this.profileData?.statistics?.research_article?.total || 0;
     return projCount + artCount;
   }
 
-  // 🌟 ฟังก์ชันจัดการกราฟ
   openChart(type: 'research' | 'plan_project' | 'training') {
     this.activeChartType.set(type);
     if (type === 'research') {
-      this.researchTab.set('project'); // Default ไปที่โครงการวิจัยก่อน
+      this.researchTab.set('project');
     }
     this.updateChartData();
   }
 
-  // 🌟 ฟังก์ชันสลับ Tab ภายในกราฟ Research
   setResearchTab(tab: 'project' | 'article') {
     this.researchTab.set(tab);
     this.updateChartData();
   }
 
-  // 🌟 ฟังก์ชันอัปเดตข้อมูลกราฟตามสิ่งที่เลือก
   updateChartData() {
     const type = this.activeChartType();
     if (!type || !this.profileData?.statistics) return;
 
     let statKey = type as string;
-    // ถ้าเป็นโหมด Research ให้เช็ค Tab อีกทีว่าดึง object ไหน
     if (type === 'research') {
       statKey = this.researchTab() === 'project' ? 'research_project' : 'research_article';
     }
@@ -170,7 +188,6 @@ export class ProfileComponent implements OnInit {
     return '';
   }
 
-  // 🌟 เจาะลึกข้อมูล พาส่งไปยังหน้าตารางพร้อมแนบ Param
   goToModule(year: string) {
     const type = this.activeChartType();
     const staffName = this.profileData?.basic_info?.full_name;
@@ -361,7 +378,12 @@ export class ProfileComponent implements OnInit {
         add: this.mapScopeToDatabase(mod.add),
         edit: this.mapScopeToDatabase(mod.edit)
       }));
-      payload = { update_type: 'permissions', target_user_id: this.profileData.basic_info.user_id, permissions: permsToSend };
+      payload = { 
+        update_type: 'permissions', 
+        person_id: this.profileData.person_id, // 🌟 เพิ่มบรรทัดนี้ เพื่อบอกให้ Backend ทราบว่ากำลังแก้ไขสิทธิ์ของใคร
+        target_user_id: this.profileData.basic_info.user_id, 
+        permissions: permsToSend 
+      };
     }
 
     this.http.post('http://localhost:8080/api/get_staff_profile.php', payload, { headers })
@@ -371,11 +393,16 @@ export class ProfileComponent implements OnInit {
             if (this.isEditProfileMode && this.imagePreview) { localStorage.setItem('profile_image_override', this.imagePreview); }
             this.isEditProfileMode = false;
             this.isEditPermissionMode = false;
-            alert('✅ บันทึกข้อมูลเรียบร้อยแล้ว!');
-            this.fetchProfileData(this.profileData.person_id);
-          } else { alert('❌ บันทึกไม่สำเร็จ: ' + res.message); }
+            this.openAlertModal('สำเร็จ', '✅ บันทึกข้อมูลเรียบร้อยแล้ว!', () => {
+              this.fetchProfileData(this.profileData.person_id);
+            });
+          } else { 
+            this.openAlertModal('เกิดข้อผิดพลาด', '❌ บันทึกไม่สำเร็จ: ' + res.message); 
+          }
         },
-        error: (err) => { alert('❌ เชื่อมต่อเซิร์ฟเวอร์เพื่อบันทึกข้อมูลล้มเหลว'); }
+        error: (err) => { 
+          this.openAlertModal('เกิดข้อผิดพลาด', '❌ เชื่อมต่อเซิร์ฟเวอร์เพื่อบันทึกข้อมูลล้มเหลว'); 
+        }
       });
   }
 }

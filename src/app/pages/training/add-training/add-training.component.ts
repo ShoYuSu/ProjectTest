@@ -19,7 +19,9 @@ export class AddTrainingComponent implements OnInit {
 
   isEditMode = signal(false);
   editId: string | null = null;
-  loading = false;
+  
+  loading = false; 
+  isSubmitting = false; 
 
   participants: Array<{ staff_id: string; is_external?: boolean; name?: string }> = [{ staff_id: '' }]; 
   
@@ -55,6 +57,54 @@ export class AddTrainingComponent implements OnInit {
 
   staffSearchQueries: { [index: number]: string } = {};
   isStaffDropdownOpen: { [index: number]: boolean } = {};
+
+  // ==========================================
+  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
+  // ==========================================
+  isConfirmModalOpen = signal(false);
+  confirmTitle = signal('');
+  confirmMessage = signal('');
+  confirmAction: (() => void) | null = null;
+
+  isAlertModalOpen = signal(false);
+  alertTitle = signal('');
+  alertMessage = signal('');
+  alertCallback: (() => void) | null = null;
+
+  openConfirmModal(title: string, message: string, action: () => void) {
+    this.confirmTitle.set(title);
+    this.confirmMessage.set(message);
+    this.confirmAction = action;
+    this.isConfirmModalOpen.set(true);
+  }
+
+  closeConfirmModal() {
+    this.isConfirmModalOpen.set(false);
+    this.confirmAction = null;
+  }
+
+  confirmModalYes() {
+    if (this.confirmAction) {
+      this.confirmAction();
+    }
+    this.closeConfirmModal();
+  }
+
+  openAlertModal(title: string, message: string, callback: (() => void) | null = null) {
+    this.alertTitle.set(title);
+    this.alertMessage.set(message);
+    this.alertCallback = callback;
+    this.isAlertModalOpen.set(true);
+  }
+
+  closeAlertModal() {
+    this.isAlertModalOpen.set(false);
+    if (this.alertCallback) {
+      this.alertCallback();
+      this.alertCallback = null;
+    }
+  }
+  // ==========================================
 
   getStaffName(staffId: string): string {
     if (!staffId) return '';
@@ -165,7 +215,7 @@ export class AddTrainingComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        alert('❌ ไม่สามารถดึงข้อมูลพื้นฐานได้');
+        this.openAlertModal('เกิดข้อผิดพลาด', '❌ ไม่สามารถดึงข้อมูลพื้นฐานได้');
         this.loading = false;
       }
     });
@@ -173,21 +223,26 @@ export class AddTrainingComponent implements OnInit {
 
   addParticipant() { this.participants.push({ staff_id: '' }); }
   
-  // 🌟 ฟังก์ชันเพิ่มคนนอก
   addExternalParticipant() {
-    if (!this.externalName.trim()) { alert('กรุณากรอกชื่อบุคคลภายนอก'); return; }
+    if (!this.externalName.trim()) { 
+      this.openAlertModal('แจ้งเตือน', 'กรุณากรอกชื่อบุคคลภายนอก'); 
+      return; 
+    }
     const isDup = this.participants.some(p => p.name === this.externalName.trim());
-    if (isDup) { alert('มีชื่อบุคคลนี้ในรายการแล้ว'); return; }
+    if (isDup) { 
+      this.openAlertModal('แจ้งเตือน', 'มีชื่อบุคคลนี้ในรายการแล้ว'); 
+      return; 
+    }
     this.participants.push({ staff_id: '', name: this.externalName.trim(), is_external: true });
     this.externalName = '';
   }
 
   removeParticipant(index: number) { if (this.participants.length > 1) { this.participants.splice(index, 1); } }
 
-  // --- Benefits Dropdown Logic ---
   toggleDropdown() { this.isDropdownOpen = !this.isDropdownOpen; }
   selectBenefit(option: string) { this.trainingData.benefits = option; this.isDropdownOpen = false; }
   startEdit(index: number, value: string, event: Event) { event.stopPropagation(); this.editingIndex = index; this.editValue = value; }
+  
   saveEdit(index: number) {
     if (this.editValue.trim() !== '') {
       this.benefitOptions[index] = this.editValue.trim();
@@ -198,13 +253,15 @@ export class AddTrainingComponent implements OnInit {
     this.editingIndex = null;
   }
   cancelEdit() { this.editingIndex = null; }
+  
   deleteBenefit(index: number, event: Event) {
     event.stopPropagation();
-    if (confirm('ยืนยันการลบตัวเลือกนี้?')) {
+    this.openConfirmModal('ยืนยันการลบ', 'คุณต้องการลบตัวเลือกประโยชน์ที่ได้รับนี้ใช่หรือไม่?', () => {
       if (this.trainingData.benefits === this.benefitOptions[index]) { this.trainingData.benefits = ''; }
       this.benefitOptions.splice(index, 1);
-    }
+    });
   }
+
   addNewBenefit() {
     if (this.newBenefit.trim() !== '') {
       this.benefitOptions.push(this.newBenefit.trim());
@@ -213,26 +270,27 @@ export class AddTrainingComponent implements OnInit {
       this.isDropdownOpen = false;
     }
   }
-  // --- End Benefits Dropdown Logic ---
 
   onSubmit() {
     if (!this.trainingData.topic || !this.trainingData.startDate || !this.trainingData.endDate) {
-      alert('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน (หัวข้อ, วันที่เริ่มต้น-สิ้นสุด)'); return;
+      this.openAlertModal('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน (หัวข้อ, วันที่เริ่มต้น-สิ้นสุด)'); 
+      return;
     }
 
     if (this.participants.some(p => !p.staff_id && !p.is_external)) {
-      alert('กรุณาเลือกชื่อผู้เข้าร่วมให้ครบในช่องที่เพิ่มไว้ครับ'); return;
+      this.openAlertModal('ข้อมูลไม่ครบถ้วน', 'กรุณาเลือกชื่อผู้เข้าร่วมให้ครบในช่องที่เพิ่มไว้ครับ'); 
+      return;
     }
 
     if (this.userScope() === 'self' && this.currentStaffId()) {
       const hasSelf = this.participants.some(p => p.staff_id?.toString() === this.currentStaffId().toString());
       if (!hasSelf) {
-        alert('❌ ในฐานะผู้ใช้งานทั่วไป คุณจำเป็นต้องระบุชื่อตนเองเป็นหนึ่งในผู้เข้าร่วมการอบรมด้วยครับ');
+        this.openAlertModal('ข้อผิดพลาดเรื่องสิทธิ์', '❌ ในฐานะผู้ใช้งานทั่วไป คุณจำเป็นต้องระบุชื่อตนเองเป็นหนึ่งในผู้เข้าร่วมการอบรมด้วยครับ');
         return;
       }
     }
 
-    this.loading = true;
+    this.isSubmitting = true;
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
@@ -257,17 +315,18 @@ export class AddTrainingComponent implements OnInit {
       .subscribe({
         next: (res) => {
           if (res && res.success) {
-            alert('✅ บันทึกข้อมูลการอบรมสำเร็จ!');
-            this.router.navigate(['/training']); 
+            this.openAlertModal('สำเร็จ', '✅ บันทึกข้อมูลการอบรมสำเร็จ!', () => {
+              this.router.navigate(['/training']); 
+            });
           } else {
-            alert('❌ ' + res.message);
+            this.openAlertModal('เกิดข้อผิดพลาด', '❌ ' + res.message);
           }
-          this.loading = false;
+          this.isSubmitting = false;
         },
         error: (err) => {
           console.error(err);
-          alert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
-          this.loading = false;
+          this.openAlertModal('เกิดข้อผิดพลาด', '❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+          this.isSubmitting = false;
         }
       });
   }

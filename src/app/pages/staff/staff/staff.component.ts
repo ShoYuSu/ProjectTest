@@ -24,6 +24,48 @@ export class StaffComponent implements OnInit {
   canAdd = signal<boolean>(false);
   errorMessage = signal<string>('');
 
+  // ==========================================
+  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
+  // ==========================================
+  isConfirmModalOpen = signal(false);
+  confirmTitle = signal('');
+  confirmMessage = signal('');
+  confirmAction: (() => void) | null = null;
+
+  isAlertModalOpen = signal(false);
+  alertTitle = signal('');
+  alertMessage = signal('');
+
+  openConfirmModal(title: string, message: string, action: () => void) {
+    this.confirmTitle.set(title);
+    this.confirmMessage.set(message);
+    this.confirmAction = action;
+    this.isConfirmModalOpen.set(true);
+  }
+
+  closeConfirmModal() {
+    this.isConfirmModalOpen.set(false);
+    this.confirmAction = null;
+  }
+
+  confirmModalYes() {
+    if (this.confirmAction) {
+      this.confirmAction();
+    }
+    this.closeConfirmModal();
+  }
+
+  openAlertModal(title: string, message: string) {
+    this.alertTitle.set(title);
+    this.alertMessage.set(message);
+    this.isAlertModalOpen.set(true);
+  }
+
+  closeAlertModal() {
+    this.isAlertModalOpen.set(false);
+  }
+  // ==========================================
+
   filteredStaffList = computed(() => {
     let list = this.rawStaffList();
     const search = this.searchQuery().toLowerCase().trim();
@@ -115,14 +157,14 @@ export class StaffComponent implements OnInit {
             staff_id: item.staff_id,
             person_id: item.person_id,
             name: item.full_name,
-            staff_code: item.staff_code, // ดึงรหัสประจำตัวมาไว้ใช้อ้างอิง
+            staff_code: item.staff_code, 
             image: item.img_profile ? 'http://localhost:8080/api/' + item.img_profile.replace(/^\/+/, '') : null,
             position: item.position,
             department: item.department || 'ส่วนกลาง',
             researchCount: Number(item.researchCount) || 0,
             can_edit: item.can_edit,
             can_delete: item.can_delete,
-            can_reset_password: item.can_reset_password // 🌟 มารับค่าจาก API
+            can_reset_password: item.can_reset_password
           }));
 
           this.rawStaffList.set(mappedData);
@@ -154,9 +196,9 @@ export class StaffComponent implements OnInit {
     return 'บุคลากร';
   }
 
-  // 🌟 ฟังก์ชันเรียกรีเซ็ตรหัสผ่าน
+  // 🌟 ฟังก์ชันเรียกรีเซ็ตรหัสผ่าน (เปลี่ยนมาใช้ Modal)
   resetPassword(personId: number, name: string) {
-    if (confirm(`⚠️ คำเตือน: คุณต้องการรีเซ็ตรหัสผ่านของ "${name}" ใช่หรือไม่?\n\nรหัสผ่านจะถูกตั้งค่ากลับไปเป็น "รหัสประจำตัว" และผู้ใช้งานจะถูกบังคับให้เปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบในครั้งถัดไป`)) {
+    this.openConfirmModal('ยืนยันการรีเซ็ตรหัสผ่าน', `⚠️ คำเตือน: คุณต้องการรีเซ็ตรหัสผ่านของ "${name}" ใช่หรือไม่?\n\nรหัสผ่านจะถูกตั้งค่ากลับไปเป็น "รหัสประจำตัว" และผู้ใช้งานจะถูกบังคับให้เปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบในครั้งถัดไป`, () => {
       const token = localStorage.getItem('token') || '';
       const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
       
@@ -165,18 +207,18 @@ export class StaffComponent implements OnInit {
       }, { headers }).subscribe({
         next: (res) => {
           if (res.success) {
-            alert('✅ ' + res.message);
+            this.openAlertModal('สำเร็จ', '✅ ' + res.message);
           } else {
-            alert('❌ เกิดข้อผิดพลาด: ' + res.message);
+            this.openAlertModal('เกิดข้อผิดพลาด', '❌ ' + res.message);
           }
         },
-        error: (err) => alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้')
+        error: (err) => this.openAlertModal('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้')
       });
-    }
+    });
   }
 
   deleteStaff(staffId: number, personId: number, name: string) {
-    if (confirm(`คุณต้องการลบข้อมูลของ ${name} ใช่หรือไม่?`)) {
+    this.openConfirmModal('ยืนยันการลบข้อมูล', `คุณต้องการลบข้อมูลของ ${name} ใช่หรือไม่?`, () => {
       const token = localStorage.getItem('token') || '';
       const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
       
@@ -186,7 +228,7 @@ export class StaffComponent implements OnInit {
       }, { headers }).subscribe({
         next: (res) => {
           if (res.success) {
-            alert('ลบข้อมูลสำเร็จ');
+            this.openAlertModal('สำเร็จ', '✅ ลบข้อมูลสำเร็จ');
             this.loadStaff(this.currentDept());
           } else {
             this.errorMessage.set('เกิดข้อผิดพลาด: ' + res.message);
@@ -194,6 +236,6 @@ export class StaffComponent implements OnInit {
         },
         error: (err) => this.errorMessage.set('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้')
       });
-    }
+    });
   }
 }

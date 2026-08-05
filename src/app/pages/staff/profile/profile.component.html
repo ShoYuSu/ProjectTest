@@ -566,3 +566,19 @@
   </datalist>
 
 </div>
+<!-- 🌟 Custom Alert Modal -->
+@if (isAlertModalOpen()) {
+  <div class="fixed inset-0 z-[150] flex items-center justify-center animate-in fade-in duration-200">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px]" (click)="closeAlertModal()"></div>
+    <div class="relative bg-white rounded-[2rem] overflow-hidden p-8 max-w-sm w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col items-center text-center">
+      <div class="w-16 h-16 bg-[#F9BD15]/10 text-[#F9BD15] rounded-full flex items-center justify-center mb-5">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <h3 class="text-xl font-black text-[#2A1D1A] mb-2">{{ alertTitle() }}</h3>
+      <p class="text-sm font-bold text-gray-500 mb-8">{{ alertMessage() }}</p>
+      <button (click)="closeAlertModal()" class="w-full py-3.5 rounded-xl font-black text-[#2A1D1A] bg-[#F9BD15] hover:brightness-105 shadow-md hover:shadow-lg transition-all active:scale-95">
+        ตกลง
+      </button>
+    </div>
+  </div>
+}

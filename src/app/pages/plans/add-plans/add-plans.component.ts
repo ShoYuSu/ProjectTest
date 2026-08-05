@@ -63,6 +63,57 @@ export class AddPlansComponent implements OnInit {
   staffSearchQueries: { [index: number]: string } = {};
   isStaffDropdownOpen: { [index: number]: boolean } = {};
 
+  // ==========================================
+  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm Modal
+  // ==========================================
+  isConfirmModalOpen = signal(false);
+  confirmTitle = signal('');
+  confirmMessage = signal('');
+  confirmAction: (() => void) | null = null;
+
+  openConfirmModal(title: string, message: string, action: () => void) {
+    this.confirmTitle.set(title);
+    this.confirmMessage.set(message);
+    this.confirmAction = action;
+    this.isConfirmModalOpen.set(true);
+  }
+
+  closeConfirmModal() {
+    this.isConfirmModalOpen.set(false);
+    this.confirmAction = null;
+  }
+
+  confirmModalYes() {
+    if (this.confirmAction) {
+      this.confirmAction();
+    }
+    this.closeConfirmModal();
+  }
+
+  // ==========================================
+  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Alert Modal
+  // ==========================================
+  isAlertModalOpen = signal(false);
+  alertTitle = signal('');
+  alertMessage = signal('');
+  alertCallback: (() => void) | null = null;
+
+  openAlertModal(title: string, message: string, callback: (() => void) | null = null) {
+    this.alertTitle.set(title);
+    this.alertMessage.set(message);
+    this.alertCallback = callback;
+    this.isAlertModalOpen.set(true);
+  }
+
+  closeAlertModal() {
+    this.isAlertModalOpen.set(false);
+    if (this.alertCallback) {
+      this.alertCallback();
+      this.alertCallback = null;
+    }
+  }
+  // ==========================================
+
   getStaffName(staffId: string): string {
     if (!staffId) return '';
     const staff = this.staffMembers().find(s => s.staff_id === staffId);
@@ -224,7 +275,7 @@ export class AddPlansComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        alert('❌ ไม่สามารถดึงข้อมูลพื้นฐานได้');
+        this.openAlertModal('เกิดข้อผิดพลาด', '❌ ไม่สามารถดึงข้อมูลพื้นฐานได้');
         this.loading = false;
       }
     });
@@ -246,16 +297,18 @@ export class AddPlansComponent implements OnInit {
     }
     this.editingStrategyIndex.set(null);
   }
+
   deleteStrategy(index: number, event: Event) {
     event.stopPropagation();
-    if (confirm('ยืนยันการลบยุทธศาสตร์นี้?')) {
+    this.openConfirmModal('ยืนยันการลบ', 'คุณต้องการลบยุทธศาสตร์นี้ออกจากรายการใช่หรือไม่?', () => {
       const list = this.strategiesList();
       if (this.selectedStrategy() === list[index]) this.selectedStrategy.set('เลือกแผนยุทธศาสตร์');
       list.splice(index, 1);
       this.strategiesList.set([...list]);
       localStorage.setItem('custom_strategies', JSON.stringify(list)); 
-    }
+    });
   }
+
   addNewStrategy(val: string) {
     if (val.trim()) {
       const newList = [...this.strategiesList(), val.trim()];
@@ -282,16 +335,18 @@ export class AddPlansComponent implements OnInit {
     }
     this.editingPlanIndex.set(null);
   }
+
   deletePlan(index: number, event: Event) {
     event.stopPropagation();
-    if (confirm('ยืนยันการลบแผนงานนี้?')) {
+    this.openConfirmModal('ยืนยันการลบ', 'คุณต้องการลบแผนงานนี้ออกจากรายการใช่หรือไม่?', () => {
       const list = this.plansList();
       if (this.selectedPlan() === list[index]) this.selectedPlan.set('เลือกแผนงาน');
       list.splice(index, 1);
       this.plansList.set([...list]);
       localStorage.setItem('custom_plans', JSON.stringify(list)); 
-    }
+    });
   }
+
   addNewPlan(val: string) {
     if (val.trim()) {
       const newList = [...this.plansList(), val.trim()];
@@ -307,11 +362,16 @@ export class AddPlansComponent implements OnInit {
 
   addParticipant() { this.participants.push({ staff_id: '' }); }
   
-  // 🌟 ฟังก์ชันเพิ่มคนนอก
   addExternalParticipant() {
-    if (!this.externalName.trim()) { alert('กรุณากรอกชื่อบุคคลภายนอก'); return; }
+    if (!this.externalName.trim()) { 
+      this.openAlertModal('แจ้งเตือน', 'กรุณากรอกชื่อบุคคลภายนอก'); 
+      return; 
+    }
     const isDup = this.participants.some(p => p.name === this.externalName.trim());
-    if (isDup) { alert('มีชื่อบุคคลนี้ในรายการแล้ว'); return; }
+    if (isDup) { 
+      this.openAlertModal('แจ้งเตือน', 'มีชื่อบุคคลนี้ในรายการแล้ว'); 
+      return; 
+    }
     this.participants.push({ staff_id: '', name: this.externalName.trim(), is_external: true });
     this.externalName = '';
   }
@@ -326,12 +386,12 @@ export class AddPlansComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       if (file.type !== 'application/pdf') {
-        alert('❌ กรุณาเลือกเฉพาะไฟล์ PDF เท่านั้นครับ');
+        this.openAlertModal('ไฟล์ไม่ถูกต้อง', '❌ กรุณาเลือกเฉพาะไฟล์ PDF เท่านั้นครับ');
         event.target.value = '';
         return;
       }
       if (file.size > 5242880) {
-        alert('❌ ขนาดไฟล์ใหญ่เกินไป! กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB ครับ');
+        this.openAlertModal('ขนาดไฟล์ใหญ่เกินไป', '❌ ขนาดไฟล์ใหญ่เกินไป! กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB ครับ');
         event.target.value = ''; 
         return;
       }
@@ -348,12 +408,12 @@ export class AddPlansComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       if (file.type !== 'application/pdf') {
-        alert('❌ กรุณาเลือกเฉพาะไฟล์ PDF เท่านั้นครับ');
+        this.openAlertModal('ไฟล์ไม่ถูกต้อง', '❌ กรุณาเลือกเฉพาะไฟล์ PDF เท่านั้นครับ');
         event.target.value = '';
         return;
       }
       if (file.size > 5242880) {
-        alert('❌ ขนาดไฟล์ใหญ่เกินไป! กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB ครับ');
+        this.openAlertModal('ขนาดไฟล์ใหญ่เกินไป', '❌ ขนาดไฟล์ใหญ่เกินไป! กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB ครับ');
         event.target.value = ''; 
         return;
       }
@@ -367,14 +427,23 @@ export class AddPlansComponent implements OnInit {
   }
 
   submitForm() {
-    if (!this.projectName.trim()) { alert('กรุณาระบุชื่อโครงการ'); return; }
-    if (!this.planYear) { alert('กรุณาระบุปี พ.ศ. ที่ดำเนินการ'); return; }
-    if (this.participants.some(p => !p.staff_id && !p.is_external)) { alert('กรุณาเลือกชื่อผู้รับผิดชอบให้ครบถ้วน'); return; }
+    if (!this.projectName.trim()) { 
+      this.openAlertModal('ข้อมูลไม่ครบถ้วน', 'กรุณาระบุชื่อโครงการ'); 
+      return; 
+    }
+    if (!this.planYear) { 
+      this.openAlertModal('ข้อมูลไม่ครบถ้วน', 'กรุณาระบุปี พ.ศ. ที่ดำเนินการ'); 
+      return; 
+    }
+    if (this.participants.some(p => !p.staff_id && !p.is_external)) { 
+      this.openAlertModal('ข้อมูลไม่ครบถ้วน', 'กรุณาเลือกชื่อผู้รับผิดชอบให้ครบถ้วน'); 
+      return; 
+    }
 
     if (this.userScope() === 'self' && this.currentStaffId()) {
       const hasSelf = this.participants.some(p => p.staff_id?.toString() === this.currentStaffId().toString());
       if (!hasSelf) {
-        alert('❌ ในฐานะผู้ใช้งานทั่วไป คุณจำเป็นต้องระบุชื่อตนเองเป็นผู้รับผิดชอบโครงการด้วยครับ');
+        this.openAlertModal('ข้อผิดพลาดเรื่องสิทธิ์', '❌ ในฐานะผู้ใช้งานทั่วไป คุณจำเป็นต้องระบุชื่อตนเองเป็นผู้รับผิดชอบโครงการด้วยครับ');
         return;
       }
     }
@@ -407,16 +476,19 @@ export class AddPlansComponent implements OnInit {
       .subscribe({
         next: (res) => {
           if (res && res.success) {
-            alert('✅ บันทึกข้อมูลแผนงานสำเร็จ!');
-            this.router.navigate(['/plans']); 
+            this.openAlertModal('สำเร็จ', '✅ บันทึกข้อมูลแผนงานสำเร็จ!', () => {
+              this.router.navigate(['/plans']); 
+            });
           } else {
-            alert('❌ ' + res.message);
+            this.openAlertModal('เกิดข้อผิดพลาด', '❌ ' + res.message);
           }
           this.isSubmitting = false;
         },
         error: (err) => {
           console.error(err);
-          alert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+          // 🌟 ดึง Error จริงๆ จากฝั่งหลังบ้านมาแสดง
+          const errMsg = err.error?.message || err.error?.error || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์';
+          this.openAlertModal('เกิดข้อผิดพลาด', '❌ ' + errMsg);
           this.isSubmitting = false;
         }
       });

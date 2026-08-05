@@ -18,7 +18,6 @@ export class AddStaffComponent implements OnInit {
   showSuccessModal = signal<boolean>(false);
   loading = false;
 
-  // 🌟 เพิ่มฟิลด์ role สำหรับส่งไปให้ระบบ Login ของเพื่อน
   staffData = {
     fullName: '',
     staffCode: '',
@@ -41,6 +40,48 @@ export class AddStaffComponent implements OnInit {
     { id: 4, name: 'Plans / Projects', subName: 'แผนงาน / โครงการ', moduleCode: 'Plan_Project', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' },
     { id: 5, name: 'Training', subName: 'ข้อมูลอบรม', moduleCode: 'Training', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' }
   ];
+
+  // ==========================================
+  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
+  // ==========================================
+  isConfirmModalOpen = signal(false);
+  confirmTitle = signal('');
+  confirmMessage = signal('');
+  confirmAction: (() => void) | null = null;
+
+  isAlertModalOpen = signal(false);
+  alertTitle = signal('');
+  alertMessage = signal('');
+
+  openConfirmModal(title: string, message: string, action: () => void) {
+    this.confirmTitle.set(title);
+    this.confirmMessage.set(message);
+    this.confirmAction = action;
+    this.isConfirmModalOpen.set(true);
+  }
+
+  closeConfirmModal() {
+    this.isConfirmModalOpen.set(false);
+    this.confirmAction = null;
+  }
+
+  confirmModalYes() {
+    if (this.confirmAction) {
+      this.confirmAction();
+    }
+    this.closeConfirmModal();
+  }
+
+  openAlertModal(title: string, message: string) {
+    this.alertTitle.set(title);
+    this.alertMessage.set(message);
+    this.isAlertModalOpen.set(true);
+  }
+
+  closeAlertModal() {
+    this.isAlertModalOpen.set(false);
+  }
+  // ==========================================
 
   private readonly defaultTemplates = [
     {
@@ -109,7 +150,16 @@ export class AddStaffComponent implements OnInit {
   }
 
   resetToDefaultTemplates(askConfirm = true) {
-    if (askConfirm && !confirm('ต้องการคืนค่าเทมเพลตสิทธิ์ทั้งหมดกลับเป็นค่าเริ่มต้นหรือไม่?')) return;
+    if (askConfirm) {
+      this.openConfirmModal('คืนค่าเริ่มต้น', 'ต้องการคืนค่าเทมเพลตสิทธิ์ทั้งหมดกลับเป็นค่าเริ่มต้นหรือไม่?', () => {
+        this.applyResetDefaults();
+      });
+    } else {
+      this.applyResetDefaults();
+    }
+  }
+
+  private applyResetDefaults() {
     this.templates.set(JSON.parse(JSON.stringify(this.defaultTemplates)));
     localStorage.setItem('unified_perm_templates', JSON.stringify(this.defaultTemplates));
     this.clearTable();
@@ -119,7 +169,6 @@ export class AddStaffComponent implements OnInit {
     this.currentTemplateName.set(tpl.name);
     this.modules = JSON.parse(JSON.stringify(tpl.permissions));
 
-    // ระบบเปลี่ยน Role อัตโนมัติ (ถ้าเลือกแอดมิน ให้ช่อง Role เป็นแอดมินด้วย)
     if (tpl.name === 'แอดมิน' || tpl.name.toLowerCase().includes('admin')) {
       this.staffData.role = 'admin';
     } else {
@@ -138,24 +187,31 @@ export class AddStaffComponent implements OnInit {
 
     let updated;
     if (existingIndex !== -1) {
-       if (confirm(`มีเทมเพลตชื่อ "${name.trim()}" อยู่แล้ว ต้องการบันทึกทับใช่หรือไม่?`)) {
-          updated = [...current]; updated[existingIndex] = newTemplate;
-       } else { return; }
-    } else { updated = [...current, newTemplate]; }
+       this.openConfirmModal('ยืนยันการบันทึกทับ', `มีเทมเพลตชื่อ "${name.trim()}" อยู่แล้ว ต้องการบันทึกทับใช่หรือไม่?`, () => {
+         updated = [...current]; updated[existingIndex] = newTemplate;
+         this.applySaveTemplate(updated, name);
+       });
+       return; // หยุดรอให้กด Modal ยืนยันก่อน
+    } else { 
+       updated = [...current, newTemplate]; 
+       this.applySaveTemplate(updated, name);
+    }
+  }
 
+  private applySaveTemplate(updated: any[], name: string) {
     this.templates.set(updated);
     this.currentTemplateName.set(name.trim());
     localStorage.setItem('unified_perm_templates', JSON.stringify(updated));
-    alert('บันทึกเทมเพลตสำเร็จ!');
+    this.openAlertModal('สำเร็จ', 'บันทึกเทมเพลตสำเร็จ!');
   }
 
   deleteTemplate(name: string) {
-    if (confirm(`⚠️ ต้องการลบเทมเพลต "${name}" ใช่หรือไม่?`)) {
+    this.openConfirmModal('ยืนยันการลบ', `⚠️ ต้องการลบเทมเพลต "${name}" ใช่หรือไม่?`, () => {
       const updated = this.templates().filter(t => t.name !== name);
       this.templates.set(updated);
       localStorage.setItem('unified_perm_templates', JSON.stringify(updated));
       if (this.currentTemplateName() === name) this.clearTable();
-    }
+    });
   }
 
   clearTable() {
@@ -174,7 +230,7 @@ export class AddStaffComponent implements OnInit {
 
   onSubmit() {
     if (!this.staffData.fullName || !this.staffData.staffCode || !this.staffData.email) {
-      alert('กรุณากรอกข้อมูลพื้นฐานให้ครบถ้วน');
+      this.openAlertModal('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกข้อมูลพื้นฐานให้ครบถ้วน');
       return;
     }
 
@@ -203,7 +259,6 @@ export class AddStaffComponent implements OnInit {
       formData.append('img_profile', this.selectedFile, this.selectedFile.name);
     }
 
-    // 🌟 เปลี่ยนการส่ง Header ให้ใช้ JWT Token
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
@@ -212,14 +267,14 @@ export class AddStaffComponent implements OnInit {
         next: (response) => {
           this.loading = false;
           if (response && response.success) {
-            this.showSuccessModal.set(true);
+            this.showSuccessModal.set(true); // Modal สำเร็จเดิมที่มีให้
           } else {
-            alert('❌ บันทึกไม่สำเร็จ: \n' + (response?.message || ''));
+            this.openAlertModal('เกิดข้อผิดพลาด', '❌ บันทึกไม่สำเร็จ: \n' + (response?.message || ''));
           }
         },
         error: (err: HttpErrorResponse) => {
           this.loading = false;
-          alert(`🚨 การเชื่อมต่อล้มเหลว รหัส: ${err.status}`);
+          this.openAlertModal('เชื่อมต่อล้มเหลว', `🚨 การเชื่อมต่อล้มเหลว รหัส: ${err.status}`);
         }
       });
   }

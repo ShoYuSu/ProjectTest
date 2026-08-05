@@ -48,6 +48,54 @@ export class AddArticleComponent implements OnInit {
   staffSearchQueries: { [index: number]: string } = {};
   isStaffDropdownOpen: { [index: number]: boolean } = {};
 
+  // ==========================================
+  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
+  // ==========================================
+  isConfirmModalOpen = signal(false);
+  confirmTitle = signal('');
+  confirmMessage = signal('');
+  confirmAction: (() => void) | null = null;
+
+  isAlertModalOpen = signal(false);
+  alertTitle = signal('');
+  alertMessage = signal('');
+  alertCallback: (() => void) | null = null;
+
+  openConfirmModal(title: string, message: string, action: () => void) {
+    this.confirmTitle.set(title);
+    this.confirmMessage.set(message);
+    this.confirmAction = action;
+    this.isConfirmModalOpen.set(true);
+  }
+
+  closeConfirmModal() {
+    this.isConfirmModalOpen.set(false);
+    this.confirmAction = null;
+  }
+
+  confirmModalYes() {
+    if (this.confirmAction) {
+      this.confirmAction();
+    }
+    this.closeConfirmModal();
+  }
+
+  openAlertModal(title: string, message: string, callback: (() => void) | null = null) {
+    this.alertTitle.set(title);
+    this.alertMessage.set(message);
+    this.alertCallback = callback;
+    this.isAlertModalOpen.set(true);
+  }
+
+  closeAlertModal() {
+    this.isAlertModalOpen.set(false);
+    if (this.alertCallback) {
+      this.alertCallback();
+      this.alertCallback = null;
+    }
+  }
+  // ==========================================
+
   getStaffName(staffId: string): string {
     if (!staffId) return '';
     const staff = this.staffMembers().find(s => s.staff_id === staffId);
@@ -169,6 +217,11 @@ export class AddArticleComponent implements OnInit {
         }
 
         this.loading.set(false);
+      },
+      error: (err) => {
+        console.error(err);
+        this.openAlertModal('เกิดข้อผิดพลาด', '❌ ไม่สามารถดึงข้อมูลพื้นฐานได้');
+        this.loading.set(false);
       }
     });
   }
@@ -177,7 +230,7 @@ export class AddArticleComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       if (file.size > 5242880) {
-        alert('❌ ขนาดไฟล์ใหญ่เกินไป! กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB ครับ');
+        this.openAlertModal('ขนาดไฟล์ใหญ่เกินไป', '❌ ขนาดไฟล์ใหญ่เกินไป! กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB ครับ');
         event.target.value = ''; 
         return;
       }
@@ -192,24 +245,23 @@ export class AddArticleComponent implements OnInit {
 
   addAuthorRow() { this.formData.authors.push({ staff_id: '', role: 'ผู้นิพนธ์ร่วม (Co-Author)' }); }
   
-  // 🌟 ฟังก์ชันเพิ่มคนนอก
   addExternalAuthor() {
     if (!this.externalName.trim()) {
-      alert('กรุณากรอกชื่อบุคคลภายนอกครับ');
+      this.openAlertModal('แจ้งเตือน', 'กรุณากรอกชื่อบุคคลภายนอกครับ');
       return;
     }
     const isDuplicate = this.formData.authors.some(a => a.name === this.externalName.trim());
     if (isDuplicate) {
-      alert('มีชื่อบุคคลนี้ในรายการแล้วครับ');
+      this.openAlertModal('แจ้งเตือน', 'มีชื่อบุคคลนี้ในรายการแล้วครับ');
       return;
     }
     this.formData.authors.push({
       staff_id: '',
       name: this.externalName.trim(),
-      role: 'ผู้นิพนธ์ร่วม (Co-Author)', // 🌟 กำหนดบทบาทเริ่มต้น
+      role: 'ผู้นิพนธ์ร่วม (Co-Author)', 
       is_external: true
     });
-    this.externalName = ''; // เคลียร์ช่องพิมพ์ชื่อ
+    this.externalName = ''; 
   }
 
   removeAuthorRow(index: number) {
@@ -218,16 +270,18 @@ export class AddArticleComponent implements OnInit {
 
   submitForm() {
     if (!this.formData.title.trim() || !this.formData.publish_year) {
-      alert('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วนก่อนทำการบันทึกครับ'); return;
+      this.openAlertModal('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วนก่อนทำการบันทึกครับ'); 
+      return;
     }
 
     if (this.formData.authors.some(a => !a.staff_id && !a.is_external)) {
-      alert('กรุณาเลือกชื่ออาจารย์ในช่องที่มีอยู่ให้ครบถ้วนครับ'); return;
+      this.openAlertModal('ข้อมูลไม่ครบถ้วน', 'กรุณาเลือกชื่ออาจารย์ในช่องที่มีอยู่ให้ครบถ้วนครับ'); 
+      return;
     }
 
     const firstAuthorCount = this.formData.authors.filter(a => a.role === 'ผู้นิพนธ์หลัก (First Author)').length;
     if (firstAuthorCount !== 1) {
-      alert('❌ กรุณาระบุ "ผู้นิพนธ์หลัก (First Author)" เพียง 1 ท่านเท่านั้นครับ');
+      this.openAlertModal('ข้อมูลไม่ถูกต้อง', '❌ กรุณาระบุ "ผู้นิพนธ์หลัก (First Author)" เพียง 1 ท่านเท่านั้นครับ');
       return;
     }
 
@@ -251,16 +305,17 @@ export class AddArticleComponent implements OnInit {
       .subscribe({
         next: (res) => {
           if (res && res.success) {
-            alert('✅ บันทึกบทความวิจัยและไฟล์สำเร็จ!');
-            this.router.navigate(['/research/article']); 
+            this.openAlertModal('สำเร็จ', '✅ บันทึกบทความวิจัยและไฟล์สำเร็จ!', () => {
+              this.router.navigate(['/research/article']); 
+            });
           } else {
-            alert('❌ ปฏิเสธการบันทึก: ' + res.message);
+            this.openAlertModal('เกิดข้อผิดพลาด', '❌ ปฏิเสธการบันทึก: ' + res.message);
             this.isSubmitting.set(false);
           }
         },
         error: (err) => {
           console.error(err);
-          alert('❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+          this.openAlertModal('เกิดข้อผิดพลาด', '❌ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
           this.isSubmitting.set(false);
         }
       });

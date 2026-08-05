@@ -44,6 +44,54 @@ export class AddResearchComponent implements OnInit {
   staffSearchQueries: { [index: number]: string } = {};
   isStaffDropdownOpen: { [index: number]: boolean } = {};
 
+  // ==========================================
+  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
+  // ==========================================
+  isConfirmModalOpen = signal(false);
+  confirmTitle = signal('');
+  confirmMessage = signal('');
+  confirmAction: (() => void) | null = null;
+
+  isAlertModalOpen = signal(false);
+  alertTitle = signal('');
+  alertMessage = signal('');
+  alertCallback: (() => void) | null = null;
+
+  openConfirmModal(title: string, message: string, action: () => void) {
+    this.confirmTitle.set(title);
+    this.confirmMessage.set(message);
+    this.confirmAction = action;
+    this.isConfirmModalOpen.set(true);
+  }
+
+  closeConfirmModal() {
+    this.isConfirmModalOpen.set(false);
+    this.confirmAction = null;
+  }
+
+  confirmModalYes() {
+    if (this.confirmAction) {
+      this.confirmAction();
+    }
+    this.closeConfirmModal();
+  }
+
+  openAlertModal(title: string, message: string, callback: (() => void) | null = null) {
+    this.alertTitle.set(title);
+    this.alertMessage.set(message);
+    this.alertCallback = callback;
+    this.isAlertModalOpen.set(true);
+  }
+
+  closeAlertModal() {
+    this.isAlertModalOpen.set(false);
+    if (this.alertCallback) {
+      this.alertCallback();
+      this.alertCallback = null;
+    }
+  }
+  // ==========================================
+
   getStaffName(staffId: string): string {
     if (!staffId) return '';
     const staff = this.staffMembers().find(s => s.staff_id === staffId);
@@ -164,7 +212,7 @@ export class AddResearchComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        alert('❌ ไม่สามารถดึงข้อมูลพื้นฐานได้');
+        this.openAlertModal('เกิดข้อผิดพลาด', '❌ ไม่สามารถดึงข้อมูลพื้นฐานได้');
         this.loading.set(false);
       }
     });
@@ -184,54 +232,59 @@ export class AddResearchComponent implements OnInit {
 
   addAuthorRow() { this.formData.authors.push({ staff_id: '', role: 'ผู้ร่วมวิจัย' }); }
   
-  // 🌟 ฟังก์ชันเพิ่มคนนอก
   addExternalAuthor() {
     if (!this.externalName.trim()) {
-      alert('กรุณากรอกชื่อบุคคลภายนอกครับ');
+      this.openAlertModal('แจ้งเตือน', 'กรุณากรอกชื่อบุคคลภายนอกครับ');
       return;
     }
     const isDuplicate = this.formData.authors.some(a => a.name === this.externalName.trim());
     if (isDuplicate) {
-      alert('มีชื่อบุคคลนี้ในรายการแล้วครับ');
+      this.openAlertModal('แจ้งเตือน', 'มีชื่อบุคคลนี้ในรายการแล้วครับ');
       return;
     }
     this.formData.authors.push({
       staff_id: '',
       name: this.externalName.trim(),
-      role: 'ผู้ร่วมวิจัย', // 🌟 กำหนดบทบาทเริ่มต้นเป็นผู้ร่วมวิจัย
+      role: 'ผู้ร่วมวิจัย', 
       is_external: true
     });
-    this.externalName = ''; // เคลียร์ช่องพิมพ์ชื่อ
+    this.externalName = ''; 
   }
 
   removeAuthorRow(index: number) {
-    if (this.formData.authors.length > 1) this.formData.authors.splice(index, 1);
-    else alert('โครงการวิจัยจำเป็นต้องมีผู้รับผิดชอบอย่างน้อย 1 คนครับ');
+    if (this.formData.authors.length > 1) {
+      this.formData.authors.splice(index, 1);
+    } else {
+      this.openAlertModal('แจ้งเตือน', 'โครงการวิจัยจำเป็นต้องมีผู้รับผิดชอบอย่างน้อย 1 คนครับ');
+    }
   }
 
   submitForm() {
     if (!this.formData.title.trim() || !this.formData.funding_source.trim() || !this.formData.year_funded || !this.formData.year_ended) {
-      alert('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วนก่อนทำการบันทึกครับ'); return;
+      this.openAlertModal('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วนก่อนทำการบันทึกครับ'); 
+      return;
     }
 
     if (Number(this.formData.year_funded) > Number(this.formData.year_ended)) {
-      alert('❌ ปี พ.ศ. ที่สิ้นสุดโครงการ จะต้องไม่น้อยกว่าปี พ.ศ. ที่เริ่มได้รับทุนครับ'); return;
+      this.openAlertModal('ข้อมูลไม่ถูกต้อง', '❌ ปี พ.ศ. ที่สิ้นสุดโครงการ จะต้องไม่น้อยกว่าปี พ.ศ. ที่เริ่มได้รับทุนครับ'); 
+      return;
     }
 
     if (this.formData.authors.some(a => !a.staff_id && !a.is_external)) {
-      alert('กรุณาเลือกชื่ออาจารย์ในช่องที่มีอยู่ให้ครบถ้วนครับ'); return;
+      this.openAlertModal('ข้อมูลไม่ครบถ้วน', 'กรุณาเลือกชื่ออาจารย์ในช่องที่มีอยู่ให้ครบถ้วนครับ'); 
+      return;
     }
 
     const principalCount = this.formData.authors.filter(a => a.role === 'หัวหน้าโครงการ').length;
     if (principalCount !== 1) {
-      alert('❌ กรุณาระบุ "หัวหน้าโครงการ" เพียง 1 ท่านเท่านั้นครับ'); 
+      this.openAlertModal('ข้อมูลไม่ถูกต้อง', '❌ กรุณาระบุ "หัวหน้าโครงการ" เพียง 1 ท่านเท่านั้นครับ'); 
       return;
     }
 
     if (this.userScope() === 'self' && this.currentStaffId()) {
       const hasSelf = this.formData.authors.some(a => a.staff_id?.toString() === this.currentStaffId().toString());
       if (!hasSelf) {
-        alert('❌ ในฐานะผู้ใช้งานทั่วไป คุณจำเป็นต้องระบุชื่อของตนเองเป็นหนึ่งในผู้รับผิดชอบโครงการด้วยครับ');
+        this.openAlertModal('ข้อผิดพลาดเรื่องสิทธิ์', '❌ ในฐานะผู้ใช้งานทั่วไป คุณจำเป็นต้องระบุชื่อของตนเองเป็นหนึ่งในผู้รับผิดชอบโครงการด้วยครับ');
         return;
       }
     }
@@ -249,17 +302,18 @@ export class AddResearchComponent implements OnInit {
       .subscribe({
         next: (res) => {
           if (res && res.success) {
-            alert('✅ ' + (this.isEditMode() ? 'อัปเดตข้อมูลสำเร็จ' : 'บันทึกสำเร็จ'));
-            this.router.navigate(['/research']); 
+            this.openAlertModal('สำเร็จ', '✅ ' + (this.isEditMode() ? 'อัปเดตข้อมูลสำเร็จ' : 'บันทึกสำเร็จ'), () => {
+              this.router.navigate(['/research']); 
+            });
           } else {
-            alert('❌ ปฏิเสธการบันทึก: ' + res.message);
+            this.openAlertModal('เกิดข้อผิดพลาด', '❌ ปฏิเสธการบันทึก: ' + res.message);
             this.isSubmitting.set(false);
           }
         },
         error: (err) => {
           console.error(err);
           const errMsg = err.error?.message || err.error?.error || 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์';
-          alert('❌ ' + errMsg);
+          this.openAlertModal('เกิดข้อผิดพลาด', '❌ ' + errMsg);
           this.isSubmitting.set(false);
         }
       });
