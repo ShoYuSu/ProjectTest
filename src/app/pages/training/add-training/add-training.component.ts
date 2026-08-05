@@ -21,11 +21,14 @@ export class AddTrainingComponent implements OnInit {
   editId: string | null = null;
   loading = false;
 
-  participants: Array<{ staff_id: string }> = [{ staff_id: '' }]; 
+  participants: Array<{ staff_id: string; is_external?: boolean; name?: string }> = [{ staff_id: '' }]; 
   
   staffMembers = signal<any[]>([]);
   userScope = signal<string>('none'); 
   currentStaffId = signal<string>(''); 
+
+  // ตัวแปรเพิ่มคนนอก
+  externalName: string = '';
 
   isDropdownOpen = false;
   newBenefit = '';               
@@ -50,9 +53,6 @@ export class AddTrainingComponent implements OnInit {
     remarks: ''          
   };
 
-  // ==========================================
-  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันใหม่สำหรับ Dropdown พิมพ์ค้นหาได้
-  // ==========================================
   staffSearchQueries: { [index: number]: string } = {};
   isStaffDropdownOpen: { [index: number]: boolean } = {};
 
@@ -83,9 +83,6 @@ export class AddTrainingComponent implements OnInit {
       (s.position && s.position.toLowerCase().includes(query))
     );
   }
-  // ==========================================
-  // 🌟 [จบ] ส่วนระบบค้นหา
-  // ==========================================
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -126,7 +123,6 @@ export class AddTrainingComponent implements OnInit {
           this.currentStaffId.set(myStaffId); 
         }
 
-        // 🌟 Permission-Based Only
         let scope = 'none';
         const p = res.perms.permissions || res.perms || {};
         const modPerms = p['training_info'] || p['training'];
@@ -151,11 +147,15 @@ export class AddTrainingComponent implements OnInit {
           this.trainingData.remarks = td.remarks || '';
           
           if (td.participants && td.participants.length > 0) {
-            this.participants = td.participants;
+            this.participants = td.participants.map((p: any) => ({
+              staff_id: p.staff_id ? p.staff_id.toString() : '',
+              is_external: !!p.external_name,
+              name: p.external_name || ''
+            }));
           }
         }
 
-        if (this.participants.length === 1 && !this.participants[0].staff_id) {
+        if (this.participants.length === 1 && !this.participants[0].staff_id && !this.participants[0].is_external) {
           if (scope === 'self' && myStaffId) {
              this.participants[0].staff_id = myStaffId; 
           }
@@ -172,6 +172,16 @@ export class AddTrainingComponent implements OnInit {
   }
 
   addParticipant() { this.participants.push({ staff_id: '' }); }
+  
+  // 🌟 ฟังก์ชันเพิ่มคนนอก
+  addExternalParticipant() {
+    if (!this.externalName.trim()) { alert('กรุณากรอกชื่อบุคคลภายนอก'); return; }
+    const isDup = this.participants.some(p => p.name === this.externalName.trim());
+    if (isDup) { alert('มีชื่อบุคคลนี้ในรายการแล้ว'); return; }
+    this.participants.push({ staff_id: '', name: this.externalName.trim(), is_external: true });
+    this.externalName = '';
+  }
+
   removeParticipant(index: number) { if (this.participants.length > 1) { this.participants.splice(index, 1); } }
 
   // --- Benefits Dropdown Logic ---
@@ -210,12 +220,12 @@ export class AddTrainingComponent implements OnInit {
       alert('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน (หัวข้อ, วันที่เริ่มต้น-สิ้นสุด)'); return;
     }
 
-    if (this.participants.some(p => !p.staff_id)) {
+    if (this.participants.some(p => !p.staff_id && !p.is_external)) {
       alert('กรุณาเลือกชื่อผู้เข้าร่วมให้ครบในช่องที่เพิ่มไว้ครับ'); return;
     }
 
     if (this.userScope() === 'self' && this.currentStaffId()) {
-      const hasSelf = this.participants.some(p => p.staff_id.toString() === this.currentStaffId().toString());
+      const hasSelf = this.participants.some(p => p.staff_id?.toString() === this.currentStaffId().toString());
       if (!hasSelf) {
         alert('❌ ในฐานะผู้ใช้งานทั่วไป คุณจำเป็นต้องระบุชื่อตนเองเป็นหนึ่งในผู้เข้าร่วมการอบรมด้วยครับ');
         return;

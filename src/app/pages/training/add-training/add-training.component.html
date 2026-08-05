@@ -28,27 +28,28 @@
         
         <button (click)="addParticipant()" class="text-sm font-bold bg-gray-50 hover:bg-gray-100 text-[#2A1D1A] px-4 py-2 rounded-xl transition-colors flex items-center gap-2 border border-gray-200">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-          เพิ่มรายชื่อ
+          เพิ่มบุคลากร
         </button>
       </div>
 
       <div class="space-y-3">
         @for (participant of participants; track $index) {
-          <!-- 🌟 เพิ่ม z-index ให้อยู่บนสุดตอนคลิกเปิด dropdown -->
           <div class="flex gap-3 items-center group transition-all" [ngClass]="{'relative z-50': isStaffDropdownOpen[$index]}">
             <span class="text-xs font-black text-gray-300 w-6 shrink-0">{{ $index + 1 }}.</span>
             
             <div class="relative flex-1">
-              <!-- ปุ่ม Dropdown หลัก -->
-              <button type="button" (click)="toggleStaffDropdown($index, $event)"
+              <button type="button" (click)="!participant.is_external && toggleStaffDropdown($index, $event)"
                       class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-[#F9BD15] transition-all text-left flex justify-between items-center"
-                      [ngClass]="{'text-[#2A1D1A]': participant.staff_id, 'text-gray-400': !participant.staff_id}">
-                <span class="truncate">{{ participant.staff_id ? getStaffName(participant.staff_id) : '--- ค้นหาและเลือกรายชื่อบุคลากร ---' }}</span>
-                <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                      [ngClass]="{'text-[#2A1D1A]': participant.staff_id || participant.is_external, 'text-gray-400': !participant.staff_id && !participant.is_external, 'bg-gray-100 cursor-not-allowed': participant.is_external}">
+                <span class="truncate">
+                  {{ participant.is_external ? participant.name + ' (บุคคลภายนอก)' : (participant.staff_id ? getStaffName(participant.staff_id) : '--- ค้นหาและเลือกรายชื่อบุคลากร ---') }}
+                </span>
+                @if (!participant.is_external) {
+                  <svg class="w-4 h-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                }
               </button>
 
-              <!-- 🌟 กล่องค้นหา Dropdown -->
-              @if (isStaffDropdownOpen[$index]) {
+              @if (isStaffDropdownOpen[$index] && !participant.is_external) {
                 <div class="fixed inset-0 z-40" (click)="isStaffDropdownOpen[$index] = false"></div>
                 
                 <div class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
@@ -81,6 +82,33 @@
           </div>
         }
       </div>
+
+      <!-- 🌟 เพิ่มบุคคลภายนอก -->
+      <div class="mt-4 p-5 bg-gray-50 border border-gray-200 rounded-2xl shadow-sm">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-1 h-4 bg-[#F9BD15] rounded-full"></div>
+          <label class="block text-xs font-black text-[#2A1D1A] uppercase tracking-wide">
+            เพิ่มบุคคลภายนอก / วิทยากร
+          </label>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="flex-1 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <input type="text" [(ngModel)]="externalName" name="extName" 
+                   placeholder="พิมพ์ชื่อ-นามสกุล บุคคลภายนอก..." 
+                   class="w-full pl-10 pr-4 py-3 bg-white rounded-xl border border-gray-200 text-sm font-bold focus:border-[#F9BD15] focus:ring-1 focus:ring-[#F9BD15] outline-none transition-all shadow-sm">
+          </div>
+          <button type="button" (click)="addExternalParticipant()"
+                  class="bg-[#2A1D1A] text-[#F9BD15] px-6 py-3 rounded-xl font-black text-sm hover:bg-black transition-all active:scale-95 shadow-md flex items-center justify-center gap-2 whitespace-nowrap">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            เพิ่ม
+          </button>
+        </div>
+      </div>
+
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
@@ -124,7 +152,6 @@
                class="w-full bg-gray-50 border border-transparent focus:border-[#F9BD15] focus:bg-white rounded-2xl px-5 py-3.5 text-sm font-bold text-[#2A1D1A] outline-none transition-all">
       </div>
 
-      <!-- 🌟 เพิ่ม z-index รองลงมา เพื่อไม่ให้กล่อง dropdown ด้านบนมาทะลุโดนกล่องนี้ -->
       <div class="md:col-span-2 space-y-5 pt-4 border-t border-gray-100 relative" [ngClass]="{'z-40': isDropdownOpen}">
         <div>
           <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">

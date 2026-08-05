@@ -20,8 +20,8 @@ export class AddPlansComponent implements OnInit {
   isEditMode = signal(false);
   editId: string | null = null;
   
-  loading = false; // 🌟 ใช้สำหรับตอนดึงข้อมูลรายชื่อเริ่มต้น
-  isSubmitting = false; // 🌟 แยกตัวแปรใหม่ ใช้เฉพาะตอนกดปุ่ม "บันทึก"
+  loading = false;
+  isSubmitting = false; 
 
   projectName = '';
   planYear: number = new Date().getFullYear() + 543;
@@ -34,10 +34,13 @@ export class AddPlansComponent implements OnInit {
   summaryFile = '';
   selectedSummaryName = signal<string>('');
 
-  participants: Array<{ staff_id: string }> = [{ staff_id: '' }]; 
+  participants: Array<{ staff_id: string; is_external?: boolean; name?: string }> = [{ staff_id: '' }]; 
   staffMembers = signal<any[]>([]);
   userScope = signal<string>('none'); 
   currentStaffId = signal<string>(''); 
+
+  // ตัวแปรเพิ่มคนนอก
+  externalName: string = '';
 
   subActivities = signal<{id: number, value: string}[]>([{ id: Date.now(), value: '' }]);
 
@@ -57,9 +60,6 @@ export class AddPlansComponent implements OnInit {
   statusList = ['ยังไม่ได้ดำเนินการ', 'อยู่ระหว่างดำเนินการ', 'ดำเนินการแล้วเสร็จ'];
   isStatusOpen = signal(false);
 
-  // ==========================================
-  // 🌟 ส่วนระบบค้นหา Dropdown
-  // ==========================================
   staffSearchQueries: { [index: number]: string } = {};
   isStaffDropdownOpen: { [index: number]: boolean } = {};
 
@@ -90,7 +90,6 @@ export class AddPlansComponent implements OnInit {
       (s.position && s.position.toLowerCase().includes(query))
     );
   }
-  // ==========================================
 
   ngOnInit() {
     this.initDropdownData(); 
@@ -134,7 +133,7 @@ export class AddPlansComponent implements OnInit {
   }
 
   loadActiveStaff() {
-    this.loading = true; // 🌟 ใช้ loading สำหรับหน้าจอหมุนโหลดข้อมูลเริ่มต้น
+    this.loading = true; 
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     
@@ -203,7 +202,11 @@ export class AddPlansComponent implements OnInit {
           }
           
           if (pd.participants && pd.participants.length > 0) {
-            this.participants = pd.participants;
+            this.participants = pd.participants.map((p: any) => ({
+              staff_id: p.staff_id ? p.staff_id.toString() : '',
+              is_external: !!p.external_name,
+              name: p.external_name || ''
+            }));
           }
           if (pd.sub_activities && pd.sub_activities.length > 0) {
             this.subActivities.set(
@@ -212,7 +215,7 @@ export class AddPlansComponent implements OnInit {
           }
         }
 
-        if (this.participants.length === 1 && !this.participants[0].staff_id) {
+        if (this.participants.length === 1 && !this.participants[0].staff_id && !this.participants[0].is_external) {
           if (scope === 'self' && myStaffId) {
              this.participants[0].staff_id = myStaffId; 
           }
@@ -303,6 +306,16 @@ export class AddPlansComponent implements OnInit {
   selectStatus(item: string) { this.selectedStatus.set(item); this.isStatusOpen.set(false); }
 
   addParticipant() { this.participants.push({ staff_id: '' }); }
+  
+  // 🌟 ฟังก์ชันเพิ่มคนนอก
+  addExternalParticipant() {
+    if (!this.externalName.trim()) { alert('กรุณากรอกชื่อบุคคลภายนอก'); return; }
+    const isDup = this.participants.some(p => p.name === this.externalName.trim());
+    if (isDup) { alert('มีชื่อบุคคลนี้ในรายการแล้ว'); return; }
+    this.participants.push({ staff_id: '', name: this.externalName.trim(), is_external: true });
+    this.externalName = '';
+  }
+
   removeParticipant(index: number) { if (this.participants.length > 1) { this.participants.splice(index, 1); } }
 
   addSubActivity() { this.subActivities.update(items => [...items, { id: Date.now(), value: '' }]); }
@@ -356,17 +369,17 @@ export class AddPlansComponent implements OnInit {
   submitForm() {
     if (!this.projectName.trim()) { alert('กรุณาระบุชื่อโครงการ'); return; }
     if (!this.planYear) { alert('กรุณาระบุปี พ.ศ. ที่ดำเนินการ'); return; }
-    if (this.participants.some(p => !p.staff_id)) { alert('กรุณาเลือกชื่อผู้รับผิดชอบให้ครบถ้วน'); return; }
+    if (this.participants.some(p => !p.staff_id && !p.is_external)) { alert('กรุณาเลือกชื่อผู้รับผิดชอบให้ครบถ้วน'); return; }
 
     if (this.userScope() === 'self' && this.currentStaffId()) {
-      const hasSelf = this.participants.some(p => p.staff_id.toString() === this.currentStaffId().toString());
+      const hasSelf = this.participants.some(p => p.staff_id?.toString() === this.currentStaffId().toString());
       if (!hasSelf) {
         alert('❌ ในฐานะผู้ใช้งานทั่วไป คุณจำเป็นต้องระบุชื่อตนเองเป็นผู้รับผิดชอบโครงการด้วยครับ');
         return;
       }
     }
 
-    this.isSubmitting = true; // 🌟 ใช้ isSubmitting สำหรับโชว์ป็อปอัปกำลังบันทึก
+    this.isSubmitting = true; 
     const token = localStorage.getItem('token') || '';
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 

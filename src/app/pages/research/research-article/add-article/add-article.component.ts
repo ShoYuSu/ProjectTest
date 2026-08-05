@@ -25,7 +25,7 @@ export class AddArticleComponent implements OnInit {
 
   isEditMode = signal(false);
   editId: string | null = null;
-  selectedFileName = signal<string>(''); // 🌟 เก็บชื่อไฟล์เพื่อแสดงผล
+  selectedFileName = signal<string>(''); 
 
   formData = {
     article_type: 'journal', 
@@ -38,13 +38,13 @@ export class AddArticleComponent implements OnInit {
     conference_name: '',
     conference_date: '',
     conference_location: '',
-    attached_file: '', // 🌟 เพิ่มช่องรับไฟล์
-    authors: [] as Array<{ staff_id: string; role: string }>
+    attached_file: '', 
+    authors: [] as Array<{ staff_id: string; role: string; is_external?: boolean; name?: string }>
   };
 
-  // ==========================================
-  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันใหม่สำหรับ Dropdown พิมพ์ค้นหาได้
-  // ==========================================
+  // ตัวแปรเพิ่มคนนอก
+  externalName: string = '';
+
   staffSearchQueries: { [index: number]: string } = {};
   isStaffDropdownOpen: { [index: number]: boolean } = {};
 
@@ -75,9 +75,6 @@ export class AddArticleComponent implements OnInit {
       (s.position && s.position.toLowerCase().includes(query))
     );
   }
-  // ==========================================
-  // 🌟 [จบ] ส่วนระบบค้นหา
-  // ==========================================
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -145,13 +142,17 @@ export class AddArticleComponent implements OnInit {
           this.formData.conference_location = ad.conference_location || '';
           if (ad.dept_id) this.formData.dept_id = ad.dept_id.toString();
           
-          // 🌟 ตั้งค่าลิงก์ไฟล์เก่า
           if (ad.attached_file) {
             this.formData.attached_file = "http://localhost:8080/api/" + ad.attached_file;
           }
 
           if (ad.authors && ad.authors.length > 0) {
-            this.formData.authors = ad.authors;
+            this.formData.authors = ad.authors.map((a: any) => ({
+              staff_id: a.staff_id ? a.staff_id.toString() : '',
+              role: a.role,
+              is_external: !!a.external_name,
+              name: a.external_name || ''
+            }));
           }
         }
 
@@ -172,7 +173,6 @@ export class AddArticleComponent implements OnInit {
     });
   }
 
-  // 🌟 ฟังก์ชันแปลงไฟล์เป็น Base64
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -191,6 +191,27 @@ export class AddArticleComponent implements OnInit {
   }
 
   addAuthorRow() { this.formData.authors.push({ staff_id: '', role: 'ผู้นิพนธ์ร่วม (Co-Author)' }); }
+  
+  // 🌟 ฟังก์ชันเพิ่มคนนอก
+  addExternalAuthor() {
+    if (!this.externalName.trim()) {
+      alert('กรุณากรอกชื่อบุคคลภายนอกครับ');
+      return;
+    }
+    const isDuplicate = this.formData.authors.some(a => a.name === this.externalName.trim());
+    if (isDuplicate) {
+      alert('มีชื่อบุคคลนี้ในรายการแล้วครับ');
+      return;
+    }
+    this.formData.authors.push({
+      staff_id: '',
+      name: this.externalName.trim(),
+      role: 'ผู้นิพนธ์ร่วม (Co-Author)', // 🌟 กำหนดบทบาทเริ่มต้น
+      is_external: true
+    });
+    this.externalName = ''; // เคลียร์ช่องพิมพ์ชื่อ
+  }
+
   removeAuthorRow(index: number) {
     if (this.formData.authors.length > 1) this.formData.authors.splice(index, 1);
   }
@@ -200,7 +221,7 @@ export class AddArticleComponent implements OnInit {
       alert('กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วนก่อนทำการบันทึกครับ'); return;
     }
 
-    if (this.formData.authors.some(a => !a.staff_id)) {
+    if (this.formData.authors.some(a => !a.staff_id && !a.is_external)) {
       alert('กรุณาเลือกชื่ออาจารย์ในช่องที่มีอยู่ให้ครบถ้วนครับ'); return;
     }
 

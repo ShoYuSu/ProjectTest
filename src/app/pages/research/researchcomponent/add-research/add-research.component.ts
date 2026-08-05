@@ -25,8 +25,6 @@ export class AddResearchComponent implements OnInit {
 
   isEditMode = signal(false);
   editId: string | null = null;
-  
-  // 🌟 เพิ่ม Signal สำหรับเก็บชื่อไฟล์ที่ผู้ใช้เลือก
   selectedFileName = signal<string>('');
 
   formData = {
@@ -36,13 +34,13 @@ export class AddResearchComponent implements OnInit {
     year_ended: new Date().getFullYear() + 543,
     funding_source: '',
     budget: null as number | null,
-    attached_file: '', // 🌟 ตัวแปรเก็บ Base64 หรือ Path เดิม
-    authors: [] as Array<{ staff_id: string; role: string }>
+    attached_file: '', 
+    authors: [] as Array<{ staff_id: string; role: string; is_external?: boolean; name?: string }>
   };
 
-  // ==========================================
-  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันใหม่สำหรับ Dropdown พิมพ์ค้นหาได้
-  // ==========================================
+  // ตัวแปรเพิ่มคนนอก
+  externalName: string = '';
+
   staffSearchQueries: { [index: number]: string } = {};
   isStaffDropdownOpen: { [index: number]: boolean } = {};
 
@@ -73,9 +71,6 @@ export class AddResearchComponent implements OnInit {
       (s.position && s.position.toLowerCase().includes(query))
     );
   }
-  // ==========================================
-  // 🌟 [จบ] ส่วนระบบค้นหา
-  // ==========================================
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -118,7 +113,6 @@ export class AddResearchComponent implements OnInit {
           this.currentStaffId.set(myStaffId); 
         }
 
-        // 🌟 Permission-Based Only
         let scope = 'none';
         const p = res.perms.permissions || res.perms || {};
         const modPerms = p['research_info'] || p['research'];
@@ -140,13 +134,17 @@ export class AddResearchComponent implements OnInit {
           this.formData.year_ended = pd.year_ended;
           if (pd.dept_id) this.formData.dept_id = pd.dept_id.toString();
           
-          // 🌟 ดึงไฟล์เดิมมาเซ็ตในฟอร์ม
           if (pd.attached_file) {
             this.formData.attached_file = "http://localhost:8080/api/" + pd.attached_file;
           }
 
           if (pd.authors && pd.authors.length > 0) {
-            this.formData.authors = pd.authors;
+            this.formData.authors = pd.authors.map((a: any) => ({
+              staff_id: a.staff_id ? a.staff_id.toString() : '',
+              role: a.role,
+              is_external: !!a.external_name,
+              name: a.external_name || ''
+            }));
           }
         }
 
@@ -172,7 +170,6 @@ export class AddResearchComponent implements OnInit {
     });
   }
 
-  // 🌟 ฟังก์ชันจัดการเมื่อผู้ใช้เลือกไฟล์ (แปลงเอกสารเป็น Base64)
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
@@ -186,6 +183,26 @@ export class AddResearchComponent implements OnInit {
   }
 
   addAuthorRow() { this.formData.authors.push({ staff_id: '', role: 'ผู้ร่วมวิจัย' }); }
+  
+  // 🌟 ฟังก์ชันเพิ่มคนนอก
+  addExternalAuthor() {
+    if (!this.externalName.trim()) {
+      alert('กรุณากรอกชื่อบุคคลภายนอกครับ');
+      return;
+    }
+    const isDuplicate = this.formData.authors.some(a => a.name === this.externalName.trim());
+    if (isDuplicate) {
+      alert('มีชื่อบุคคลนี้ในรายการแล้วครับ');
+      return;
+    }
+    this.formData.authors.push({
+      staff_id: '',
+      name: this.externalName.trim(),
+      role: 'ผู้ร่วมวิจัย', // 🌟 กำหนดบทบาทเริ่มต้นเป็นผู้ร่วมวิจัย
+      is_external: true
+    });
+    this.externalName = ''; // เคลียร์ช่องพิมพ์ชื่อ
+  }
 
   removeAuthorRow(index: number) {
     if (this.formData.authors.length > 1) this.formData.authors.splice(index, 1);
@@ -201,7 +218,7 @@ export class AddResearchComponent implements OnInit {
       alert('❌ ปี พ.ศ. ที่สิ้นสุดโครงการ จะต้องไม่น้อยกว่าปี พ.ศ. ที่เริ่มได้รับทุนครับ'); return;
     }
 
-    if (this.formData.authors.some(a => !a.staff_id)) {
+    if (this.formData.authors.some(a => !a.staff_id && !a.is_external)) {
       alert('กรุณาเลือกชื่ออาจารย์ในช่องที่มีอยู่ให้ครบถ้วนครับ'); return;
     }
 
@@ -212,7 +229,7 @@ export class AddResearchComponent implements OnInit {
     }
 
     if (this.userScope() === 'self' && this.currentStaffId()) {
-      const hasSelf = this.formData.authors.some(a => a.staff_id.toString() === this.currentStaffId().toString());
+      const hasSelf = this.formData.authors.some(a => a.staff_id?.toString() === this.currentStaffId().toString());
       if (!hasSelf) {
         alert('❌ ในฐานะผู้ใช้งานทั่วไป คุณจำเป็นต้องระบุชื่อของตนเองเป็นหนึ่งในผู้รับผิดชอบโครงการด้วยครับ');
         return;
