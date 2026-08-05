@@ -54,7 +54,6 @@ export class StaffComponent implements OnInit {
     });
   }
 
-  // 🌟 อัปเดตตรรกะเช็คสิทธิ์ให้ปลอดภัย 100%
   checkPermissions() {
     const token = localStorage.getItem('token') || '';
     let userRole = '';
@@ -82,7 +81,6 @@ export class StaffComponent implements OnInit {
               const addKey = Object.keys(perms[staffKey]).find(a => a.toLowerCase() === 'add');
               if (addKey) {
                 const scope = perms[staffKey][addKey];
-                // 🌟 ต้องมีค่าจริงและไม่เป็น none เท่านั้น ถึงจะให้สิทธิ์เพิ่ม
                 if (scope && scope.toLowerCase() !== 'none') {
                   hasAdd = true;
                 }
@@ -117,11 +115,14 @@ export class StaffComponent implements OnInit {
             staff_id: item.staff_id,
             person_id: item.person_id,
             name: item.full_name,
+            staff_code: item.staff_code, // ดึงรหัสประจำตัวมาไว้ใช้อ้างอิง
             image: item.img_profile ? 'http://localhost:8080/api/' + item.img_profile.replace(/^\/+/, '') : null,
             position: item.position,
             department: item.department || 'ส่วนกลาง',
-            researchCount: Number(item.researchCount) || 0, // 🌟 เปลี่ยนตรงนี้จุดเดียวเพื่อให้ดึงค่าผลรวมวิจัยมาแสดง
-            can_edit: item.can_delete 
+            researchCount: Number(item.researchCount) || 0,
+            can_edit: item.can_edit,
+            can_delete: item.can_delete,
+            can_reset_password: item.can_reset_password // 🌟 มารับค่าจาก API
           }));
 
           this.rawStaffList.set(mappedData);
@@ -151,6 +152,27 @@ export class StaffComponent implements OnInit {
     if (dept === 'physics') return 'ภาควิชาฟิสิกส์';
     if (dept === 'cs') return 'ภาควิชาวิทยาการคอมพิวเตอร์';
     return 'บุคลากร';
+  }
+
+  // 🌟 ฟังก์ชันเรียกรีเซ็ตรหัสผ่าน
+  resetPassword(personId: number, name: string) {
+    if (confirm(`⚠️ คำเตือน: คุณต้องการรีเซ็ตรหัสผ่านของ "${name}" ใช่หรือไม่?\n\nรหัสผ่านจะถูกตั้งค่ากลับไปเป็น "รหัสประจำตัว" และผู้ใช้งานจะถูกบังคับให้เปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบในครั้งถัดไป`)) {
+      const token = localStorage.getItem('token') || '';
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      
+      this.http.post<any>('http://localhost:8080/api/reset_password.php', {
+        person_id: personId
+      }, { headers }).subscribe({
+        next: (res) => {
+          if (res.success) {
+            alert('✅ ' + res.message);
+          } else {
+            alert('❌ เกิดข้อผิดพลาด: ' + res.message);
+          }
+        },
+        error: (err) => alert('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้')
+      });
+    }
   }
 
   deleteStaff(staffId: number, personId: number, name: string) {
