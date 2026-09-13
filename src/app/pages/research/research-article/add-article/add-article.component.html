@@ -111,8 +111,18 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">วันที่จัดงาน (Conference Date)</label>
-            <input type="text" [(ngModel)]="formData.conference_date" placeholder="เช่น 15-17 March 2024"
-                   class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
+            <div class="flex gap-4">
+              <div class="w-full">
+                <span class="text-[10px] font-bold text-gray-400 block mb-1">วันที่เริ่มต้น</span>
+                <input type="date" [(ngModel)]="formData.conference_start_date" 
+                       class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
+              </div>
+              <div class="w-full">
+                <span class="text-[10px] font-bold text-gray-400 block mb-1">วันที่สิ้นสุด</span>
+                <input type="date" [(ngModel)]="formData.conference_end_date" 
+                       class="w-full p-4 bg-gray-50 border border-transparent rounded-2xl text-sm font-bold outline-none focus:border-[#F9BD15] focus:bg-white transition-all text-[#2A1D1A]">
+              </div>
+            </div>
           </div>
           <div>
             <label class="text-xs font-black text-[#2A1D1A] uppercase tracking-wider mb-2 block">สถานที่จัดงาน (Location)</label>

@@ -36,20 +36,20 @@ export class AddArticleComponent implements OnInit {
     journal_vol_issue: '',
     journal_quartile: '',
     conference_name: '',
-    conference_date: '',
+    // เปลี่ยนจาก conference_date เป็น 2 ตัวแปรนี้
+    conference_start_date: '', 
+    conference_end_date: '',
     conference_location: '',
     attached_file: '', 
     authors: [] as Array<{ staff_id: string; role: string; is_external?: boolean; name?: string }>
   };
 
-  // ตัวแปรเพิ่มคนนอก
   externalName: string = '';
-
   staffSearchQueries: { [index: number]: string } = {};
   isStaffDropdownOpen: { [index: number]: boolean } = {};
 
   // ==========================================
-  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
+  // โมดอลแจ้งเตือน
   // ==========================================
   isConfirmModalOpen = signal(false);
   confirmTitle = signal('');
@@ -94,8 +94,10 @@ export class AddArticleComponent implements OnInit {
       this.alertCallback = null;
     }
   }
-  // ==========================================
 
+  // ==========================================
+  // จัดการรายชื่อ
+  // ==========================================
   getStaffName(staffId: string): string {
     if (!staffId) return '';
     const staff = this.staffMembers().find(s => s.staff_id === staffId);
@@ -186,7 +188,9 @@ export class AddArticleComponent implements OnInit {
           this.formData.journal_vol_issue = ad.journal_vol_issue || '';
           this.formData.journal_quartile = ad.journal_quartile || '';
           this.formData.conference_name = ad.conference_name || '';
-          this.formData.conference_date = ad.conference_date || '';
+          // โหลดข้อมูล 2 ตัวแปรนี้มาแสดง
+          this.formData.conference_start_date = ad.conference_start_date || '';
+          this.formData.conference_end_date = ad.conference_end_date || '';
           this.formData.conference_location = ad.conference_location || '';
           if (ad.dept_id) this.formData.dept_id = ad.dept_id.toString();
           
@@ -292,7 +296,11 @@ export class AddArticleComponent implements OnInit {
     const payload = { ...this.formData, id: this.editId };
 
     if (payload.article_type === 'journal') {
-      payload.conference_name = ''; payload.conference_date = ''; payload.conference_location = '';
+      payload.conference_name = ''; 
+      // เคลียร์ค่าทั้งคู่เมื่อเลือกเป็น Journal
+      payload.conference_start_date = ''; 
+      payload.conference_end_date = ''; 
+      payload.conference_location = '';
     } else {
       payload.journal_name = ''; payload.journal_vol_issue = ''; payload.journal_quartile = '';
     }
