@@ -150,11 +150,11 @@
         </div>
 
         <div class="space-y-3">
-            @for (participant of participants; track $index) {
-                <div class="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 transition-all" [ngClass]="{'relative z-50': isStaffDropdownOpen[$index]}">
+            @for (participant of participants; track $index; let i = $index) {
+                <div class="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 transition-all" [ngClass]="{'relative z-50': isStaffDropdownOpen[i]}">
                     
                     <div class="relative flex-1">
-                      <button type="button" (click)="!participant.is_external && toggleStaffDropdown($index, $event)"
+                      <button type="button" (click)="!participant.is_external && toggleStaffDropdown(i, $event)"
                               class="w-full p-3.5 bg-gray-50 rounded-xl font-bold text-sm border border-transparent focus:bg-white focus:border-[#F9BD15] outline-none transition-all text-left flex justify-between items-center"
                               [ngClass]="{'text-[#2A1D1A]': participant.staff_id || participant.is_external, 'text-gray-400': !participant.staff_id && !participant.is_external, 'bg-gray-100 cursor-not-allowed': participant.is_external}">
                         <span class="truncate">
@@ -165,21 +165,22 @@
                         }
                       </button>
 
-                      @if (isStaffDropdownOpen[$index] && !participant.is_external) {
-                        <div class="fixed inset-0 z-40" (click)="isStaffDropdownOpen[$index] = false"></div>
+                      @if (isStaffDropdownOpen[i] && !participant.is_external) {
+                        <div class="fixed inset-0 z-40" (click)="isStaffDropdownOpen[i] = false"></div>
                         
                         <div class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
                           <div class="p-3 border-b border-gray-100 bg-gray-50 relative">
                             <svg class="w-4 h-4 absolute left-6 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                            <input type="text" [(ngModel)]="staffSearchQueries[$index]" (click)="$event.stopPropagation()" placeholder="พิมพ์ชื่อเพื่อค้นหา..." class="w-full pl-9 pr-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-[#F9BD15] text-[#2A1D1A] bg-white">
+                            <!-- 🌟 แก้ไขตรงนี้ให้ใช้ i ในช่องค้นหา เพื่อให้พิมพ์หาชื่อคนอื่นได้ -->
+                            <input type="text" [(ngModel)]="staffSearchQueries[i]" (click)="$event.stopPropagation()" placeholder="พิมพ์ชื่อเพื่อค้นหา..." class="w-full pl-9 pr-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-[#F9BD15] text-[#2A1D1A] bg-white">
                           </div>
                           
                           <ul class="max-h-60 overflow-y-auto">
-                            @if (getFilteredStaffList($index).length === 0) {
+                            @if (getFilteredStaffList(i).length === 0) {
                               <li class="p-4 text-center text-sm font-bold text-gray-400">ไม่พบรายชื่อที่ค้นหา</li>
                             }
-                            @for (staff of getFilteredStaffList($index); track staff.staff_id) {
-                              <li (click)="selectStaffForParticipant($index, staff.staff_id)"
+                            @for (staff of getFilteredStaffList(i); track staff.staff_id) {
+                              <li (click)="selectStaffForParticipant(i, staff.staff_id)"
                                   class="p-3 hover:bg-gray-50 cursor-pointer font-bold text-sm text-[#2A1D1A] transition-colors border-b border-gray-50 last:border-0"
                                   [class.bg-[#F9BD15]/10]="participant.staff_id === staff.staff_id">
                                 {{ staff.full_name }} <span class="text-xs text-gray-400 font-normal">({{ staff.position || 'บุคลากร' }})</span>
@@ -190,7 +191,8 @@
                       }
                     </div>
 
-                    <button (click)="removeParticipant($index)" class="p-3.5 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                    <!-- 🌟 แก้ไข: ลบรายชื่อโดยใช้ i -->
+                    <button (click)="removeParticipant(i)" class="p-3.5 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                     </button>
                 </div>
@@ -343,13 +345,10 @@
   <!-- 🌟 Custom Confirm Modal -->
   @if (isConfirmModalOpen()) {
     <div class="fixed inset-0 z-[100] flex items-center justify-center animate-in fade-in duration-200">
-      <!-- Backdrop สีเทาดำ -->
       <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px]" (click)="closeConfirmModal()"></div>
       
-      <!-- Modal Content -->
       <div class="relative bg-white rounded-[2rem] p-8 max-w-sm w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col items-center text-center">
         
-        <!-- ไอคอนเตือน -->
         <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-5">
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         </div>
@@ -372,13 +371,10 @@
   <!-- 🌟 Custom Alert Modal -->
   @if (isAlertModalOpen()) {
     <div class="fixed inset-0 z-[100] flex items-center justify-center animate-in fade-in duration-200">
-      <!-- Backdrop -->
       <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px]" (click)="closeAlertModal()"></div>
       
-      <!-- Modal Content -->
       <div class="relative bg-white rounded-[2rem] p-8 max-w-sm w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col items-center text-center">
         
-        <!-- ไอคอนแจ้งเตือน -->
         <div class="w-16 h-16 bg-[#F9BD15]/10 text-[#F9BD15] rounded-full flex items-center justify-center mb-5">
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </div>
