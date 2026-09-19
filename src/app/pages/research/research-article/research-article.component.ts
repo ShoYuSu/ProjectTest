@@ -118,7 +118,7 @@ export class ResearchArticleComponent implements OnInit, OnDestroy {
             journal_quartile: item.journal_quartile || '',
             conference_name: item.conference_name || '',
             conference_date: item.conference_date || '',
-            conference_end_date: item.conference_end_date || '', // เพิ่มการดึงค่า
+            conference_end_date: item.conference_end_date || '', // 🌟 เพิ่มการดึงค่าวันที่สิ้นสุด
             conference_location: item.conference_location || '',
             attachedFile: item.attachedFile || null,
             can_edit: item.can_edit,
@@ -223,13 +223,15 @@ export class ResearchArticleComponent implements OnInit, OnDestroy {
   }
   isAllSelected(): boolean { return this.filteredArticles().length > 0 && this.selectedIds().size === this.filteredArticles().length; }
 
-  // 🌟 อัปเดตฟังก์ชัน Export CSV ให้แสดงข้อมูลตามประเภทบทความ
+  // 🌟 ฟังก์ชันการ Export CSV (แก้ไขให้ดาวน์โหลดวันที่ได้ครบถ้วน)
   exportSelectedToCSV() {
     let dataToExport = this.filteredArticles();
     if (this.selectedIds().size > 0) dataToExport = dataToExport.filter(item => this.selectedIds().has(item.id));
     if (dataToExport.length === 0) { alert('⚠️ ไม่มีข้อมูลสำหรับ Export'); return; }
 
     const isJournal = this.activeTab() === 'journal';
+    
+    // 🌟 1. เพิ่มหัวตารางให้มี "วันที่ประชุม (เริ่ม)" และ "วันที่ประชุม (สิ้นสุด)"
     const headers = isJournal 
       ? ['ID', 'ชื่อบทความ', 'ผู้นิพนธ์', 'ปีที่ตีพิมพ์', 'ชื่อวารสาร', 'Vol. / Issue', 'Quartile', 'ภาควิชา']
       : ['ID', 'ชื่อบทความ', 'ผู้นิพนธ์', 'ปีที่ตีพิมพ์', 'ชื่องานประชุม', 'วันที่ประชุม (เริ่ม)', 'วันที่ประชุม (สิ้นสุด)', 'สถานที่จัดงาน', 'ภาควิชา'];
@@ -238,7 +240,18 @@ export class ResearchArticleComponent implements OnInit, OnDestroy {
       if (isJournal) {
         return [ item.id, `"${item.title}"`, `"${item.author}"`, item.year || '-', `"${item.journal_name}"`, `"${item.journal_vol_issue}"`, `"${item.journal_quartile}"`, `"${item.department}"`].join(',');
       } else {
-        return [ item.id, `"${item.title}"`, `"${item.author}"`, item.year || '-', `"${item.conference_name}"`, `"${item.conference_date}"`, `"${item.conference_end_date || ''}"`, `"${item.conference_location}"`, `"${item.department}"`].join(',');
+        // 🌟 2. ดึงค่า item.conference_date และ item.conference_end_date มาใส่ให้ตรงกับหัวตาราง
+        return [ 
+          item.id, 
+          `"${item.title}"`, 
+          `"${item.author}"`, 
+          item.year || '-', 
+          `"${item.conference_name}"`, 
+          `"${item.conference_date || '-'}"`, 
+          `"${item.conference_end_date || '-'}"`, 
+          `"${item.conference_location}"`, 
+          `"${item.department}"`
+        ].join(',');
       }
     });
 
