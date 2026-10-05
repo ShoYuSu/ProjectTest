@@ -84,6 +84,18 @@
               <span class="text-gray-400">จำนวนงานวิจัย</span>
               <span class="font-bold text-[#2A1D1A]">{{ staff.researchCount }}</span>
             </div>
+            <!-- 🌟 เพิ่มแถบอัปเดตล่าสุดตรงนี้ -->
+            <div class="flex justify-between items-center text-xs border-b border-gray-50 pb-2">
+              <span class="text-gray-400">อัปเดตล่าสุด</span>
+              <span class="px-2 py-1 rounded-lg text-[10px] font-black tracking-wide border"
+                    [ngClass]="{
+                      'bg-green-50 text-green-600 border-green-200': staff.days_ago === 'วันนี้',
+                      'bg-blue-50 text-blue-600 border-blue-200': staff.days_ago === 'เมื่อวาน',
+                      'bg-gray-50 text-gray-500 border-gray-200': staff.days_ago !== 'วันนี้' && staff.days_ago !== 'เมื่อวาน'
+                    }">
+                {{ staff.days_ago }}
+              </span>
+            </div>
           </div>
           
           <div class="w-full flex gap-2 mt-5">

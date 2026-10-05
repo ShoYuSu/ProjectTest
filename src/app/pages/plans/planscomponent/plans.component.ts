@@ -31,10 +31,28 @@ export class PlansComponent implements OnInit, OnDestroy {
   currentPage = signal(1);
   itemsPerPage = 10;
 
-  // 🌟 State & Scroll Persistence
   private stateKey = 'plan_state';
   currentScroll = 0;
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
+
+  // 🌟 1. เพิ่มฟังก์ชันคำนวณวันอัปเดตล่าสุด
+  getDaysAgo(dateStr: string): string {
+    if (!dateStr || dateStr.startsWith('0000')) return '-';
+    
+    const updated = new Date(dateStr);
+    const today = new Date();
+    
+    updated.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    
+    const diffTime = today.getTime() - updated.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'วันนี้';
+    if (diffDays === 1) return 'เมื่อวาน';
+    if (diffDays > 0) return `${diffDays} วันที่แล้ว`;
+    return '-'; 
+  }
 
   ngOnInit() {
     const savedState = sessionStorage.getItem(this.stateKey);
@@ -104,7 +122,9 @@ export class PlansComponent implements OnInit, OnDestroy {
             proposalFile: item.proposalFile || null,
             summaryFile: item.summaryFile || null,
             participants: item.participants || '-',
-            sub_activities: item.sub_activities ? item.sub_activities.split('|||') : []
+            sub_activities: item.sub_activities ? item.sub_activities.split('|||') : [],
+            updated_at: item.updated_at,                      // 🌟 เพิ่มฟิลด์
+            days_ago: this.getDaysAgo(item.updated_at)        // 🌟 ใช้งานฟังก์ชัน
           }));
           this.allPlans.set(mappedData);
           this.applyFilters(false);

@@ -34,10 +34,28 @@ export class ResearchArticleComponent implements OnInit, OnDestroy {
   currentPage = signal(1);
   itemsPerPage = 10;
 
-  // 🌟 State & Scroll Persistence
   private stateKey = 'article_state';
   currentScroll = 0;
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
+
+  // 🌟 1. เพิ่มฟังก์ชันคำนวณวันอัปเดตล่าสุด
+  getDaysAgo(dateStr: string): string {
+    if (!dateStr || dateStr.startsWith('0000')) return '-';
+    
+    const updated = new Date(dateStr);
+    const today = new Date();
+    
+    updated.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    
+    const diffTime = today.getTime() - updated.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'วันนี้';
+    if (diffDays === 1) return 'เมื่อวาน';
+    if (diffDays > 0) return `${diffDays} วันที่แล้ว`;
+    return '-'; 
+  }
 
   ngOnInit() {
     const savedState = sessionStorage.getItem(this.stateKey);
@@ -118,11 +136,13 @@ export class ResearchArticleComponent implements OnInit, OnDestroy {
             journal_quartile: item.journal_quartile || '',
             conference_name: item.conference_name || '',
             conference_date: item.conference_date || '',
-            conference_end_date: item.conference_end_date || '', // 🌟 เพิ่มการดึงค่าวันที่สิ้นสุด
+            conference_end_date: item.conference_end_date || '', 
             conference_location: item.conference_location || '',
             attachedFile: item.attachedFile || null,
             can_edit: item.can_edit,
-            can_delete: item.can_delete
+            can_delete: item.can_delete,
+            updated_at: item.updated_at,                      // 🌟 เพิ่มฟิลด์
+            days_ago: this.getDaysAgo(item.updated_at)        // 🌟 ใช้งานฟังก์ชัน
           }));
 
           this.allArticles.set(mappedData);
@@ -223,7 +243,6 @@ export class ResearchArticleComponent implements OnInit, OnDestroy {
   }
   isAllSelected(): boolean { return this.filteredArticles().length > 0 && this.selectedIds().size === this.filteredArticles().length; }
 
-  // 🌟 ฟังก์ชันการ Export CSV (แก้ไขให้ดาวน์โหลดวันที่ได้ครบถ้วน)
   exportSelectedToCSV() {
     let dataToExport = this.filteredArticles();
     if (this.selectedIds().size > 0) dataToExport = dataToExport.filter(item => this.selectedIds().has(item.id));
@@ -231,24 +250,25 @@ export class ResearchArticleComponent implements OnInit, OnDestroy {
 
     const isJournal = this.activeTab() === 'journal';
     
-    // 🌟 1. เพิ่มหัวตารางให้มี "วันที่ประชุม (เริ่ม)" และ "วันที่ประชุม (สิ้นสุด)"
     const headers = isJournal 
       ? ['ID', 'ชื่อบทความ', 'ผู้นิพนธ์', 'ปีที่ตีพิมพ์', 'ชื่อวารสาร', 'Vol. / Issue', 'Quartile', 'ภาควิชา']
       : ['ID', 'ชื่อบทความ', 'ผู้นิพนธ์', 'ปีที่ตีพิมพ์', 'ชื่องานประชุม', 'วันที่ประชุม (เริ่ม)', 'วันที่ประชุม (สิ้นสุด)', 'สถานที่จัดงาน', 'ภาควิชา'];
     
     const csvRows = dataToExport.map(item => {
+      const confDate = (!item.conference_date || item.conference_date === '0000-00-00') ? '-' : item.conference_date;
+      const confEndDate = (!item.conference_end_date || item.conference_end_date === '0000-00-00') ? '-' : item.conference_end_date;
+
       if (isJournal) {
         return [ item.id, `"${item.title}"`, `"${item.author}"`, item.year || '-', `"${item.journal_name}"`, `"${item.journal_vol_issue}"`, `"${item.journal_quartile}"`, `"${item.department}"`].join(',');
       } else {
-        // 🌟 2. ดึงค่า item.conference_date และ item.conference_end_date มาใส่ให้ตรงกับหัวตาราง
         return [ 
           item.id, 
           `"${item.title}"`, 
           `"${item.author}"`, 
           item.year || '-', 
           `"${item.conference_name}"`, 
-          `"${item.conference_date || '-'}"`, 
-          `"${item.conference_end_date || '-'}"`, 
+          `"${confDate}"`, 
+          `"${confEndDate}"`, 
           `"${item.conference_location}"`, 
           `"${item.department}"`
         ].join(',');

@@ -24,9 +24,6 @@ export class StaffComponent implements OnInit {
   canAdd = signal<boolean>(false);
   errorMessage = signal<string>('');
 
-  // ==========================================
-  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
-  // ==========================================
   isConfirmModalOpen = signal(false);
   confirmTitle = signal('');
   confirmMessage = signal('');
@@ -35,6 +32,25 @@ export class StaffComponent implements OnInit {
   isAlertModalOpen = signal(false);
   alertTitle = signal('');
   alertMessage = signal('');
+
+  // 🌟 1. เพิ่มฟังก์ชันคำนวณวันอัปเดตล่าสุด
+  getDaysAgo(dateStr: string): string {
+    if (!dateStr || dateStr.startsWith('0000')) return '-';
+    
+    const updated = new Date(dateStr);
+    const today = new Date();
+    
+    updated.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    
+    const diffTime = today.getTime() - updated.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'วันนี้';
+    if (diffDays === 1) return 'เมื่อวาน';
+    if (diffDays > 0) return `${diffDays} วันที่แล้ว`;
+    return '-'; 
+  }
 
   openConfirmModal(title: string, message: string, action: () => void) {
     this.confirmTitle.set(title);
@@ -64,7 +80,6 @@ export class StaffComponent implements OnInit {
   closeAlertModal() {
     this.isAlertModalOpen.set(false);
   }
-  // ==========================================
 
   filteredStaffList = computed(() => {
     let list = this.rawStaffList();
@@ -164,7 +179,9 @@ export class StaffComponent implements OnInit {
             researchCount: Number(item.researchCount) || 0,
             can_edit: item.can_edit,
             can_delete: item.can_delete,
-            can_reset_password: item.can_reset_password
+            can_reset_password: item.can_reset_password,
+            updated_at: item.updated_at,                      // 🌟 เพิ่มฟิลด์
+            days_ago: this.getDaysAgo(item.updated_at)        // 🌟 ใช้งานฟังก์ชัน
           }));
 
           this.rawStaffList.set(mappedData);
@@ -196,7 +213,6 @@ export class StaffComponent implements OnInit {
     return 'บุคลากร';
   }
 
-  // 🌟 ฟังก์ชันเรียกรีเซ็ตรหัสผ่าน (เปลี่ยนมาใช้ Modal)
   resetPassword(personId: number, name: string) {
     this.openConfirmModal('ยืนยันการรีเซ็ตรหัสผ่าน', `⚠️ คำเตือน: คุณต้องการรีเซ็ตรหัสผ่านของ "${name}" ใช่หรือไม่?\n\nรหัสผ่านจะถูกตั้งค่ากลับไปเป็น "รหัสประจำตัว" และผู้ใช้งานจะถูกบังคับให้เปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบในครั้งถัดไป`, () => {
       const token = localStorage.getItem('token') || '';

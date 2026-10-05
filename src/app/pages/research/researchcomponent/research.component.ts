@@ -38,8 +38,26 @@ export class ResearchComponent implements OnInit, OnDestroy {
   currentScroll = 0;
   @ViewChild('scrollContainer') scrollContainer!: ElementRef;
 
+  // 🌟 1. เพิ่มฟังก์ชันคำนวณวันอัปเดตล่าสุด
+  getDaysAgo(dateStr: string): string {
+    if (!dateStr || dateStr.startsWith('0000')) return '-';
+    
+    const updated = new Date(dateStr);
+    const today = new Date();
+    
+    updated.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    
+    const diffTime = today.getTime() - updated.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'วันนี้';
+    if (diffDays === 1) return 'เมื่อวาน';
+    if (diffDays > 0) return `${diffDays} วันที่แล้ว`;
+    return '-'; 
+  }
+
   ngOnInit() {
-    // 🌟 1. โหลด State เดิมที่เคยบันทึกไว้ตอนเปลี่ยนหน้า
     const savedState = sessionStorage.getItem(this.stateKey);
     if (savedState) {
       const state = JSON.parse(savedState);
@@ -51,7 +69,6 @@ export class ResearchComponent implements OnInit, OnDestroy {
       this.currentScroll = state.scroll || 0;
     }
 
-    // 🌟 2. ถ้ารับค่า Params มาจากหน้าโปรไฟล์ ให้บังคับเคลียร์ค่า State ปกติ
     this.route.queryParams.subscribe(params => {
       if (params['search'] || params['year']) {
         if (params['search']) this.searchQuery.set(params['search']);
@@ -65,7 +82,6 @@ export class ResearchComponent implements OnInit, OnDestroy {
     this.fetchResearchData();      
   }
 
-  // 🌟 3. บันทึก State ทิ้งไว้เสมอเมื่อ Component ถูกทำลาย (เปลี่ยนไปหน้าแก้/เพิ่ม)
   ngOnDestroy() {
     const state = {
       page: this.currentPage(),
@@ -121,14 +137,15 @@ export class ResearchComponent implements OnInit, OnDestroy {
             budget: item.budget || 0,
             attachedFile: item.attachedFile || null,
             can_edit: item.can_edit,
-            can_delete: item.can_delete 
+            can_delete: item.can_delete,
+            updated_at: item.updated_at,                     // 🌟 เพิ่มฟิลด์
+            days_ago: this.getDaysAgo(item.updated_at)       // 🌟 ใช้งานฟังก์ชัน
           }));
 
           this.allProjects.set(mappedData);
-          this.applyFilters(false); // 🌟 โหลดข้อมูลเสร็จ ห้ามรีเซ็ตหน้าเพจ
+          this.applyFilters(false); 
           this.loading.set(false);
           
-          // 🌟 4. เลื่อน Scroll กลับไปตำแหน่งเดิมหลังจาก Render เสร็จ
           setTimeout(() => {
             if (this.scrollContainer) {
               this.scrollContainer.nativeElement.scrollTop = this.currentScroll;
@@ -165,7 +182,6 @@ export class ResearchComponent implements OnInit, OnDestroy {
     return ['ทั้งหมด', ...uniqueYears.map(String)];
   });
 
-  // 🌟 ฟังก์ชันจัดการการรีเซ็ต Scroll และ บันทึก Scroll
   onScroll(event: any) { this.currentScroll = event.target.scrollTop; }
   resetScroll() {
     this.currentScroll = 0;
@@ -200,7 +216,6 @@ export class ResearchComponent implements OnInit, OnDestroy {
 
     this.filteredProjects.set(sortedResult);
     
-    // 🌟 จัดการให้เปลี่ยนหน้าเฉพาะเมื่อฟิลเตอร์เปลี่ยน
     if (resetPage) {
       this.currentPage.set(1);
       this.resetScroll();
