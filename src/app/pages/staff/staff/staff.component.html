@@ -7,16 +7,6 @@
     </div>
     
     <div class="flex items-center gap-3">
-      
-      <!-- 🌟 ปุ่มกู้คืนผู้ใช้ (Admin Only) นำมาวางฝั่งซ้ายของช่องค้นหา -->
-      @if (userRole() === 'admin') {
-        <button (click)="openRestoreModal()" 
-                class="text-sm font-bold bg-white border border-gray-200 text-gray-600 hover:text-[#2A1D1A] hover:border-[#F9BD15] px-4 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-2 whitespace-nowrap">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-          ประวัติและการกู้คืน
-        </button>
-      }
-
       <div class="relative">
         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -156,115 +146,6 @@
       <button (click)="closeAlertModal()" class="w-full py-3.5 rounded-xl font-black text-[#2A1D1A] bg-[#F9BD15] hover:brightness-105 shadow-md hover:shadow-lg transition-all active:scale-95">
         ตกลง
       </button>
-    </div>
-  </div>
-}
-
-<!-- ========================================== -->
-<!-- 🌟 Modal กู้คืนผู้ใช้และประวัติ (Admin Only) -->
-<!-- ========================================== -->
-@if (isRestoreModalOpen) {
-  <div class="fixed inset-0 z-[100] flex items-center justify-center animate-in fade-in duration-200">
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px]" (click)="closeRestoreModal()"></div>
-    
-    <div class="relative bg-white rounded-[2rem] overflow-hidden p-8 max-w-4xl w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col h-[85vh]">
-      
-      <div class="flex items-center justify-between mb-6 pb-6 border-b border-gray-100 flex-none">
-        <div class="flex items-center gap-3">
-          <div class="w-12 h-12 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-          </div>
-          <div>
-            <h3 class="text-xl font-black text-[#2A1D1A]">ระบบจัดการประวัติและการกู้คืน</h3>
-            <p class="text-xs font-bold text-red-500 mt-1 uppercase tracking-wider">Administrator Access Only</p>
-          </div>
-        </div>
-        <button (click)="closeRestoreModal()" class="w-10 h-10 bg-gray-50 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full flex items-center justify-center transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
-
-      <div class="flex gap-2 mb-6 bg-gray-50 p-1.5 rounded-xl flex-none">
-        <button (click)="activeRestoreTab = 'deleted'" 
-                [ngClass]="activeRestoreTab === 'deleted' ? 'bg-white text-[#2A1D1A] shadow-sm' : 'text-gray-500 hover:text-[#2A1D1A]'" 
-                class="flex-1 font-bold text-sm py-2.5 rounded-lg transition-all">
-          รายชื่อที่ถูกลบ (รอการกู้คืน)
-        </button>
-        <button (click)="activeRestoreTab = 'history'" 
-                [ngClass]="activeRestoreTab === 'history' ? 'bg-white text-[#2A1D1A] shadow-sm' : 'text-gray-500 hover:text-[#2A1D1A]'" 
-                class="flex-1 font-bold text-sm py-2.5 rounded-lg transition-all">
-          ประวัติการจัดการบุคลากรทั้งหมด
-        </button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-        
-        <!-- Tab 1: รอการกู้คืน -->
-        @if (activeRestoreTab === 'deleted') {
-          <div class="space-y-4">
-            @if (deletedStaffList.length === 0) {
-              <div class="text-center py-16 flex flex-col items-center">
-                <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11v1a10 10 0 1 1-9-10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-                </div>
-                <p class="text-gray-400 font-bold">ไม่มีบัญชีบุคลากรที่ถูกลบในขณะนี้</p>
-              </div>
-            }
-            @for (staff of deletedStaffList; track staff.id) {
-              <div class="flex items-center justify-between p-5 bg-white border border-gray-100 hover:border-gray-300 rounded-2xl shadow-sm transition-all">
-                <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center font-black text-lg">
-                    {{ staff.full_name.charAt(0) }}
-                  </div>
-                  <div>
-                    <h4 class="font-black text-[#2A1D1A] text-base">{{ staff.full_name }}</h4>
-                    <div class="flex gap-4 mt-1">
-                      <span class="text-xs text-gray-500 font-bold bg-gray-100 px-2 py-0.5 rounded-md">{{ staff.position }}</span>
-                      <span class="text-xs text-red-400 font-bold">ลบเมื่อ: {{ staff.deleted_at }}</span>
-                    </div>
-                  </div>
-                </div>
-                <button (click)="restoreStaff(staff.id)" class="bg-green-50 text-green-600 hover:bg-green-600 hover:text-white px-5 py-2.5 rounded-xl text-xs font-black transition-all shadow-sm active:scale-95 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-                  กู้คืนข้อมูล
-                </button>
-              </div>
-            }
-          </div>
-        }
-
-        <!-- Tab 2: ประวัติระบบ (Audit Logs) -->
-        @if (activeRestoreTab === 'history') {
-          <div class="relative border-l-2 border-gray-100 ml-4 space-y-8 pb-4">
-            @if (systemLogs.length === 0) {
-              <div class="text-center py-16 text-gray-400 font-bold">ยังไม่มีประวัติการจัดการในระบบ</div>
-            }
-            @for (log of systemLogs; track log.id) {
-              <div class="relative pl-6">
-                <!-- Timeline Dot -->
-                <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-4 border-white"
-                     [ngClass]="{'bg-green-500': log.action === 'CREATE', 'bg-red-500': log.action === 'DELETE', 'bg-blue-500': log.action === 'RESTORE'}">
-                </div>
-                
-                <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-black uppercase tracking-wider"
-                          [ngClass]="{'text-green-600': log.action === 'CREATE', 'text-red-600': log.action === 'DELETE', 'text-blue-600': log.action === 'RESTORE'}">
-                      {{ log.action === 'CREATE' ? 'เพิ่มบุคลากร' : (log.action === 'DELETE' ? 'ลบบุคลากร' : 'กู้คืนบุคลากร') }}
-                    </span>
-                    <span class="text-xs font-bold text-gray-400">{{ log.created_at }}</span>
-                  </div>
-                  <p class="font-bold text-[#2A1D1A] text-sm mb-2">{{ log.details }}</p>
-                  <p class="text-[11px] font-bold text-gray-400 bg-white inline-block px-2 py-1 rounded-lg border border-gray-100">
-                    ดำเนินการโดย: <span class="text-gray-600">{{ log.admin_name }}</span>
-                  </p>
-                </div>
-              </div>
-            }
-          </div>
-        }
-      </div>
-
     </div>
   </div>
 }
