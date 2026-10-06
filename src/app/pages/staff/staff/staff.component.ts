@@ -24,12 +24,12 @@ export class StaffComponent implements OnInit {
   canAdd = signal<boolean>(false);
   errorMessage = signal<string>('');
 
-<<<<<<< HEAD
-=======
-  // ==========================================
-  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
-  // ==========================================
->>>>>>> 5e8140e91f6edd0b968d4245970b01b835e3bd7a
+// <<<<<<< HEAD
+// =======
+//   // ==========================================
+//   // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
+//   // ==========================================
+// >>>>>>> 5e8140e91f6edd0b968d4245970b01b835e3bd7a
   isConfirmModalOpen = signal(false);
   confirmTitle = signal('');
   confirmMessage = signal('');
