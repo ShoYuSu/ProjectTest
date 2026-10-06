@@ -25,6 +25,14 @@ export class StaffComponent implements OnInit {
   errorMessage = signal<string>('');
 
   // ==========================================
+  // 🌟 [เริ่ม] ตัวแปรสำหรับระบบ Restore & History
+  // ==========================================
+  isRestoreModalOpen = false;
+  activeRestoreTab: 'deleted' | 'history' = 'deleted';
+  deletedStaffList: any[] = [];
+  systemLogs: any[] = [];
+
+  // ==========================================
   // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
   // ==========================================
   isConfirmModalOpen = signal(false);
@@ -96,16 +104,21 @@ export class StaffComponent implements OnInit {
     });
   }
 
-  checkPermissions() {
+  // 🌟 เช็คสิทธิ์และดึงค่า User Role
+  userRole(): string {
     const token = localStorage.getItem('token') || '';
-    let userRole = '';
-
     if (token) {
       try {
         const decoded: any = jwtDecode(token);
-        userRole = decoded.role ? decoded.role.toLowerCase() : '';
-      } catch (e) { console.error('Token error:', e); }
+        return decoded.role ? decoded.role.toLowerCase() : '';
+      } catch (e) { return ''; }
     }
+    return '';
+  }
+
+  checkPermissions() {
+    const token = localStorage.getItem('token') || '';
+    let userRole = this.userRole();
 
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
@@ -196,7 +209,6 @@ export class StaffComponent implements OnInit {
     return 'บุคลากร';
   }
 
-  // 🌟 ฟังก์ชันเรียกรีเซ็ตรหัสผ่าน (เปลี่ยนมาใช้ Modal)
   resetPassword(personId: number, name: string) {
     this.openConfirmModal('ยืนยันการรีเซ็ตรหัสผ่าน', `⚠️ คำเตือน: คุณต้องการรีเซ็ตรหัสผ่านของ "${name}" ใช่หรือไม่?\n\nรหัสผ่านจะถูกตั้งค่ากลับไปเป็น "รหัสประจำตัว" และผู้ใช้งานจะถูกบังคับให้เปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบในครั้งถัดไป`, () => {
       const token = localStorage.getItem('token') || '';
@@ -230,12 +242,70 @@ export class StaffComponent implements OnInit {
           if (res.success) {
             this.openAlertModal('สำเร็จ', '✅ ลบข้อมูลสำเร็จ');
             this.loadStaff(this.currentDept());
+            // จำลองการเพิ่ม Log ทันทีที่ลบ
+            this.systemLogs.unshift({
+              id: Date.now(),
+              action: 'DELETE',
+              details: `ลบข้อมูลบุคลากร: ${name}`,
+              admin_name: 'System Admin',
+              created_at: new Date().toLocaleString('th-TH')
+            });
           } else {
             this.errorMessage.set('เกิดข้อผิดพลาด: ' + res.message);
           }
         },
         error: (err) => this.errorMessage.set('ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้')
       });
+    });
+  }
+
+  // ==========================================
+  // 🌟 ฟังก์ชันสำหรับเปิดปิด Modal Restore & Load Data
+  // ==========================================
+  openRestoreModal() {
+    this.isRestoreModalOpen = true;
+    this.activeRestoreTab = 'deleted';
+    this.loadMockRestoreData(); 
+  }
+
+  closeRestoreModal() {
+    this.isRestoreModalOpen = false;
+  }
+
+  loadMockRestoreData() {
+    // จำลองรายชื่อคนที่ถูกลบ
+    this.deletedStaffList = [
+      { id: 1, full_name: 'นายตัวอย่าง ถูกลบ', position: 'สายวิชาการ', deleted_at: '6 ต.ค. 2026 10:30' },
+      { id: 2, full_name: 'นางสาวทดสอบ ลบทิ้ง', position: 'สายสนับสนุน', deleted_at: '5 ต.ค. 2026 15:45' }
+    ];
+
+    // จำลองประวัติทั้งหมด
+    this.systemLogs = [
+      { id: 1, action: 'DELETE', details: 'ลบข้อมูลบุคลากร: นายตัวอย่าง ถูกลบ', admin_name: 'System Admin', created_at: '6 ต.ค. 2026 10:30' },
+      { id: 2, action: 'CREATE', details: 'เพิ่มบุคลากรใหม่: อาจารย์ไพรัตน์ ชัยชนะดี', admin_name: 'System Admin', created_at: '4 ต.ค. 2026 09:15' },
+      { id: 3, action: 'RESTORE', details: 'กู้คืนข้อมูลบุคลากร: นายทศพร ศิริโชคทรัพย์', admin_name: 'System Admin', created_at: '2 ต.ค. 2026 14:20' }
+    ];
+  }
+
+  restoreStaff(id: number) {
+    this.openConfirmModal('ยืนยันการกู้คืนข้อมูล', 'คุณต้องการกู้คืนบัญชีผู้ใช้งานนี้ให้กลับมาใช้งานได้ตามปกติใช่หรือไม่?', () => {
+      const staffToRestore = this.deletedStaffList.find(s => s.id === id);
+      if(staffToRestore) {
+        // 1. ลบออกจากคิวถูกลบ (หน้า Frontend จำลอง)
+        this.deletedStaffList = this.deletedStaffList.filter(s => s.id !== id);
+        
+        // 2. ยัดใส่ประวัติว่าเพิ่งกู้คืน
+        this.systemLogs.unshift({
+          id: Date.now(),
+          action: 'RESTORE',
+          details: `กู้คืนข้อมูลบุคลากร: ${staffToRestore.full_name}`,
+          admin_name: 'System Admin',
+          created_at: new Date().toLocaleString('th-TH')
+        });
+        
+        // 3. แจ้งเตือนสำเร็จ
+        this.openAlertModal('สำเร็จ', `✅ กู้คืนข้อมูลของ ${staffToRestore.full_name} สำเร็จแล้ว!`);
+      }
     });
   }
 }
