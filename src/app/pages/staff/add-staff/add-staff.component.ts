@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms'; 
 import { HttpClientModule, HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http'; 
-import { jwtDecode } from 'jwt-decode'; // 🌟 1. เพิ่ม Import สำหรับถอดรหัส Token
+import { jwtDecode } from 'jwt-decode'; // 🌟 เพิ่ม import สำหรับถอดรหัส Token
 
 @Component({
   selector: 'app-add-staff',
@@ -19,7 +19,7 @@ export class AddStaffComponent implements OnInit {
   showSuccessModal = signal<boolean>(false);
   loading = false;
   
-  isAdmin = signal<boolean>(false); // 🌟 2. เพิ่มตัวแปรเช็คสถานะ Admin
+  isAdmin = signal<boolean>(false); // 🌟 เพิ่มตัวแปรเช็ค Admin
 
   staffData = {
     fullName: '',
@@ -126,7 +126,7 @@ export class AddStaffComponent implements OnInit {
   ];
 
   ngOnInit() {
-    // 🌟 3. ถอดรหัส Token เพื่อตรวจสอบว่าเป็น Admin หรือไม่ตั้งแต่โหลดหน้า
+    // 🌟 ดึงค่าจาก Token เพื่อเช็กว่าเป็น Admin หรือไม่
     const token = localStorage.getItem('token') || '';
     if (token) {
       try {

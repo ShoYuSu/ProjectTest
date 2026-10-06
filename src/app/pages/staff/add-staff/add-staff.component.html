@@ -64,17 +64,24 @@
               <input type="email" [(ngModel)]="staffData.email" name="email" class="w-full p-3.5 bg-gray-50 rounded-xl text-sm font-bold border border-transparent focus:border-[#F9BD15] focus:bg-white outline-none transition-all">
             </div>
             
+            <!-- 🌟 ส่วนจัดการ Role ที่ถูกบล็อกสำหรับผู้ใช้ทั่วไป -->
             <div>
               <label class="block text-xs font-bold text-[#2A1D1A] mb-2">ระดับสิทธิ์ในระบบ (Role)</label>
               <div class="relative">
-                <select [(ngModel)]="staffData.role" name="role" class="w-full p-3.5 bg-[#FEF5DD] rounded-xl text-sm font-bold border border-[#F9BD15]/30 focus:border-[#F9BD15] outline-none appearance-none transition-all text-[#2A1D1A]">
+                <select [(ngModel)]="staffData.role" name="role" 
+                        [disabled]="!isAdmin()"
+                        [ngClass]="{'bg-gray-100 text-gray-500 cursor-not-allowed border-transparent': !isAdmin(), 'bg-[#FEF5DD] text-[#2A1D1A] border-[#F9BD15]/30 focus:border-[#F9BD15]': isAdmin()}"
+                        class="w-full p-3.5 rounded-xl text-sm font-bold border outline-none appearance-none transition-all">
                   <option value="teacher">ผู้ใช้งานทั่วไป (Teacher / Staff)</option>
                   <option value="admin">ผู้ดูแลระบบ (Admin)</option>
                 </select>
-                <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-[#F9BD15]">
+                <div class="absolute inset-y-0 right-4 flex items-center pointer-events-none" [ngClass]="isAdmin() ? 'text-[#F9BD15]' : 'text-gray-400'">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                 </div>
               </div>
+              @if (!isAdmin()) {
+                <p class="text-[10px] text-red-500 font-bold mt-2">* เฉพาะผู้ดูแลระบบระดับคณะเท่านั้นที่สามารถกำหนดสิทธิ์นี้ได้</p>
+              }
             </div>
 
             <div>
@@ -265,6 +272,7 @@
     </div>
   </div>
 }
+
 <!-- 🌟 Custom Confirm Modal -->
 @if (isConfirmModalOpen()) {
   <div class="fixed inset-0 z-[110] flex items-center justify-center animate-in fade-in duration-200">

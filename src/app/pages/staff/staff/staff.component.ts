@@ -33,11 +33,12 @@ export class StaffComponent implements OnInit {
   alertTitle = signal('');
   alertMessage = signal('');
 
-  // 🌟 [เพิ่มใหม่] ตัวแปรสำหรับระบบ Restore & History
+  // 🌟 ตัวแปรสำหรับระบบ Restore & History (ปรับให้ตรงกับ HTML ของเพื่อน)
   isRestoreModalOpen = false;
   activeRestoreTab: 'deleted' | 'history' = 'deleted';
-  deletedStaffList: any[] = [];
-  systemLogs: any[] = [];
+  deletedStaffList = signal<any[]>([]);
+  systemLogs = signal<any[]>([]);
+  isLoadingRecovery = signal<boolean>(false);
 
   getDaysAgo(dateStr: string): string {
     if (!dateStr || dateStr.startsWith('0000')) return '-';
@@ -57,7 +58,6 @@ export class StaffComponent implements OnInit {
     return '-'; 
   }
 
-  // 🌟 [เพิ่มใหม่] ฟังก์ชันสำหรับเช็คว่าผู้ใช้เป็น admin หรือไม่เพื่อแสดงปุ่ม
   userRole(): string {
     const token = localStorage.getItem('token') || '';
     if (token) {
@@ -251,7 +251,7 @@ export class StaffComponent implements OnInit {
   }
 
   deleteStaff(staffId: number, personId: number, name: string) {
-    this.openConfirmModal('ยืนยันการลบข้อมูล', `คุณต้องการลบข้อมูลของ ${name} ใช่หรือไม่?`, () => {
+    this.openConfirmModal('ยืนยันการซ่อนข้อมูล', `คุณต้องการซ่อนข้อมูลของ ${name} ใช่หรือไม่? (Soft Delete)`, () => {
       const token = localStorage.getItem('token') || '';
       const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
       
@@ -261,7 +261,7 @@ export class StaffComponent implements OnInit {
       }, { headers }).subscribe({
         next: (res) => {
           if (res.success) {
-            this.openAlertModal('สำเร็จ', '✅ ลบข้อมูลสำเร็จ');
+            this.openAlertModal('สำเร็จ', '✅ ซ่อนข้อมูลสำเร็จ (สถานะถูกเปลี่ยนเป็น Inactive)');
             this.loadStaff(this.currentDept());
           } else {
             this.errorMessage.set('เกิดข้อผิดพลาด: ' + res.message);
@@ -273,52 +273,96 @@ export class StaffComponent implements OnInit {
   }
 
   // ==========================================
-  // 🌟 [เพิ่มใหม่] ฟังก์ชันสำหรับเปิดปิด Modal Restore & Load Data
+  // 🌟 ฟังก์ชันระบบ Restore & Hard Delete ที่ทำงานกับ Database จริง
   // ==========================================
   openRestoreModal() {
     this.isRestoreModalOpen = true;
     this.activeRestoreTab = 'deleted';
-    this.loadMockRestoreData(); 
+    this.loadInactiveStaff(); 
   }
 
   closeRestoreModal() {
     this.isRestoreModalOpen = false;
+    this.loadStaff(this.currentDept()); // โหลดตารางหลักใหม่เผื่อมีคนถูกกู้คืนกลับมา
   }
 
-  loadMockRestoreData() {
-    // จำลองรายชื่อคนที่ถูกลบ
-    this.deletedStaffList = [
-      { id: 1, full_name: 'นายตัวอย่าง ถูกลบ', position: 'สายวิชาการ', deleted_at: '6 ต.ค. 2026 10:30' },
-      { id: 2, full_name: 'นางสาวทดสอบ ลบทิ้ง', position: 'สายสนับสนุน', deleted_at: '5 ต.ค. 2026 15:45' }
-    ];
+  loadInactiveStaff() {
+    this.isLoadingRecovery.set(true);
+    const token = localStorage.getItem('token') || '';
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    // จำลองประวัติทั้งหมด
-    this.systemLogs = [
-      { id: 1, action: 'DELETE', details: 'ลบข้อมูลบุคลากร: นายตัวอย่าง ถูกลบ', admin_name: 'System Admin', created_at: '6 ต.ค. 2026 10:30' },
-      { id: 2, action: 'CREATE', details: 'เพิ่มบุคลากรใหม่: อาจารย์ไพรัตน์ ชัยชนะดี', admin_name: 'System Admin', created_at: '4 ต.ค. 2026 09:15' },
-      { id: 3, action: 'RESTORE', details: 'กู้คืนข้อมูลบุคลากร: นายทศพร ศิริโชคทรัพย์', admin_name: 'System Admin', created_at: '2 ต.ค. 2026 14:20' }
-    ];
+    this.http.get<any[]>('http://localhost:8080/api/get_inactive_staff.php', { headers })
+      .subscribe({
+        next: (data) => {
+          // แมปข้อมูลให้เข้ากับตัวแปรที่เพื่อนเขียนไว้ใน HTML
+          const mappedData = (data || []).map(item => ({
+            id: item.person_id,
+            person_id: item.person_id,
+            staff_id: item.staff_id,
+            name: item.name,
+            full_name: item.name,
+            position: item.position,
+            department: item.department,
+            deleted_at: item.deleted_at,
+            image: item.image
+          }));
+          
+          this.deletedStaffList.set(mappedData);
+
+          // จำลองข้อมูลประวัติการลบ (Audit Logs) สำหรับ Tab History ไว้ดูเล่นๆ
+          this.systemLogs.set([
+            { id: 1, action: 'DELETE', details: 'ลบข้อมูลบุคลากร', admin_name: 'System Admin', created_at: new Date().toLocaleDateString('th-TH') }
+          ]);
+
+          this.isLoadingRecovery.set(false);
+        },
+        error: () => {
+          this.isLoadingRecovery.set(false);
+          this.openAlertModal('ข้อผิดพลาด', 'ไม่สามารถดึงข้อมูลประวัติที่ถูกลบได้');
+        }
+      });
   }
 
-  restoreStaff(id: number) {
-    this.openConfirmModal('ยืนยันการกู้คืนข้อมูล', 'คุณต้องการกู้คืนบัญชีผู้ใช้งานนี้ให้กลับมาใช้งานได้ตามปกติใช่หรือไม่?', () => {
-      const staffToRestore = this.deletedStaffList.find(s => s.id === id);
-      if(staffToRestore) {
-        // 1. ลบออกจากคิวถูกลบ (หน้า Frontend จำลอง)
-        this.deletedStaffList = this.deletedStaffList.filter(s => s.id !== id);
-        
-        // 2. ยัดใส่ประวัติว่าเพิ่งกู้คืน
-        this.systemLogs.unshift({
-          id: Date.now(),
-          action: 'RESTORE',
-          details: `กู้คืนข้อมูลบุคลากร: ${staffToRestore.full_name}`,
-          admin_name: 'System Admin',
-          created_at: new Date().toLocaleString('th-TH')
+  restoreStaff(personId: number, name: string) {
+    this.openConfirmModal('ยืนยันการกู้คืน', `คุณต้องการกู้คืนบัญชีของ "${name}" กลับมาใช้งานเป็นสถานะ Active ใช่หรือไม่?`, () => {
+      const token = localStorage.getItem('token') || '';
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      
+      this.http.post<any>('http://localhost:8080/api/restore_staff.php', { person_id: personId }, { headers })
+        .subscribe({
+          next: (res) => {
+            if (res.success) {
+              this.openAlertModal('สำเร็จ', '✅ ' + res.message);
+              this.loadInactiveStaff(); // ดึงรายชื่อใหม่หลังกู้คืนสำเร็จ
+            } else {
+              this.openAlertModal('ข้อผิดพลาด', '❌ ' + res.message);
+            }
+          },
+          error: () => this.openAlertModal('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้')
         });
-        
-        // 3. แจ้งเตือนสำเร็จ
-        this.openAlertModal('สำเร็จ', `✅ กู้คืนข้อมูลของ ${staffToRestore.full_name} สำเร็จแล้ว!`);
-      }
+    });
+  }
+
+  hardDeleteStaff(staffId: number, personId: number, name: string) {
+    this.openConfirmModal('⚠️ ยืนยันการลบถาวร', `คำเตือน! คุณต้องการลบข้อมูลของ "${name}" แบบถาวรใช่หรือไม่?\n\nข้อมูลภาระงานวิจัย โครงการ และประวัติทั้งหมดที่เกี่ยวข้องจะถูกลบออกจากฐานข้อมูล และไม่สามารถกู้คืนได้อีก`, () => {
+      const token = localStorage.getItem('token') || '';
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      
+      this.http.post<any>('http://localhost:8080/api/hard_delete_staff.php', { 
+        staff_id: staffId, 
+        person_id: personId 
+      }, { headers })
+        .subscribe({
+          next: (res) => {
+            if (res.success) {
+              this.openAlertModal('สำเร็จ', '✅ ' + res.message);
+              this.loadInactiveStaff(); // ดึงรายชื่อใหม่หลังลบถาวรสำเร็จ
+            } else {
+              this.openAlertModal('ข้อผิดพลาด', '❌ ' + res.message);
+            }
+          },
+          error: () => this.openAlertModal('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้')
+        });
     });
   }
 }

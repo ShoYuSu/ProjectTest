@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms'; 
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'; 
-import { jwtDecode } from 'jwt-decode'; // 🌟 1. เพิ่ม Import สำหรับถอดรหัส Token
+import { jwtDecode } from 'jwt-decode'; // 🌟 เพิ่ม import สำหรับถอดรหัส Token
 
 @Component({
   selector: 'app-profile',
@@ -25,7 +25,7 @@ export class ProfileComponent implements OnInit {
   isEditProfileMode = false;
   isEditPermissionMode = false;
   
-  isAdmin = signal<boolean>(false); // 🌟 2. เพิ่มตัวแปรเช็คสถานะ Admin
+  isAdmin = signal<boolean>(false); // 🌟 เพิ่มตัวแปรเช็คสถานะ Admin
 
   editData: any = {};
   selectedFile: File | null = null;
@@ -80,7 +80,7 @@ export class ProfileComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // 🌟 3. ถอดรหัส Token เพื่อเช็คว่าคนที่เข้าระบบเป็น Admin หรือไม่
+    // 🌟 ถอดรหัส Token เพื่อเช็คว่าเป็น Admin หรือไม่
     const token = localStorage.getItem('token') || '';
     if (token) {
       try {
@@ -125,9 +125,7 @@ export class ProfileComponent implements OnInit {
               this.profileData = response.data;
               this.canEditProfile = response.can_edit_profile;
               
-              // 🌟 4. จุดไคลแม็กซ์: บังคับให้สิทธิ์เปิดปุ่มจัดการสิทธิ์ (รวมถึงการแก้ Role) 
-              // ต้องเป็นคนที่ฐานข้อมูลส่งมาให้ว่าแก้ได้ และ "ต้องเป็น Admin" เท่านั้น! 
-              // ผู้ใช้ทั่วไปแม้จะเป็นเจ้าของโปรไฟล์ ปุ่มนี้ก็จะไม่แสดงครับ
+              // 🌟 ล็อกการแก้ไขสิทธิ์ ต้องเป็นคนที่ Backend อนุญาต และ "ต้องเป็น Admin เท่านั้น" 
               this.canEditPermissions = response.can_edit_permissions && this.isAdmin();
               this.canViewPermissions = this.canEditPermissions || response.is_owner;
               
