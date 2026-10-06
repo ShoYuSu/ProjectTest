@@ -24,6 +24,12 @@ export class StaffComponent implements OnInit {
   canAdd = signal<boolean>(false);
   errorMessage = signal<string>('');
 
+<<<<<<< HEAD
+=======
+  // ==========================================
+  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
+  // ==========================================
+>>>>>>> 5e8140e91f6edd0b968d4245970b01b835e3bd7a
   isConfirmModalOpen = signal(false);
   confirmTitle = signal('');
   confirmMessage = signal('');
@@ -213,6 +219,7 @@ export class StaffComponent implements OnInit {
     return 'บุคลากร';
   }
 
+  // 🌟 ฟังก์ชันเรียกรีเซ็ตรหัสผ่าน (เปลี่ยนมาใช้ Modal)
   resetPassword(personId: number, name: string) {
     this.openConfirmModal('ยืนยันการรีเซ็ตรหัสผ่าน', `⚠️ คำเตือน: คุณต้องการรีเซ็ตรหัสผ่านของ "${name}" ใช่หรือไม่?\n\nรหัสผ่านจะถูกตั้งค่ากลับไปเป็น "รหัสประจำตัว" และผู้ใช้งานจะถูกบังคับให้เปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบในครั้งถัดไป`, () => {
       const token = localStorage.getItem('token') || '';

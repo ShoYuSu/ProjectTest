@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms'; 
 import { HttpClientModule, HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http'; 
+import { jwtDecode } from 'jwt-decode'; // 🌟 1. เพิ่ม Import สำหรับถอดรหัส Token
 
 @Component({
   selector: 'app-add-staff',
@@ -17,6 +18,8 @@ export class AddStaffComponent implements OnInit {
 
   showSuccessModal = signal<boolean>(false);
   loading = false;
+  
+  isAdmin = signal<boolean>(false); // 🌟 2. เพิ่มตัวแปรเช็คสถานะ Admin
 
   staffData = {
     fullName: '',
@@ -41,9 +44,6 @@ export class AddStaffComponent implements OnInit {
     { id: 5, name: 'Training', subName: 'ข้อมูลอบรม', moduleCode: 'Training', isDashboard: false, viewAccess: false, view: 'none', add: 'none', edit: 'none' }
   ];
 
-  // ==========================================
-  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
-  // ==========================================
   isConfirmModalOpen = signal(false);
   confirmTitle = signal('');
   confirmMessage = signal('');
@@ -81,7 +81,6 @@ export class AddStaffComponent implements OnInit {
   closeAlertModal() {
     this.isAlertModalOpen.set(false);
   }
-  // ==========================================
 
   private readonly defaultTemplates = [
     {
@@ -127,6 +126,17 @@ export class AddStaffComponent implements OnInit {
   ];
 
   ngOnInit() {
+    // 🌟 3. ถอดรหัส Token เพื่อตรวจสอบว่าเป็น Admin หรือไม่ตั้งแต่โหลดหน้า
+    const token = localStorage.getItem('token') || '';
+    if (token) {
+      try {
+        const decoded: any = jwtDecode(token);
+        this.isAdmin.set(decoded.role && decoded.role.toLowerCase() === 'admin');
+      } catch (e) {
+        console.error('Invalid token', e);
+      }
+    }
+    
     this.initTemplates();
   }
 
@@ -191,7 +201,7 @@ export class AddStaffComponent implements OnInit {
          updated = [...current]; updated[existingIndex] = newTemplate;
          this.applySaveTemplate(updated, name);
        });
-       return; // หยุดรอให้กด Modal ยืนยันก่อน
+       return; 
     } else { 
        updated = [...current, newTemplate]; 
        this.applySaveTemplate(updated, name);
@@ -267,7 +277,7 @@ export class AddStaffComponent implements OnInit {
         next: (response) => {
           this.loading = false;
           if (response && response.success) {
-            this.showSuccessModal.set(true); // Modal สำเร็จเดิมที่มีให้
+            this.showSuccessModal.set(true); 
           } else {
             this.openAlertModal('เกิดข้อผิดพลาด', '❌ บันทึกไม่สำเร็จ: \n' + (response?.message || ''));
           }

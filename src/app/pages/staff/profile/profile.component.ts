@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms'; 
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser'; 
+import { jwtDecode } from 'jwt-decode'; // 🌟 1. เพิ่ม Import สำหรับถอดรหัส Token
 
 @Component({
   selector: 'app-profile',
@@ -24,6 +25,8 @@ export class ProfileComponent implements OnInit {
   isEditProfileMode = false;
   isEditPermissionMode = false;
   
+  isAdmin = signal<boolean>(false); // 🌟 2. เพิ่มตัวแปรเช็คสถานะ Admin
+
   editData: any = {};
   selectedFile: File | null = null;
   imagePreview: string | null = null;
@@ -47,9 +50,6 @@ export class ProfileComponent implements OnInit {
   researchTab = signal<'project' | 'article'>('project');
   chartData = signal<{year: string, count: number, heightPercent: number}[]>([]);
 
-  // ==========================================
-  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Alert Modal
-  // ==========================================
   isAlertModalOpen = signal(false);
   alertTitle = signal('');
   alertMessage = signal('');
@@ -69,7 +69,6 @@ export class ProfileComponent implements OnInit {
       this.alertCallback = null;
     }
   }
-  // ==========================================
 
   constructor(
     private route: ActivatedRoute,
@@ -81,6 +80,17 @@ export class ProfileComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // 🌟 3. ถอดรหัส Token เพื่อเช็คว่าคนที่เข้าระบบเป็น Admin หรือไม่
+    const token = localStorage.getItem('token') || '';
+    if (token) {
+      try {
+        const decoded: any = jwtDecode(token);
+        this.isAdmin.set(decoded.role && decoded.role.toLowerCase() === 'admin');
+      } catch (e) {
+        console.error('Invalid token', e);
+      }
+    }
+
     const currentYearBE = new Date().getFullYear() + 543;
     for (let i = 0; i <= 50; i++) {
       this.yearsList.push((currentYearBE - i).toString());
@@ -114,8 +124,13 @@ export class ProfileComponent implements OnInit {
             if (response && response.status === 'success') {
               this.profileData = response.data;
               this.canEditProfile = response.can_edit_profile;
-              this.canEditPermissions = response.can_edit_permissions;
+              
+              // 🌟 4. จุดไคลแม็กซ์: บังคับให้สิทธิ์เปิดปุ่มจัดการสิทธิ์ (รวมถึงการแก้ Role) 
+              // ต้องเป็นคนที่ฐานข้อมูลส่งมาให้ว่าแก้ได้ และ "ต้องเป็น Admin" เท่านั้น! 
+              // ผู้ใช้ทั่วไปแม้จะเป็นเจ้าของโปรไฟล์ ปุ่มนี้ก็จะไม่แสดงครับ
+              this.canEditPermissions = response.can_edit_permissions && this.isAdmin();
               this.canViewPermissions = this.canEditPermissions || response.is_owner;
+              
               this.mapPermissionsToModules(response.data.permissions);
             } else {
               this.errorMessage = response?.message || 'เกิดข้อผิดพลาด';
@@ -380,7 +395,7 @@ export class ProfileComponent implements OnInit {
       }));
       payload = { 
         update_type: 'permissions', 
-        person_id: this.profileData.person_id, // 🌟 เพิ่มบรรทัดนี้ เพื่อบอกให้ Backend ทราบว่ากำลังแก้ไขสิทธิ์ของใคร
+        person_id: this.profileData.person_id,
         target_user_id: this.profileData.basic_info.user_id, 
         permissions: permsToSend 
       };
