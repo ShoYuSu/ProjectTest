@@ -97,12 +97,12 @@
       <div class="space-y-3">
         @for (author of formData.authors; track $index) {
           <div class="flex flex-col sm:flex-row gap-3 p-4 bg-gray-50 rounded-2xl relative border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200 transition-all"
-               [ngClass]="{'z-50': isStaffDropdownOpen[$index]}">
+               [ngClass]="{'z-50': author._isOpen}">
             
             <div class="flex-1 relative">
               <label class="text-[10px] font-bold text-gray-400 mb-1 block">ชื่อผู้รับผิดชอบโครงการ</label>
               
-              <button type="button" (click)="!author.is_external && toggleStaffDropdown($index, $event)"
+              <button type="button" (click)="!author.is_external && toggleStaffDropdown(author, $event)"
                       class="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-[#F9BD15] transition-all text-left flex justify-between items-center"
                       [ngClass]="{'text-[#2A1D1A]': author.staff_id || author.is_external, 'text-gray-400': !author.staff_id && !author.is_external, 'bg-gray-100 cursor-not-allowed': author.is_external}">
                 <span class="truncate">
@@ -113,21 +113,22 @@
                 }
               </button>
 
-              @if (isStaffDropdownOpen[$index] && !author.is_external) {
-                <div class="fixed inset-0 z-40" (click)="isStaffDropdownOpen[$index] = false"></div>
+              @if (author._isOpen && !author.is_external) {
+                <div class="fixed inset-0 z-40" (click)="author._isOpen = false"></div>
                 
                 <div class="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
                   <div class="p-3 border-b border-gray-100 bg-gray-50 relative">
                     <svg class="w-4 h-4 absolute left-6 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" [(ngModel)]="staffSearchQueries[$index]" (click)="$event.stopPropagation()" placeholder="พิมพ์ชื่อเพื่อค้นหา..." class="w-full pl-9 pr-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-[#F9BD15] text-[#2A1D1A] bg-white">
+                    <!-- 🌟 แก้ไข: บังคับใส่ [name] และผูกตัวแปรให้ตรงกับแถว -->
+                    <input type="text" [(ngModel)]="author._search" [name]="'search_' + $index" (click)="$event.stopPropagation()" placeholder="พิมพ์ชื่อเพื่อค้นหา..." class="w-full pl-9 pr-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-[#F9BD15] text-[#2A1D1A] bg-white">
                   </div>
                   
                   <ul class="max-h-60 overflow-y-auto">
-                    @if (getFilteredStaffList($index).length === 0) {
+                    @if (getFilteredStaffList(author).length === 0) {
                       <li class="p-4 text-center text-sm font-bold text-gray-400">ไม่พบรายชื่อที่ค้นหา</li>
                     }
-                    @for (staff of getFilteredStaffList($index); track staff.staff_id) {
-                      <li (click)="selectStaffForParticipant($index, staff.staff_id)"
+                    @for (staff of getFilteredStaffList(author); track staff.staff_id) {
+                      <li (click)="selectStaffForParticipant(author, staff.staff_id)"
                           class="p-3 hover:bg-gray-50 cursor-pointer font-bold text-sm text-[#2A1D1A] transition-colors border-b border-gray-50 last:border-0"
                           [class.bg-[#F9BD15]/10]="author.staff_id === staff.staff_id">
                         {{ staff.full_name }} <span class="text-xs text-gray-400 font-normal">({{ staff.position || 'บุคลากร' }})</span>
@@ -140,7 +141,8 @@
 
             <div class="w-full sm:w-56">
               <label class="text-[10px] font-bold text-gray-400 mb-1 block">บทบาทในโครงการ</label>
-              <select [(ngModel)]="author.role" 
+              <!-- 🌟 แก้ไข: บังคับใส่ [name] -->
+              <select [(ngModel)]="author.role" [name]="'role_' + $index"
                       class="w-full p-3 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-[#F9BD15] text-[#2A1D1A]">
                 <option value="หัวหน้าโครงการ">หัวหน้าโครงการ (Principal)</option>
                 <option value="ผู้ร่วมวิจัย">ผู้ร่วมวิจัย (Co-Researcher)</option>
@@ -158,7 +160,6 @@
         }
       </div>
 
-      <!-- 🌟 เพิ่มบุคคลภายนอก -->
       <div class="mt-4 p-5 bg-gray-50 border border-gray-200 rounded-2xl shadow-sm">
         <div class="flex items-center gap-2 mb-3">
           <div class="w-1 h-4 bg-[#F9BD15] rounded-full"></div>
@@ -202,9 +203,7 @@
 
 </div>
 
-<!-- 🌟 2. ส่วนของ Popup / Modal (ย้ายออกมาอยู่นอกสุด เพื่อป้องกันบัคขอบขาวจาก Animation) -->
-
-<!-- 🌟 แสดงป็อปอัปกำลังบันทึก -->
+<!-- 🌟 2. ส่วนของ Popup / Modal -->
 @if (isSubmitting()) {
   <div class="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-[100] flex items-center justify-center pointer-events-none">
      <div class="bg-[#2A1D1A] text-[#F9BD15] px-6 py-3 rounded-full font-bold text-sm shadow-xl flex items-center gap-3">
@@ -214,7 +213,6 @@
   </div>
 }
 
-<!-- 🌟 Custom Confirm Modal -->
 @if (isConfirmModalOpen()) {
   <div class="fixed inset-0 z-[110] flex items-center justify-center animate-in fade-in duration-200">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px]" (click)="closeConfirmModal()"></div>
@@ -236,7 +234,6 @@
   </div>
 }
 
-<!-- 🌟 Custom Alert Modal -->
 @if (isAlertModalOpen()) {
   <div class="fixed inset-0 z-[110] flex items-center justify-center animate-in fade-in duration-200">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-[2px]" (click)="closeAlertModal()"></div>

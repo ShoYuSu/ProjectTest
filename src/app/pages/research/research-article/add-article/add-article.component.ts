@@ -40,12 +40,11 @@ export class AddArticleComponent implements OnInit {
     conference_end_date: '',
     conference_location: '',
     attached_file: '', 
-    authors: [] as Array<{ staff_id: string; role: string; is_external?: boolean; name?: string }>
+    // 🌟 ฝังสถานะการเปิดปิดและค้นหาของ Dropdown ไว้ในแต่ละแถว
+    authors: [] as Array<{ staff_id: string; role: string; is_external?: boolean; name?: string; _isOpen?: boolean; _search?: string }>
   };
 
   externalName: string = '';
-  staffSearchQueries: { [index: number]: string } = {};
-  isStaffDropdownOpen: { [index: number]: boolean } = {};
 
   // โมดอลแจ้งเตือน
   isConfirmModalOpen = signal(false);
@@ -92,31 +91,31 @@ export class AddArticleComponent implements OnInit {
     }
   }
 
-  // 🌟 แก้ไขจุดที่บัค: เปลี่ยนการเปรียบเทียบ id ให้รองรับทั้ง Number และ String
+  // 🌟 ฟังก์ชันจัดการ Dropdown สำหรับแต่ละแถวโดยเฉพาะ
   getStaffName(staffId: string | number): string {
     if (!staffId) return '';
     const staff = this.staffMembers().find(s => s.staff_id?.toString() === staffId.toString());
     return staff ? `${staff.full_name} (${staff.position || 'บุคลากร'})` : '';
   }
 
-  toggleStaffDropdown(index: number, event: Event) {
+  toggleStaffDropdown(author: any, event: Event) {
     event.stopPropagation();
-    this.isStaffDropdownOpen[index] = !this.isStaffDropdownOpen[index];
-    if (this.isStaffDropdownOpen[index]) {
-      this.staffSearchQueries[index] = ''; 
+    author._isOpen = !author._isOpen;
+    if (author._isOpen) {
+      author._search = ''; 
     }
   }
 
-  selectStaffForParticipant(index: number, staffId: string | number) {
-    this.formData.authors[index].staff_id = staffId.toString();
-    this.isStaffDropdownOpen[index] = false;
+  selectStaffForParticipant(author: any, staffId: string | number) {
+    author.staff_id = staffId.toString();
+    author._isOpen = false;
   }
 
-  getFilteredStaffList(index: number) {
-    const query = (this.staffSearchQueries[index] || '').toLowerCase().trim();
+  getFilteredStaffList(author: any) {
+    const query = (author._search || '').toLowerCase().trim();
     if (!query) return this.staffMembers();
     return this.staffMembers().filter(s =>
-      s.full_name.toLowerCase().includes(query) ||
+      (s.full_name && s.full_name.toLowerCase().includes(query)) ||
       (s.position && s.position.toLowerCase().includes(query))
     );
   }
@@ -197,7 +196,9 @@ export class AddArticleComponent implements OnInit {
               staff_id: a.staff_id ? a.staff_id.toString() : '',
               role: a.role,
               is_external: !!a.external_name,
-              name: a.external_name || ''
+              name: a.external_name || '',
+              _isOpen: false,
+              _search: ''
             }));
           }
         }
@@ -208,9 +209,9 @@ export class AddArticleComponent implements OnInit {
 
         if (this.formData.authors.length === 0) {
           if (scope === 'self' && myStaffId) {
-             this.formData.authors.push({ staff_id: myStaffId, role: 'ผู้นิพนธ์หลัก (First Author)' });
+             this.formData.authors.push({ staff_id: myStaffId, role: 'ผู้นิพนธ์หลัก (First Author)', _isOpen: false, _search: '' });
           } else {
-             this.formData.authors.push({ staff_id: '', role: 'ผู้นิพนธ์หลัก (First Author)' });
+             this.formData.authors.push({ staff_id: '', role: 'ผู้นิพนธ์หลัก (First Author)', _isOpen: false, _search: '' });
           }
         }
 
@@ -221,38 +222,6 @@ export class AddArticleComponent implements OnInit {
         this.openAlertModal('เกิดข้อผิดพลาด', '❌ ไม่สามารถดึงข้อมูลพื้นฐานได้');
         this.loading.set(false);
       }
-    });
-  }
-
-  onCsvUpload(event: any) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    this.openConfirmModal('ยืนยันการนำเข้า', `ต้องการนำเข้าข้อมูลบทความวิจัยจากไฟล์ ${file.name} ใช่หรือไม่?`, () => {
-      this.isSubmitting.set(true);
-      const token = localStorage.getItem('token') || '';
-      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-      
-      const formData = new FormData();
-      formData.append('csv_file', file);
-
-      this.http.post<any>('http://localhost:8080/api/import_articles_csv.php', formData, { headers })
-        .subscribe({
-          next: (res) => {
-            this.isSubmitting.set(false);
-            if (res.success) {
-              this.openAlertModal('สำเร็จ', `✅ นำเข้าข้อมูลสำเร็จ ${res.imported_count} รายการ`, () => {
-                this.router.navigate(['/research/article']);
-              });
-            } else {
-              this.openAlertModal('ข้อผิดพลาด', '❌ ' + res.message);
-            }
-          },
-          error: () => {
-            this.isSubmitting.set(false);
-            this.openAlertModal('ข้อผิดพลาด', '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์เพื่อนำเข้า CSV ได้');
-          }
-        });
     });
   }
 
@@ -273,7 +242,7 @@ export class AddArticleComponent implements OnInit {
     }
   }
 
-  addAuthorRow() { this.formData.authors.push({ staff_id: '', role: 'ผู้นิพนธ์ร่วม (Co-Author)' }); }
+  addAuthorRow() { this.formData.authors.push({ staff_id: '', role: 'ผู้นิพนธ์ร่วม (Co-Author)', _isOpen: false, _search: '' }); }
   
   addExternalAuthor() {
     if (!this.externalName.trim()) {
@@ -289,7 +258,9 @@ export class AddArticleComponent implements OnInit {
       staff_id: '',
       name: this.externalName.trim(),
       role: 'ผู้นิพนธ์ร่วม (Co-Author)', 
-      is_external: true
+      is_external: true,
+      _isOpen: false,
+      _search: ''
     });
     this.externalName = ''; 
   }

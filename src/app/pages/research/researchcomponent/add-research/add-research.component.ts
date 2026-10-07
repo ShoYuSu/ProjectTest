@@ -35,18 +35,13 @@ export class AddResearchComponent implements OnInit {
     funding_source: '',
     budget: null as number | null,
     attached_file: '', 
-    authors: [] as Array<{ staff_id: string; role: string; is_external?: boolean; name?: string }>
+    // 🌟 ฝังสถานะไว้ใน object
+    authors: [] as Array<{ staff_id: string; role: string; is_external?: boolean; name?: string; _isOpen?: boolean; _search?: string }>
   };
 
-  // ตัวแปรเพิ่มคนนอก
   externalName: string = '';
 
-  staffSearchQueries: { [index: number]: string } = {};
-  isStaffDropdownOpen: { [index: number]: boolean } = {};
-
-  // ==========================================
-  // 🌟 [เริ่ม] ตัวแปรและฟังก์ชันสำหรับ Custom Confirm & Alert Modal
-  // ==========================================
+  // โมดอล
   isConfirmModalOpen = signal(false);
   confirmTitle = signal('');
   confirmMessage = signal('');
@@ -90,32 +85,32 @@ export class AddResearchComponent implements OnInit {
       this.alertCallback = null;
     }
   }
-  // ==========================================
 
-  getStaffName(staffId: string): string {
+  // 🌟 ฟังก์ชันจัดการ Dropdown สำหรับแต่ละแถวโดยเฉพาะ
+  getStaffName(staffId: string | number): string {
     if (!staffId) return '';
-    const staff = this.staffMembers().find(s => s.staff_id === staffId);
+    const staff = this.staffMembers().find(s => s.staff_id?.toString() === staffId.toString());
     return staff ? `${staff.full_name} (${staff.position || 'บุคลากร'})` : '';
   }
 
-  toggleStaffDropdown(index: number, event: Event) {
+  toggleStaffDropdown(author: any, event: Event) {
     event.stopPropagation();
-    this.isStaffDropdownOpen[index] = !this.isStaffDropdownOpen[index];
-    if (this.isStaffDropdownOpen[index]) {
-      this.staffSearchQueries[index] = ''; 
+    author._isOpen = !author._isOpen;
+    if (author._isOpen) {
+      author._search = ''; 
     }
   }
 
-  selectStaffForParticipant(index: number, staffId: string) {
-    this.formData.authors[index].staff_id = staffId;
-    this.isStaffDropdownOpen[index] = false;
+  selectStaffForParticipant(author: any, staffId: string | number) {
+    author.staff_id = staffId.toString();
+    author._isOpen = false;
   }
 
-  getFilteredStaffList(index: number) {
-    const query = (this.staffSearchQueries[index] || '').toLowerCase().trim();
+  getFilteredStaffList(author: any) {
+    const query = (author._search || '').toLowerCase().trim();
     if (!query) return this.staffMembers();
     return this.staffMembers().filter(s =>
-      s.full_name.toLowerCase().includes(query) ||
+      (s.full_name && s.full_name.toLowerCase().includes(query)) ||
       (s.position && s.position.toLowerCase().includes(query))
     );
   }
@@ -191,7 +186,9 @@ export class AddResearchComponent implements OnInit {
               staff_id: a.staff_id ? a.staff_id.toString() : '',
               role: a.role,
               is_external: !!a.external_name,
-              name: a.external_name || ''
+              name: a.external_name || '',
+              _isOpen: false,
+              _search: ''
             }));
           }
         }
@@ -202,9 +199,9 @@ export class AddResearchComponent implements OnInit {
 
         if (this.formData.authors.length === 0) {
           if (scope === 'self' && myStaffId) {
-             this.formData.authors.push({ staff_id: myStaffId, role: 'หัวหน้าโครงการ' });
+             this.formData.authors.push({ staff_id: myStaffId, role: 'หัวหน้าโครงการ', _isOpen: false, _search: '' });
           } else {
-             this.formData.authors.push({ staff_id: '', role: 'หัวหน้าโครงการ' });
+             this.formData.authors.push({ staff_id: '', role: 'หัวหน้าโครงการ', _isOpen: false, _search: '' });
           }
         }
 
@@ -230,7 +227,7 @@ export class AddResearchComponent implements OnInit {
     }
   }
 
-  addAuthorRow() { this.formData.authors.push({ staff_id: '', role: 'ผู้ร่วมวิจัย' }); }
+  addAuthorRow() { this.formData.authors.push({ staff_id: '', role: 'ผู้ร่วมวิจัย', _isOpen: false, _search: '' }); }
   
   addExternalAuthor() {
     if (!this.externalName.trim()) {
@@ -246,7 +243,9 @@ export class AddResearchComponent implements OnInit {
       staff_id: '',
       name: this.externalName.trim(),
       role: 'ผู้ร่วมวิจัย', 
-      is_external: true
+      is_external: true,
+      _isOpen: false,
+      _search: ''
     });
     this.externalName = ''; 
   }
