@@ -130,7 +130,7 @@
       </div>
       
       <div #scrollContainer (scroll)="onScroll($event)" class="overflow-auto max-h-[65vh] w-full">
-        <table class="w-full text-left border-collapse min-w-[1200px]">
+        <table class="w-full text-left border-collapse min-w-[1300px]">
             <thead class="text-xs text-gray-500 font-bold">
               <tr>
                   @if (isExportMode()) {
@@ -145,8 +145,11 @@
                   
                   <th class="py-5 px-4 w-28 text-center sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">ปีที่ตีพิมพ์</th>
                   
-                  <th class="py-5 px-4 w-64 sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">รายละเอียดตีพิมพ์/นำเสนอ</th>
+                  <!-- 🌟 ขยายความกว้างคอลัมน์รายละเอียดให้กว้างขึ้น เพื่อให้อ่านง่าย -->
+                  <th class="py-5 px-4 w-80 min-w-[320px] sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">รายละเอียดตีพิมพ์/นำเสนอ</th>
+                  
                   <th class="py-5 px-4 w-32 text-center sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">อัปเดตล่าสุด</th>
+                  
                   <th class="py-5 px-4 w-24 text-center sticky top-0 bg-gray-50 z-30 border-b border-gray-100 shadow-[0_2px_4px_rgba(0,0,0,0.02)]">เอกสารแนบ</th> 
                   <th class="py-5 px-8 w-[140px] min-w-[140px] max-w-[140px] text-center sticky top-0 right-0 bg-gray-50 z-40 border-l border-b border-gray-100 shadow-[-4px_2px_12px_-4px_rgba(0,0,0,0.1)]">จัดการ</th>
               </tr>
@@ -172,22 +175,23 @@
                           {{ article.year || '-' }}
                         </td>
 
+                        <!-- 🌟 นำคลาส line-clamp ออกทั้งหมด และใส่ leading-relaxed แทนเพื่อให้ขึ้นบรรทัดใหม่ตามธรรมชาติ -->
                         <td class="py-6 px-4 align-top pt-6">
                           @if (activeTab() === 'conference') {
-                            <div class="flex flex-col gap-1">
-                                <span class="text-sm font-bold text-[#8a6800] line-clamp-2">{{ article.conference_name || '-' }}</span>
-                                <span class="text-xs text-gray-400 font-bold line-clamp-1">
+                            <div class="flex flex-col gap-1.5">
+                                <span class="text-sm font-bold text-[#8a6800] leading-relaxed">{{ article.conference_name || '-' }}</span>
+                                <span class="text-xs text-gray-400 font-bold leading-relaxed">
                                   วันที่: {{ article.conference_date || '-' }} 
                                   @if (article.conference_end_date) {
                                     ถึง {{ article.conference_end_date }}
                                   }
                                 </span>
-                                <span class="text-xs text-gray-400 font-bold line-clamp-1">สถานที่: {{ article.conference_location || '-' }}</span>
+                                <span class="text-xs text-gray-400 font-bold leading-relaxed">สถานที่: {{ article.conference_location || '-' }}</span>
                             </div>
                           } @else {
-                            <div class="flex flex-col gap-1">
-                                <span class="text-sm font-bold text-[#8a6800] line-clamp-2">{{ article.journal_name || '-' }}</span>
-                                <span class="text-xs text-gray-400 font-bold">Vol. {{ article.journal_vol_issue || '-' }} <span class="text-[#F9BD15] ml-1">{{ article.journal_quartile }}</span></span>
+                            <div class="flex flex-col gap-1.5">
+                                <span class="text-sm font-bold text-[#8a6800] leading-relaxed">{{ article.journal_name || '-' }}</span>
+                                <span class="text-xs text-gray-400 font-bold leading-relaxed">Vol. {{ article.journal_vol_issue || '-' }} <span class="text-[#F9BD15] ml-1">{{ article.journal_quartile }}</span></span>
                             </div>
                           }
                         </td>

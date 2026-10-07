@@ -36,7 +36,6 @@ export class AddArticleComponent implements OnInit {
     journal_vol_issue: '',
     journal_quartile: '',
     conference_name: '',
-    // เปลี่ยนจาก conference_date เป็น 2 ตัวแปรนี้
     conference_start_date: '', 
     conference_end_date: '',
     conference_location: '',
@@ -48,9 +47,7 @@ export class AddArticleComponent implements OnInit {
   staffSearchQueries: { [index: number]: string } = {};
   isStaffDropdownOpen: { [index: number]: boolean } = {};
 
-  // ==========================================
   // โมดอลแจ้งเตือน
-  // ==========================================
   isConfirmModalOpen = signal(false);
   confirmTitle = signal('');
   confirmMessage = signal('');
@@ -95,12 +92,10 @@ export class AddArticleComponent implements OnInit {
     }
   }
 
-  // ==========================================
-  // จัดการรายชื่อ
-  // ==========================================
-  getStaffName(staffId: string): string {
+  // 🌟 แก้ไขจุดที่บัค: เปลี่ยนการเปรียบเทียบ id ให้รองรับทั้ง Number และ String
+  getStaffName(staffId: string | number): string {
     if (!staffId) return '';
-    const staff = this.staffMembers().find(s => s.staff_id === staffId);
+    const staff = this.staffMembers().find(s => s.staff_id?.toString() === staffId.toString());
     return staff ? `${staff.full_name} (${staff.position || 'บุคลากร'})` : '';
   }
 
@@ -112,8 +107,8 @@ export class AddArticleComponent implements OnInit {
     }
   }
 
-  selectStaffForParticipant(index: number, staffId: string) {
-    this.formData.authors[index].staff_id = staffId;
+  selectStaffForParticipant(index: number, staffId: string | number) {
+    this.formData.authors[index].staff_id = staffId.toString();
     this.isStaffDropdownOpen[index] = false;
   }
 
@@ -188,9 +183,8 @@ export class AddArticleComponent implements OnInit {
           this.formData.journal_vol_issue = ad.journal_vol_issue || '';
           this.formData.journal_quartile = ad.journal_quartile || '';
           this.formData.conference_name = ad.conference_name || '';
-          // โหลดข้อมูล 2 ตัวแปรนี้มาแสดง
-          this.formData.conference_start_date = ad.conference_start_date || '';
-          this.formData.conference_end_date = ad.conference_end_date || '';
+          this.formData.conference_start_date = ad.conference_date !== '0000-00-00' ? ad.conference_date : '';
+          this.formData.conference_end_date = ad.conference_end_date !== '0000-00-00' ? ad.conference_end_date : '';
           this.formData.conference_location = ad.conference_location || '';
           if (ad.dept_id) this.formData.dept_id = ad.dept_id.toString();
           
@@ -227,6 +221,38 @@ export class AddArticleComponent implements OnInit {
         this.openAlertModal('เกิดข้อผิดพลาด', '❌ ไม่สามารถดึงข้อมูลพื้นฐานได้');
         this.loading.set(false);
       }
+    });
+  }
+
+  onCsvUpload(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    this.openConfirmModal('ยืนยันการนำเข้า', `ต้องการนำเข้าข้อมูลบทความวิจัยจากไฟล์ ${file.name} ใช่หรือไม่?`, () => {
+      this.isSubmitting.set(true);
+      const token = localStorage.getItem('token') || '';
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      
+      const formData = new FormData();
+      formData.append('csv_file', file);
+
+      this.http.post<any>('http://localhost:8080/api/import_articles_csv.php', formData, { headers })
+        .subscribe({
+          next: (res) => {
+            this.isSubmitting.set(false);
+            if (res.success) {
+              this.openAlertModal('สำเร็จ', `✅ นำเข้าข้อมูลสำเร็จ ${res.imported_count} รายการ`, () => {
+                this.router.navigate(['/research/article']);
+              });
+            } else {
+              this.openAlertModal('ข้อผิดพลาด', '❌ ' + res.message);
+            }
+          },
+          error: () => {
+            this.isSubmitting.set(false);
+            this.openAlertModal('ข้อผิดพลาด', '❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์เพื่อนำเข้า CSV ได้');
+          }
+        });
     });
   }
 
@@ -297,7 +323,6 @@ export class AddArticleComponent implements OnInit {
 
     if (payload.article_type === 'journal') {
       payload.conference_name = ''; 
-      // เคลียร์ค่าทั้งคู่เมื่อเลือกเป็น Journal
       payload.conference_start_date = ''; 
       payload.conference_end_date = ''; 
       payload.conference_location = '';
