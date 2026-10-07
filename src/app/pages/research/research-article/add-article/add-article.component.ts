@@ -92,9 +92,10 @@ export class AddArticleComponent implements OnInit {
     }
   }
 
-  getStaffName(staffId: string): string {
+  // 🌟 แก้ไขจุดที่บัค: เปลี่ยนการเปรียบเทียบ id ให้รองรับทั้ง Number และ String
+  getStaffName(staffId: string | number): string {
     if (!staffId) return '';
-    const staff = this.staffMembers().find(s => s.staff_id === staffId);
+    const staff = this.staffMembers().find(s => s.staff_id?.toString() === staffId.toString());
     return staff ? `${staff.full_name} (${staff.position || 'บุคลากร'})` : '';
   }
 
@@ -106,8 +107,8 @@ export class AddArticleComponent implements OnInit {
     }
   }
 
-  selectStaffForParticipant(index: number, staffId: string) {
-    this.formData.authors[index].staff_id = staffId;
+  selectStaffForParticipant(index: number, staffId: string | number) {
+    this.formData.authors[index].staff_id = staffId.toString();
     this.isStaffDropdownOpen[index] = false;
   }
 
@@ -223,7 +224,6 @@ export class AddArticleComponent implements OnInit {
     });
   }
 
-  // 🌟 เพิ่มฟังก์ชันอัปโหลด CSV
   onCsvUpload(event: any) {
     const file = event.target.files[0];
     if (!file) return;
