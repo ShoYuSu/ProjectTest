@@ -8,17 +8,17 @@
          [ngClass]="{
            '-translate-x-full': !isSidebarOpen(),
            'translate-x-0': isSidebarOpen(),
-           'w-[280px]': !isMiniSidebar(),
-           'w-[96px]': isMiniSidebar()
+           'w-[17.5rem]': !isMiniSidebar(),
+           'w-[6rem]': isMiniSidebar()
          }">
     
-    <button class="lg:hidden absolute top-4 right-4 text-gray-400 hover:text-white" (click)="toggleSidebar()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    <button type="button" aria-label="ปิดเมนู" class="lg:hidden absolute top-4 right-4 text-gray-400 hover:text-white" (click)="toggleSidebar()">
+        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
     </button>
 
     <div class="hidden lg:flex w-full items-center pt-4 transition-all duration-300" [ngClass]="isMiniSidebar() ? 'justify-center' : 'justify-end px-4'">
-        <button (click)="toggleMiniSidebar()" class="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-white/5 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+        <button type="button" [attr.aria-label]="isMiniSidebar() ? 'ขยายเมนู' : 'ย่อเมนู'" (click)="toggleMiniSidebar()" class="text-gray-400 hover:text-white p-2 rounded-xl hover:bg-white/5 transition-colors">
+          <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
         </button>
     </div>
 
@@ -31,11 +31,11 @@
       }
     </div>
 
-    <nav class="flex-1 space-y-2 overflow-y-auto no-scrollbar transition-all duration-300" [ngClass]="isMiniSidebar() ? 'px-3' : 'px-6'">
+    <nav aria-label="เมนูหลัก" class="flex-1 space-y-2 overflow-y-auto no-scrollbar transition-all duration-300" [ngClass]="isMiniSidebar() ? 'px-3' : 'px-6'">
       
       @if (canViewDashboard()) {
         <button routerLink="/dashboard" routerLinkActive="bg-[#F9BD15] text-[#2A1D1A]" [routerLinkActiveOptions]="{exact: true}" (click)="closeSidebarOnMobile()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5 group relative" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-start px-6 py-4 gap-3'">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 shrink-0"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
           @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Dashboard</span> }
         </button>
       }
@@ -43,13 +43,13 @@
       @if (canViewStaff()) {
         <div class="space-y-1">
           <!-- 🌟 เช็ค URL ทำสี Highlight เมนูหลัก -->
-          <button (click)="toggleStaff()" 
+          <button type="button" [attr.aria-expanded]="isStaffExpanded()" (click)="toggleStaff()" 
                   [class.bg-[#F9BD15]]="router.url.includes('/staff') && !router.url.includes('/profile')" 
                   [class.text-[#2A1D1A]]="router.url.includes('/staff') && !router.url.includes('/profile')" 
                   class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" 
                   [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-between px-6 py-4'">
             <div class="flex items-center" [ngClass]="!isMiniSidebar() ? 'gap-3' : ''">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 shrink-0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Staff Information</span> }
             </div>
             @if (!isMiniSidebar()) { <svg [class.rotate-180]="isStaffExpanded()" class="w-4 h-4 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg> }
@@ -107,13 +107,13 @@
       @if (canViewResearch()) {
         <div class="space-y-1">
           <!-- 🌟 เช็ค URL ทำสี Highlight เมนูหลัก -->
-          <button (click)="toggleResearch()" 
+          <button type="button" [attr.aria-expanded]="isResearchExpanded()" (click)="toggleResearch()" 
                   [class.bg-[#F9BD15]]="router.url.includes('/research')" 
                   [class.text-[#2A1D1A]]="router.url.includes('/research')" 
                   class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" 
                   [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-between px-6 py-4'">
             <div class="flex items-center" [ngClass]="!isMiniSidebar() ? 'gap-3' : ''">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 shrink-0"><path d="M10 2v7.31"/><path d="M14 9.3V1.99"/><path d="M8.5 2h7"/><path d="M14 9.3a6.5 6.5 0 1 1-4 0"/><path d="M5.52 16h12.96"/></svg>
                 @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Research Information</span> }
             </div>
             @if (!isMiniSidebar()) { <svg [class.rotate-180]="isResearchExpanded()" class="w-4 h-4 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg> }
@@ -141,14 +141,14 @@
 
       @if (canViewTraining()) {
         <button routerLink="/training" routerLinkActive="bg-[#F9BD15] text-[#2A1D1A]" (click)="closeSidebarOnMobile()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-start px-6 py-4 gap-3'">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 shrink-0"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
           @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Training & Seminars</span> }
         </button>
       }
 
       @if (canViewProjects()) {
         <button routerLink="/plans" routerLinkActive="bg-[#F9BD15] text-[#2A1D1A]" (click)="closeSidebarOnMobile()" class="w-full flex items-center rounded-2xl transition-all hover:bg-white/5" [ngClass]="isMiniSidebar() ? 'justify-center py-4 px-0' : 'justify-start px-6 py-4 gap-3'">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 shrink-0"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
           @if (!isMiniSidebar()) { <span class="font-bold text-sm whitespace-nowrap">Plans / Projects</span> }
         </button>
       }
@@ -158,86 +158,87 @@
       
       <!-- 🌟 ส่วนตั้งค่าขนาดตัวอักษร -->
       @if (!isMiniSidebar()) {
-        <div class="mb-1">
-          <label class="text-[10px] font-bold text-gray-400/60 uppercase tracking-wider mb-2 block">
+        <div class="mb-1" role="group" aria-labelledby="font-size-label">
+          <span id="font-size-label" class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">
             ขนาดตัวอักษร
-          </label>
+          </span>
           <div class="flex items-center gap-1 bg-black/20 p-1 rounded-xl border border-white/5 shadow-inner">
-            <button (click)="changeFontSize('14px')" 
-                    [class.bg-[#F9BD15]]="currentFontSize === '14px'" 
-                    [class.text-[#2A1D1A]]="currentFontSize === '14px'" 
-                    [class.text-gray-400]="currentFontSize !== '14px'"
-                    class="flex-1 py-1.5 rounded-lg font-black text-xs hover:text-white transition-all duration-200">
-              A-
-            </button>
-            
-            <button (click)="changeFontSize('16px')" 
-                    [class.bg-[#F9BD15]]="currentFontSize === '16px'" 
-                    [class.text-[#2A1D1A]]="currentFontSize === '16px'" 
-                    [class.text-gray-400]="currentFontSize !== '16px'"
-                    class="flex-1 py-1.5 rounded-lg font-black text-sm hover:text-white transition-all duration-200">
-              A
-            </button>
-            
-            <button (click)="changeFontSize('18px')" 
-                    [class.bg-[#F9BD15]]="currentFontSize === '18px'" 
-                    [class.text-[#2A1D1A]]="currentFontSize === '18px'" 
-                    [class.text-gray-400]="currentFontSize !== '18px'"
-                    class="flex-1 py-1.5 rounded-lg font-black text-base hover:text-white transition-all duration-200">
-              A+
-            </button>
+            @for (opt of fontOptions; track opt.value) {
+              <button type="button"
+                      (click)="changeFontSize(opt.value)"
+                      [attr.aria-pressed]="currentFontSize() === opt.value"
+                      [attr.aria-label]="opt.title"
+                      [title]="opt.title"
+                      class="flex-1 py-2 rounded-lg font-black leading-tight transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F9BD15]"
+                      [ngClass]="[
+                        opt.textClass,
+                        currentFontSize() === opt.value
+                          ? 'bg-[#F9BD15] text-[#2A1D1A]'
+                          : 'text-gray-400 hover:text-white'
+                      ]">{{ opt.label }}</button>
+            }
           </div>
         </div>
+      } @else {
+        <!-- sidebar แบบย่อ: ปุ่มเดียว กดวนเล็ก → ปกติ → ใหญ่ -->
+        <button type="button"
+                (click)="cycleFontSize()"
+                [attr.aria-label]="'ขนาดตัวอักษร: ' + currentFontOption().title + ' (กดเพื่อเปลี่ยน)'"
+                [title]="'ขนาดตัวอักษร: ' + currentFontOption().title"
+                class="w-full py-2 rounded-xl bg-black/20 border border-white/5 shadow-inner text-[#F9BD15] font-black text-base leading-tight hover:bg-black/30 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F9BD15]">
+          {{ currentFontOption().label }}
+        </button>
       }
 
       @if (canViewAdvisorSystem()) {
         <a (click)="goToAdvisorSystem($event)" class="cursor-pointer flex items-center rounded-2xl border border-white/5 transition-all group shadow-sm bg-white/5 hover:bg-white/10" [ngClass]="isMiniSidebar() ? 'justify-center p-3' : 'justify-between p-4'">
              <div class="flex items-center" [ngClass]="!isMiniSidebar() ? 'gap-3' : ''">
                <div class="p-2 bg-[#F9BD15]/10 rounded-lg text-[#F9BD15] shrink-0">
-                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                 <svg class="w-[1.125rem] h-[1.125rem]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                </div>
                @if (!isMiniSidebar()) {
                  <div class="flex flex-col text-left whitespace-nowrap">
-                   <span class="text-[10px] text-gray-400 font-bold mb-0.5">ไปยังระบบอื่น</span>
+                   <span class="text-xs text-gray-400 font-bold mb-0.5">ไปยังระบบอื่น</span>
                    <span class="font-bold text-sm text-white group-hover:text-[#F9BD15] transition-colors">ระบบที่ปรึกษา</span>
                  </div>
                }
              </div>
              @if (!isMiniSidebar()) {
-               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500 group-hover:text-[#F9BD15] transition-colors shrink-0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-gray-500 group-hover:text-[#F9BD15] transition-colors shrink-0"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
              }
         </a>
       }
 
-      <div class="relative w-full">
-          @if (isProfileMenuOpen) {
+      <div class="relative w-full" (click)="$event.stopPropagation()">
+          @if (isProfileMenuOpen()) {
             <div class="absolute bottom-[calc(100%+8px)] left-0 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-2 z-50"
-                 [ngClass]="isMiniSidebar() ? 'w-[200px]' : 'w-full'">
+                 [ngClass]="isMiniSidebar() ? 'w-[12.5rem]' : 'w-full'">
               
-              <a routerLink="/staff/profile" (click)="isProfileMenuOpen = false" class="flex items-center gap-3 px-4 py-3.5 text-sm font-bold text-[#2A1D1A] hover:bg-gray-50 transition-colors cursor-pointer">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-gray-500"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <a routerLink="/staff/profile" (click)="isProfileMenuOpen.set(false)" class="flex items-center gap-3 px-4 py-3.5 text-sm font-bold text-[#2A1D1A] hover:bg-gray-50 transition-colors cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[1.125rem] h-[1.125rem] shrink-0 text-gray-500"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 <span>โปรไฟล์ส่วนตัว</span>
               </a>
               
               <div class="h-px bg-gray-100 w-full"></div>
               
               <button (click)="logout()" class="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors text-left">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-[1.125rem] h-[1.125rem] shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
                 <span>ออกจากระบบ</span>
               </button>
             </div>
           }
 
           <div class="flex items-center bg-white/5 rounded-2xl cursor-pointer hover:bg-white/10 transition-colors group" 
-               (click)="toggleProfileMenu()" 
+               (click)="toggleProfileMenu()"
+               role="button" tabindex="0" aria-haspopup="menu" [attr.aria-expanded]="isProfileMenuOpen()"
+               (keydown.enter)="toggleProfileMenu()" (keydown.space)="$event.preventDefault(); toggleProfileMenu()"
                [ngClass]="isMiniSidebar() ? 'justify-center p-3' : 'gap-4 p-4'">
               
               <!-- 🌟 แสดงรูปภาพโปรไฟล์ -->
               @if (userProfileImage) {
                 <img [src]="userProfileImage" 
                      alt="Profile" 
-                     class="shrink-0 rounded-full border-2 border-[#F9BD15] object-cover shadow-sm bg-[#3A1E1D]"
-                     [ngClass]="isMiniSidebar() ? 'w-10 h-10' : 'w-10 h-10'"
+                     class="shrink-0 w-10 h-10 rounded-full border-2 border-[#F9BD15] object-cover shadow-sm bg-[#3A1E1D]"
                      (error)="handleImageError()">
               } @else {
                 <div class="shrink-0 rounded-full border-2 border-[#F9BD15] flex items-center justify-center text-[#F9BD15] font-black shadow-sm bg-[#3A1E1D]" 
@@ -248,13 +249,13 @@
               
               @if (!isMiniSidebar()) {
                 <div class="text-left whitespace-nowrap flex-1 overflow-hidden">
-                  <p class="text-xs font-black text-white uppercase leading-none mb-1 truncate w-full">{{ userName }}</p>
-                  <p class="text-[9px] text-[#F9BD15] uppercase tracking-widest">{{ userRoleDisplay }}</p>
+                  <p class="text-xs font-black text-white uppercase leading-tight mb-1 truncate w-full">{{ userName }}</p>
+                  <p class="text-xs text-[#F9BD15] uppercase tracking-widest">{{ userRoleDisplay }}</p>
                 </div>
                 
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
-                     class="text-gray-400 group-hover:text-white transition-all shrink-0" 
-                     [class.rotate-180]="isProfileMenuOpen">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                     class="w-4 h-4 text-gray-400 group-hover:text-white transition-all shrink-0" 
+                     [class.rotate-180]="isProfileMenuOpen()">
                      <path d="m18 15-6-6-6 6"/>
                 </svg>
               }
@@ -266,8 +267,8 @@
   <div class="flex-1 flex flex-col h-screen overflow-hidden">
       <!-- 🌟 เปลี่ยนโลโก้ใน Header มือถือมาใช้ไฟล์ใน assets/img แทนลิงก์วิกิพีเดีย -->
       <header class="lg:hidden bg-white shadow-sm border-b border-gray-100 p-4 flex items-center gap-4 z-30 relative">
-        <button (click)="toggleSidebar()" class="p-2 bg-gray-50 text-[#2A1D1A] rounded-xl hover:bg-[#F9BD15] hover:text-white transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+        <button type="button" aria-label="เปิดเมนู" (click)="toggleSidebar()" class="p-2 bg-gray-50 text-[#2A1D1A] rounded-xl hover:bg-[#F9BD15] hover:text-white transition-colors">
+            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
         </button>
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center p-1">
@@ -288,18 +289,18 @@
       <!-- ============================================== -->
       @if (showChangePasswordModal()) {
   <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300">
+    <div role="dialog" aria-modal="true" aria-labelledby="pwd-modal-title" class="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-300">
       
       <!-- Header (พร้อมปุ่ม X มุมขวาบน) -->
       <div class="bg-[#F9BD15] px-6 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2A1D1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          <h3 class="font-black text-[#2A1D1A] text-lg">เปลี่ยนรหัสผ่าน</h3>
+          <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2A1D1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <h3 id="pwd-modal-title" class="font-black text-[#2A1D1A] text-lg">เปลี่ยนรหัสผ่าน</h3>
         </div>
 
         <!-- ✖️ ปุ่ม X กดแล้วปิด Modal (ไม่ออกจากระบบ) -->
-        <button type="button" (click)="closeModal()" class="text-[#2A1D1A]/70 hover:text-[#2A1D1A] p-1 rounded-lg hover:bg-black/10 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <button type="button" aria-label="ปิดหน้าต่าง" (click)="closeModal()" class="text-[#2A1D1A]/70 hover:text-[#2A1D1A] p-1 rounded-lg hover:bg-black/10 transition-colors">
+          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
@@ -308,12 +309,12 @@
 
       <!-- Body -->
       <div class="p-6">
-        <p class="text-sm text-gray-500 font-bold mb-6">
+        <p class="text-sm text-gray-600 font-bold mb-6">
           คุณสามารถตั้งรหัสผ่านใหม่เพื่อความปลอดภัย หรือกดปิด/ข้ามไปก่อนได้
         </p>
 
         @if (modalError()) {
-          <div class="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 mb-4 text-xs font-bold">
+          <div role="alert" class="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 mb-4 text-xs font-bold">
             {{ modalError() }}
           </div>
         }
@@ -322,19 +323,19 @@
           
           <!-- 👁️ ช่องที่ 1: รหัสผ่านปัจจุบัน -->
           <div>
-            <label class="block text-xs font-bold text-gray-400 mb-1">รหัสผ่านปัจจุบัน</label>
+            <label class="block text-xs font-bold text-gray-600 mb-1">รหัสผ่านปัจจุบัน</label>
             <div class="relative">
               <input [type]="showCurrentPassword() ? 'text' : 'password'" 
-                     [(ngModel)]="currentPassword" name="currentPwd"
+                     [(ngModel)]="currentPassword" name="currentPwd" autocomplete="current-password" (keydown.enter)="submitChangePassword()"
                      placeholder="ระบุรหัสผ่านเดิม"
                      class="block w-full rounded-xl border border-gray-200 px-4 py-3 pr-10 focus:border-[#F9BD15] focus:outline-none focus:ring-1 focus:ring-[#F9BD15] text-sm font-bold bg-gray-50">
               
-              <button type="button" (click)="toggleShowCurrentPassword()" 
+              <button type="button" [attr.aria-label]="showCurrentPassword() ? 'ซ่อนรหัสผ่านปัจจุบัน' : 'แสดงรหัสผ่านปัจจุบัน'" (click)="toggleShowCurrentPassword()" 
                       class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none">
                 @if (showCurrentPassword()) {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                  <svg class="w-[1.125rem] h-[1.125rem]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
                 } @else {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="w-[1.125rem] h-[1.125rem]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                 }
               </button>
             </div>
@@ -342,19 +343,19 @@
 
           <!-- 👁️ ช่องที่ 2: รหัสผ่านใหม่ -->
           <div>
-            <label class="block text-xs font-bold text-gray-400 mb-1">รหัสผ่านใหม่</label>
+            <label class="block text-xs font-bold text-gray-600 mb-1">รหัสผ่านใหม่</label>
             <div class="relative">
               <input [type]="showNewPassword() ? 'text' : 'password'" 
-                     [(ngModel)]="newPassword" name="newPwd" minlength="8"
+                     [(ngModel)]="newPassword" name="newPwd" autocomplete="new-password" (keydown.enter)="submitChangePassword()" minlength="8"
                      placeholder="อย่างน้อย 8 ตัวอักษร"
                      class="block w-full rounded-xl border border-gray-200 px-4 py-3 pr-10 focus:border-[#F9BD15] focus:outline-none focus:ring-1 focus:ring-[#F9BD15] text-sm font-bold bg-gray-50">
               
-              <button type="button" (click)="toggleShowNewPassword()" 
+              <button type="button" [attr.aria-label]="showNewPassword() ? 'ซ่อนรหัสผ่านใหม่' : 'แสดงรหัสผ่านใหม่'" (click)="toggleShowNewPassword()" 
                       class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none">
                 @if (showNewPassword()) {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                  <svg class="w-[1.125rem] h-[1.125rem]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
                 } @else {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="w-[1.125rem] h-[1.125rem]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                 }
               </button>
             </div>
@@ -362,19 +363,19 @@
 
           <!-- 👁️ ช่องที่ 3: ยืนยันรหัสผ่านใหม่ -->
           <div>
-            <label class="block text-xs font-bold text-gray-400 mb-1">ยืนยันรหัสผ่านใหม่</label>
+            <label class="block text-xs font-bold text-gray-600 mb-1">ยืนยันรหัสผ่านใหม่</label>
             <div class="relative">
               <input [type]="showConfirmPassword() ? 'text' : 'password'" 
-                     [(ngModel)]="confirmPassword" name="confirmPwd"
+                     [(ngModel)]="confirmPassword" name="confirmPwd" autocomplete="new-password" (keydown.enter)="submitChangePassword()"
                      placeholder="พิมพ์รหัสผ่านใหม่อีกครั้ง"
                      class="block w-full rounded-xl border border-gray-200 px-4 py-3 pr-10 focus:border-[#F9BD15] focus:outline-none focus:ring-1 focus:ring-[#F9BD15] text-sm font-bold bg-gray-50">
               
-              <button type="button" (click)="toggleShowConfirmPassword()" 
+              <button type="button" [attr.aria-label]="showConfirmPassword() ? 'ซ่อนยืนยันรหัสผ่านใหม่' : 'แสดงยืนยันรหัสผ่านใหม่'" (click)="toggleShowConfirmPassword()" 
                       class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none">
                 @if (showConfirmPassword()) {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                  <svg class="w-[1.125rem] h-[1.125rem]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
                 } @else {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg class="w-[1.125rem] h-[1.125rem]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                 }
               </button>
             </div>
@@ -387,7 +388,7 @@
       <div class="p-6 border-t border-gray-100 flex gap-3 bg-gray-50/50">
         <!-- 🌟 ปุ่มข้ามไปก่อน (ปิด Pop-up ไม่ Logout) -->
         <button type="button" (click)="closeModal()" [disabled]="isModalLoading()"
-                class="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-gray-500 font-bold text-sm hover:bg-gray-100 transition-colors disabled:opacity-50">
+                class="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-100 transition-colors disabled:opacity-50">
           ข้ามไปก่อน
         </button>
         
